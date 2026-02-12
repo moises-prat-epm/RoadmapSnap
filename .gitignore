@@ -8,3 +8,4 @@
 # Node (if you ever add tooling)
 node_modules/
 dist/
+js/config onehouse.js

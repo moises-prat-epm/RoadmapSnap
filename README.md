@@ -1,3 +1,168 @@
+## Project Roadmap Dashboard (Template)
+
+A self-contained, interactive **roadmap dashboard** you can reuse for any project to track items (deliverables, features, workstreams, epics, etc.) across milestones. It runs entirely in the browser with **no backend** and **no build step**.
+
+- **Dashboard file**: `roadmap_dashboard.html`
+- **Configuration file**: `js/config.js`
+
+---
+
+### Preview
+
+This repo is intended to include a generic preview image:
+
+- `docs/preview.png` (see `docs/preview.md` for how to generate it)
+
+---
+
+### What you get
+
+- **Executive summary dashboard**: KPIs by status (NS/DEV/M0/M1/M2/M3), risk count, and overall completion.
+- **Compact timeline**: one row per item with milestone markers across months.
+- **Risk visibility**: items with `atRisk: true` get a warning indicator.
+- **PNG exports**:
+  - Full roadmap
+  - Summary-only view
+  - Timeline-only view
+
+---
+
+### Quick start (use the generic template)
+
+1. Clone the repo:
+
+```bash
+git clone <PUBLIC_TEMPLATE_REPO_URL>
+cd <REPO_FOLDER>
+```
+
+2. Open `roadmap_dashboard.html` in your browser (double-click it, or use `File → Open`).
+3. Edit `js/config.js`.
+4. Refresh the browser tab to see updates.
+
+---
+
+### Configuration (edit `js/config.js`)
+
+All customization lives in **one place**: `js/config.js`.
+
+The file defines a global `CONFIG` object used by `roadmap_dashboard.html`:
+
+```javascript
+const CONFIG = {
+  TIMELINE: { TODAY: "DD/MM/YYYY", START_MONTH: "MM/YYYY", END_MONTH: "MM/YYYY" },
+  ENTITY_LABELS: { singular: "Deliverable", plural: "Deliverables", columnHeader: "Deliverable", scopeLabel: "deliverables" },
+  DASHBOARD_TEXT: { title: "Project Roadmap Dashboard", totalSubtitleSuffix: "in roadmap scope" },
+  MILESTONE_TEXT: { M0: {...}, M1: {...}, M2: {...}, M3: {...} },
+  STATUS_LABELS: { NS: "...", DEV: "...", M0: "...", M1: "...", M2: "...", M3: "..." },
+  STATUS_DESCRIPTIONS: { NS: "...", DEV: "...", M0: "...", M1: "...", M2: "...", M3: "..." },
+  DELIVERABLES: [ /* your items */ ]
+};
+```
+
+#### Item shape (in `CONFIG.DELIVERABLES`)
+
+Each item looks like:
+
+```javascript
+{
+  name: "Deliverable name",
+  startDate: "DD/MM/YYYY" | null,
+  atRisk: false,
+  showInTimeline: true,
+  milestones: {
+    M0: "DD/MM/YYYY",
+    M1: "DD/MM/YYYY",
+    M2: "DD/MM/YYYY",
+    M3: "DD/MM/YYYY"
+  }
+}
+```
+
+Notes:
+
+- **Dates** must be `DD/MM/YYYY`.
+- **`showInTimeline: false`** hides the item from the timeline but it will still count in totals.
+- Status is computed automatically from milestone dates vs `TIMELINE.TODAY`.
+
+---
+
+### Exporting PNGs
+
+Use the buttons at the top of the page:
+
+- **Export Full Roadmap**
+- **Export Summary Only**
+- **Export Timeline Only**
+
+This uses `html2canvas` (loaded from a CDN). If your environment blocks external CDNs, exports may fail unless you vendor that library locally.
+
+---
+
+### Create a private copy for your project (recommended)
+
+Use the public template repo as a starting point, but keep real project data in a **private repo**.
+
+#### Option A: clone → re-point to a private repo
+
+```bash
+# 1) Clone the public template
+git clone <PUBLIC_TEMPLATE_REPO_URL> my-project-roadmap
+cd my-project-roadmap
+
+# 2) Keep a link to the template for future updates (optional but recommended)
+git remote rename origin template
+
+# 3) Add your new private repo as "origin"
+git remote add origin <YOUR_PRIVATE_REPO_URL>
+
+# 4) Push the template content into your private repo
+git push -u origin main
+```
+
+Then customize privately:
+
+```bash
+# edit configuration
+$EDITOR js/config.js
+
+git add js/config.js
+git commit -m "Configure roadmap for <My Project>"
+git push
+```
+
+#### Option B: “Use this template” (Git hosting UI)
+
+If your Git hosting supports **template repositories**, you can create a new private repo from this one via the UI, then clone your private repo and edit `js/config.js`.
+
+---
+
+### Keeping your private repo up to date with the public template
+
+If you used “template” as a remote name (Option A above), you can pull improvements from the public template later:
+
+```bash
+git fetch template
+git merge template/main
+```
+
+Resolve conflicts carefully (keep your project data in `js/config.js`).
+
+---
+
+### Why the config file is JavaScript (vs JSON/YAML)
+
+For this type of “open the HTML by double-clicking” tool, **JavaScript config is the most reliable**:
+
+- **Works over `file://`** without needing a local server.
+- Supports **comments** and trailing commas (friendlier for editing).
+- No parsing step (the browser just loads `js/config.js`).
+
+Alternatives:
+
+- **JSON**: good for strict “data-only” config, but usually requires `fetch()` + parsing; `fetch()` from `file://` is often blocked, so you’d typically need a local HTTP server.
+- **YAML**: human-friendly, but requires a YAML parser library in the browser and has the same `file://` loading constraints as JSON.
+
 ## Project Roadmap Dashboard
 
 A self-contained, interactive **roadmap dashboard** that you can use for any project to track deliverables across milestones. Everything runs client-side in the browser; there is no backend and no build step.
