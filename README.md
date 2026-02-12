@@ -1,33 +1,33 @@
-## Data Platform Migration Roadmap – OneHouse Upgrade
+## Project Roadmap Dashboard
 
-A self-contained, interactive HTML dashboard for visualizing the OneHouse / CDS data platform migration roadmap. Everything runs client-side in the browser; there is no backend and no build step.
+A self-contained, interactive **roadmap dashboard** that you can use for any project to track deliverables across milestones. Everything runs client-side in the browser; there is no backend and no build step.
 
-The main artifact is the single file:
+The main artifact is a single HTML file:
 
-- `cds-onehouse-upgrade-roadmap.html`
+- `roadmap_dashboard.html`
 
-Open it, adjust the `CONFIG` section, and you have a tailored roadmap for your program.
+Open it, adjust the `CONFIG` section, and you have a tailored roadmap for your project.
 
 ---
 
 ### 🎯 What this tool gives you
 
 - **Executive summary dashboard**: KPIs by status (NS/DEV/M0/M1/M2/M3), risk count, and overall completion.
-- **Compact roadmap timeline**: One row per data source with milestone markers across months.
+- **Compact roadmap timeline**: One row per deliverable (or feature, workstream, epic, etc.) with milestone markers across months.
 - **Risk visibility**: Items flagged as `atRisk: true` get a warning icon and visual emphasis.
 - **PNG exports**: One-click export of:
   - Full roadmap
   - Summary-only view
   - Timeline-only view
 
-All calculations (status, percentages, upcoming milestones) are derived from the date configuration inside the HTML file.
+All calculations (status, percentages, upcoming milestones) are derived from the `CONFIG` object inside the HTML file.
 
 ---
 
 ### 🚀 Quick start
 
 1. **Get the file**  
-   Ensure you have `cds-onehouse-upgrade-roadmap.html` on your machine.
+   Ensure you have `roadmap_dashboard.html` on your machine.
 
 2. **Open in a browser**  
    Double-click the file, or open it via `File → Open` in any modern browser.  
@@ -46,7 +46,7 @@ All calculations (status, percentages, upcoming milestones) are derived from the
    Each click generates a PNG and downloads it locally (filename includes the configured `TODAY` date).
 
 5. **Customize the data**  
-   - Open `cds-onehouse-upgrade-roadmap.html` in a text editor (VS Code, Cursor, etc.).
+   - Open `roadmap_dashboard.html` in a text editor (VS Code, Cursor, etc.).
    - Locate the `CONFIG` object near the top of the `<script>` block:
 
    ```javascript
@@ -66,7 +66,7 @@ No installation, dependencies, or build tooling required.
 
 ### 🧠 How the configuration works
 
-All behavior is driven by the `CONFIG` object in the `<script>` block of the HTML file.
+All behavior is driven by the `CONFIG` object in the `<script>` block of `roadmap_dashboard.html`.
 
 #### 1. `TIMELINE`
 
@@ -122,9 +122,9 @@ STATUS_DESCRIPTIONS: {
 
 These are explanatory only and don’t affect logic.
 
-#### 4. `DATA_SOURCES`
+#### 2. `DATA_SOURCES`
 
-Array of all data sources in scope (both visible and hidden).
+Array of all **items** in scope (deliverables, features, workstreams, epics, etc. — you decide via labels).
 
 Each entry has this shape:
 
@@ -163,7 +163,7 @@ Each entry has this shape:
   - Still included in all counts and percentages (KPI cards and progress bar).
   - Useful for legacy/completed sources you don’t want shown in the chart.
 
-At the bottom of the array there is a commented **template** you can copy to add new sources:
+At the bottom of the array there is a commented **template** you can copy to add new items:
 
 ```javascript
 /* Template for new data source:
@@ -184,9 +184,61 @@ At the bottom of the array there is a commented **template** you can copy to add
 
 ---
 
-### ➕ Adding or editing data sources
+### 🧩 Generic labels: entities & text
 
-#### Add a new source
+This tool is intentionally generic. Each entry in `DATA_SOURCES` can represent whatever you want to track (deliverable, feature, workstream, epic, integration, etc.). The UI text is driven by labels in `CONFIG`.
+
+#### 3. `ENTITY_LABELS`
+
+Controls how your main entities are named in the UI:
+
+```javascript
+ENTITY_LABELS: {
+    singular: "Deliverable",
+    plural: "Deliverables",
+    columnHeader: "Deliverable",
+    scopeLabel: "deliverables"
+},
+```
+
+The dashboard will then show labels like:
+
+- “Total Deliverables”
+- “Overall Progress (All 15 Deliverables)”
+- “Showing 10 of 15 deliverables”
+- Column header: “Deliverable”
+
+#### 4. `DASHBOARD_TEXT`
+
+Controls high-level titles and subtitles:
+
+```javascript
+DASHBOARD_TEXT: {
+    title: "Project Roadmap Dashboard",
+    totalSubtitleSuffix: "in roadmap scope"
+},
+```
+
+#### 5. `MILESTONE_TEXT`
+
+Customizes how each milestone is named in the **upcoming milestones cards** and compact legend:
+
+```javascript
+MILESTONE_TEXT: {
+    M0: { short: "M0", title: "Design Complete",   subtitle: "Specs & design approved" },
+    M1: { short: "M1", title: "Build Complete",    subtitle: "Implementation finished" },
+    M2: { short: "M2", title: "UAT Complete",      subtitle: "User testing passed" },
+    M3: { short: "M3", title: "Released",          subtitle: "Live in production" }
+},
+```
+
+The underlying **status logic and dates do not change**; only the labels and descriptions shown in the UI become project-specific.
+
+---
+
+### ➕ Adding or editing items
+
+#### Add a new item
 
 1. Copy the template block above (without the comment markers).
 2. Paste it inside the `DATA_SOURCES` array.
@@ -198,7 +250,7 @@ At the bottom of the array there is a commented **template** you can copy to add
    - Milestone dates (`M0`–`M3`) in `DD/MM/YYYY` format.
 4. Save the file and refresh the browser.
 
-#### Update an existing source
+#### Update an existing item
 
 1. Find the existing object in `DATA_SOURCES` by its `name`.
 2. Adjust any of:
@@ -242,102 +294,9 @@ You can then paste these PNGs into slide decks, documents, or emails.
 
 ### ✅ Summary
 
-- **Open** `cds-onehouse-upgrade-roadmap.html` in a modern browser.
-- **Configure** `TIMELINE`, `STATUS_*`, and `DATA_SOURCES` in the `CONFIG` object.
+- **Open** `roadmap_dashboard.html` in a modern browser.
+- **Configure** `TIMELINE`, `ENTITY_LABELS`, `DASHBOARD_TEXT`, `MILESTONE_TEXT`, and `DATA_SOURCES` in the `CONFIG` object.
 - **Refresh** the page to recompute statuses and redraw the roadmap.
 - **Export** PNGs for reporting using the built-in buttons.
 
-That’s all you need to maintain and share the OneHouse roadmap using this single HTML file.
-
----
-
-### 🧩 Using branches for multiple projects
-
-This repository is designed to be reused by **multiple projects**. To avoid configuration overlap, each project should maintain its own Git branch with its own `CONFIG` and milestones.
-
-#### Recommended branch naming
-
-- **One project per branch**, using a consistent naming pattern, for example:
-  - `onehouse/main-program`
-  - `project-alpha/roadmap`
-  - `client-xyz/migration`
-
-Pick a convention and keep it consistent so people can easily find the right branch.
-
-#### Creating a branch for a new project
-
-From the default branch (usually `main`):
-
-```bash
-git checkout main
-git pull
-git checkout -b project-alpha/roadmap
-```
-
-Then, on that branch:
-
-1. Open `cds-onehouse-upgrade-roadmap.html`.
-2. Update `CONFIG.TIMELINE`, `CONFIG.STATUS_*`, and `CONFIG.DATA_SOURCES` with that project’s dates and sources.
-3. Save, open the file in your browser, validate the view.
-4. Commit and push:
-
-```bash
-git add cds-onehouse-upgrade-roadmap.html
-git commit -m "Configure roadmap for Project Alpha"
-git push -u origin project-alpha/roadmap
-```
-
-This branch now “owns” Project Alpha’s roadmap.
-
-#### Switching between project configurations
-
-Each time you need to work with another project’s roadmap:
-
-```bash
-git fetch
-git checkout project-alpha/roadmap   # or another project branch
-```
-
-Then open `cds-onehouse-upgrade-roadmap.html` in your browser from that branch.  
-Because the configuration is stored in Git, **each branch shows only its own milestones**.
-
-#### Keeping branches up to date with common changes
-
-Sometimes you will update shared layout or styling (e.g. CSS, new export behavior) in `main` and want other project branches to benefit without overwriting their data.
-
-Typical workflow:
-
-1. Make and commit shared changes on `main` (without changing project-specific `CONFIG` data).
-2. Update each project branch by merging or rebasing:
-
-```bash
-git checkout main
-git pull
-
-git checkout project-alpha/roadmap
-git merge main   # or: git rebase main
-```
-
-3. Resolve any conflicts **carefully**:
-   - Keep that branch’s `CONFIG` values (timeline, data sources, risk flags).
-   - Bring over generic structural changes (CSS, layout, export logic).
-
-After conflicts are resolved:
-
-```bash
-git add .
-git commit
-git push
-```
-
-Now Project Alpha has the latest visual enhancements while preserving its own milestones.
-
-#### Exporting for each project
-
-When you export PNGs:
-
-- Make sure you are on the correct branch for the project (`git status` should show the right branch).
-- Open `cds-onehouse-upgrade-roadmap.html` from that branch.
-- Use the export buttons as usual.
-
-The exported PNGs will reflect **only the configuration of the currently checked-out branch**, so each project gets its own accurate dashboard snapshot.
+That’s all you need to maintain and share a project roadmap using this single HTML file.

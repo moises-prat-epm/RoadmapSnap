@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Platform Migration Roadmap</title>
+    <title>Project Roadmap Dashboard</title>
     
     <!-- html2canvas library for PNG export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -741,6 +741,27 @@ const CONFIG = {
         END_MONTH: "07/2026",
     },
     
+    // Entity & dashboard labels (generic, can be customized)
+    ENTITY_LABELS: {
+        singular: "Deliverable",     // e.g. "Feature", "Workstream"
+        plural: "Deliverables",      // e.g. "Features", "Workstreams"
+        columnHeader: "Deliverable", // Header for the first column in the grid
+        scopeLabel: "deliverables"   // Used in phrases like "total deliverables"
+    },
+    
+    DASHBOARD_TEXT: {
+        title: "Project Roadmap Dashboard",
+        totalSubtitleSuffix: "in roadmap scope" // Subtitle under the Total card
+    },
+    
+    // Milestone text (generic descriptions per status)
+    MILESTONE_TEXT: {
+        M0: { short: "M0", title: "M0 - Dev Complete",     subtitle: "Development Finished" },
+        M1: { short: "M1", title: "M1 - Prod Deployment",       subtitle: "Production Deployment Done" },
+        M2: { short: "M2", title: "M2 - Production Ready",          subtitle: "Production Ready for DTU consumption" },
+        M3: { short: "M3", title: "M3 - Switch Complete",           subtitle: "OneSource 1.0 Switch" }
+    },
+    
     // Status Labels
     STATUS_LABELS: {
         NS: "Not Started",
@@ -1433,6 +1454,18 @@ function renderRoadmap() {
         return '';
     }
     
+    // Config-driven labels for generic usage
+    const entityPlural = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.plural) || "Items";
+    const entityScopeLabel = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) || entityPlural.toLowerCase();
+    const columnHeaderLabel = (CONFIG.ENTITY_LABELS && (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular)) || "Item";
+    const dashboardTitle = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.title) || "Roadmap Dashboard";
+    const totalSubtitleSuffix = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.totalSubtitleSuffix) || "in scope";
+    
+    const m0Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M0) || { short: "M0", title: "M0", subtitle: "" };
+    const m1Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M1) || { short: "M1", title: "M1", subtitle: "" };
+    const m2Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M2) || { short: "M2", title: "M2", subtitle: "" };
+    const m3Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M3) || { short: "M3", title: "M3", subtitle: "" };
+    
     // Build HTML
     const roadmapHTML = `
         <!-- Export Controls -->
@@ -1465,8 +1498,8 @@ function renderRoadmap() {
             <div class="summary-dashboard" id="summary-section">
                 <div class="summary-header">
                     <div class="summary-title">
-                        Data Platform Migration Dashboard
-                        <span class="summary-title-note">(${stats.total} total sources, ${stats.visible} shown in timeline)</span>
+                        ${dashboardTitle}
+                        <span class="summary-title-note">(${stats.total} total ${entityScopeLabel}, ${stats.visible} shown in timeline)</span>
                     </div>
                     <div class="header-right">
                         ${stats.atRisk > 0 ? `
@@ -1486,8 +1519,8 @@ function renderRoadmap() {
                 <div class="kpi-section">
                     <div class="kpi-card total">
                         <div class="kpi-value">${stats.total}</div>
-                        <div class="kpi-label">Total Sources</div>
-                        <div class="kpi-sublabel">In migration scope</div>
+                        <div class="kpi-label">Total ${entityPlural}</div>
+                        <div class="kpi-sublabel">${totalSubtitleSuffix}</div>
                         ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
                     </div>
                     <div class="kpi-card ns">
@@ -1531,7 +1564,7 @@ function renderRoadmap() {
                 <!-- Progress Bar -->
                 <div class="progress-section">
                     <div class="progress-header">
-                        <div class="progress-title">Overall Migration Progress (All ${stats.total} Sources)</div>
+                        <div class="progress-title">Overall Progress (All ${stats.total} ${entityPlural})</div>
                         <div class="progress-percentage">${stats.productionReadyPercentage}% Production Ready</div>
                     </div>
                     <div class="progress-bar-container">
@@ -1574,10 +1607,10 @@ function renderRoadmap() {
                 <div class="key-milestones">
                     <div class="milestone-card">
                         <div class="milestone-card-header">
-                            <div class="milestone-card-icon m0">M0</div>
+                            <div class="milestone-card-icon m0">${m0Labels.short || "M0"}</div>
                             <div>
-                                <div class="milestone-card-title">Next Dev Complete</div>
-                                <div class="milestone-card-subtitle">Development Finished</div>
+                                <div class="milestone-card-title">${m0Labels.title || "Next Dev Complete"}</div>
+                                <div class="milestone-card-subtitle">${m0Labels.subtitle || "Development Finished"}</div>
                             </div>
                         </div>
                         <div class="milestone-card-content">
@@ -1586,10 +1619,10 @@ function renderRoadmap() {
                     </div>
                     <div class="milestone-card">
                         <div class="milestone-card-header">
-                            <div class="milestone-card-icon m1">M1</div>
+                            <div class="milestone-card-icon m1">${m1Labels.short || "M1"}</div>
                             <div>
-                                <div class="milestone-card-title">Next Deployment</div>
-                                <div class="milestone-card-subtitle">Production Deployment</div>
+                                <div class="milestone-card-title">${m1Labels.title || "Next Deployment"}</div>
+                                <div class="milestone-card-subtitle">${m1Labels.subtitle || "Production Deployment"}</div>
                             </div>
                         </div>
                         <div class="milestone-card-content">
@@ -1598,10 +1631,10 @@ function renderRoadmap() {
                     </div>
                     <div class="milestone-card">
                         <div class="milestone-card-header">
-                            <div class="milestone-card-icon m2">M2</div>
+                            <div class="milestone-card-icon m2">${m2Labels.short || "M2"}</div>
                             <div>
-                                <div class="milestone-card-title">Next Go-Live</div>
-                                <div class="milestone-card-subtitle">Production Ready</div>
+                                <div class="milestone-card-title">${m2Labels.title || "Next Go-Live"}</div>
+                                <div class="milestone-card-subtitle">${m2Labels.subtitle || "Production Ready"}</div>
                             </div>
                         </div>
                         <div class="milestone-card-content">
@@ -1610,10 +1643,10 @@ function renderRoadmap() {
                     </div>
                     <div class="milestone-card">
                         <div class="milestone-card-header">
-                            <div class="milestone-card-icon m3">M3</div>
+                            <div class="milestone-card-icon m3">${m3Labels.short || "M3"}</div>
                             <div>
-                                <div class="milestone-card-title">Next Switch</div>
-                                <div class="milestone-card-subtitle">OneSource 1.0 Switch</div>
+                                <div class="milestone-card-title">${m3Labels.title || "Next Switch"}</div>
+                                <div class="milestone-card-subtitle">${m3Labels.subtitle || "Switch milestone"}</div>
                             </div>
                         </div>
                         <div class="milestone-card-content">
@@ -1632,27 +1665,27 @@ function renderRoadmap() {
                         <div class="compact-legend-items">
                             <div class="compact-legend-item">
                                 <div class="compact-legend-color ns"></div>
-                                <span class="compact-legend-label">Not Started</span>
+                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS.NS}</span>
                             </div>
                             <div class="compact-legend-item">
                                 <div class="compact-legend-color dev"></div>
-                                <span class="compact-legend-label">In Dev</span>
+                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS.DEV}</span>
                             </div>
                             <div class="compact-legend-item">
                                 <div class="compact-legend-color m0"></div>
-                                <span class="compact-legend-label">M0 Development Done</span>
+                                <span class="compact-legend-label">${m0Labels.title || "M0"}</span>
                             </div>
                             <div class="compact-legend-item">
                                 <div class="compact-legend-color m1"></div>
-                                <span class="compact-legend-label">M1 Production Deployed</span>
+                                <span class="compact-legend-label">${m1Labels.title || "M1"}</span>
                             </div>
                             <div class="compact-legend-item">
                                 <div class="compact-legend-color m2"></div>
-                                <span class="compact-legend-label">M2 Production Ready</span>
+                                <span class="compact-legend-label">${m2Labels.title || "M2"}</span>
                             </div>
                             <div class="compact-legend-item">
                                 <div class="compact-legend-color m3"></div>
-                                <span class="compact-legend-label">M3 Switched</span>
+                                <span class="compact-legend-label">${m3Labels.title || "M3"}</span>
                             </div>
                             <div class="compact-legend-risk">
                                 ${riskIconSVG}
@@ -1661,7 +1694,7 @@ function renderRoadmap() {
                         </div>
                     </div>
                     <div class="timeline-info">
-                        Showing <span class="timeline-info-count">${stats.visible}</span> of <span class="timeline-info-count">${stats.total}</span> data sources
+                        Showing <span class="timeline-info-count">${stats.visible}</span> of <span class="timeline-info-count">${stats.total}</span> ${entityScopeLabel}
                         ${stats.hidden > 0 ? `(${stats.hidden} completed hidden)` : ''}
                     </div>
                 </div>
@@ -1672,7 +1705,7 @@ function renderRoadmap() {
                         
                         <!-- Timeline Header -->
                         <div class="timeline-header">
-                            <div class="timeline-label">Data Source</div>
+                            <div class="timeline-label">${columnHeaderLabel}</div>
                             <div class="timeline-months">
                                 ${monthColumnsHTML}
                                 <div class="today-pointer" style="left: ${todayPosition}%;">
