@@ -249,61 +249,95 @@ You can then paste these PNGs into slide decks, documents, or emails.
 
 That’s all you need to maintain and share the OneHouse roadmap using this single HTML file.
 
-## Data Platform Migration Roadmap – OneHouse Upgrade
-
-A self-contained, interactive HTML dashboard for visualizing the OneHouse / CDS data platform migration roadmap. Everything runs client-side in the browser; there is no backend and no build step.
-
-The main artifact is the single file:
-
-- `cds-onehouse-upgrade-roadmap.html`
-
-Open it, adjust the `CONFIG` section, and you have a tailored roadmap for your program.
-
 ---
 
-### 🎯 What this tool gives you
+### 🧩 Using branches for multiple projects
 
-- **Executive summary dashboard**: KPIs by status (NS/DEV/M0/M1/M2/M3), risk count, and overall completion.
-- **Compact roadmap timeline**: One row per data source with milestone markers across months.
-- **Risk visibility**: Items flagged as `atRisk: true` get a warning icon and visual emphasis.
-- **PNG exports**: One-click export of:
-  - Full roadmap
-  - Summary-only view
-  - Timeline-only view
+This repository is designed to be reused by **multiple projects**. To avoid configuration overlap, each project should maintain its own Git branch with its own `CONFIG` and milestones.
 
-All calculations (status, percentages, upcoming milestones) are derived from the date configuration inside the HTML file.
+#### Recommended branch naming
 
----
+- **One project per branch**, using a consistent naming pattern, for example:
+  - `onehouse/main-program`
+  - `project-alpha/roadmap`
+  - `client-xyz/migration`
 
-### 🚀 Quick start
+Pick a convention and keep it consistent so people can easily find the right branch.
 
-1. **Get the file**  
-   Ensure you have `cds-onehouse-upgrade-roadmap.html` on your machine.
+#### Creating a branch for a new project
 
-2. **Open in a browser**  
-   Double-click the file, or open it via `File → Open` in any modern browser.  
-   Recommended: Chrome, Edge, Firefox, or Safari.
+From the default branch (usually `main`):
 
-3. **Review the default roadmap**  
-   The page will render immediately using the built-in configuration:
-   - Summary dashboard at the top
-   - Legend and compact timeline below
+```bash
+git checkout main
+git pull
+git checkout -b project-alpha/roadmap
+```
 
-4. **Export images (optional)**  
-   Use the buttons at the top:
-   - **Export Full Roadmap**
-   - **Export Summary Only**
-   - **Export Timeline Only**  
-   Each click generates a PNG and downloads it locally (filename includes the configured `TODAY` date).
+Then, on that branch:
 
-5. **Customize the data**  
-   - Open `cds-onehouse-upgrade-roadmap.html` in a text editor (VS Code, Cursor, etc.).
-   - Locate the `CONFIG` object near the top of the `<script>` block:
+1. Open `cds-onehouse-upgrade-roadmap.html`.
+2. Update `CONFIG.TIMELINE`, `CONFIG.STATUS_*`, and `CONFIG.DATA_SOURCES` with that project’s dates and sources.
+3. Save, open the file in your browser, validate the view.
+4. Commit and push:
 
-   const CONFIG = {
-       TIMELINE: { ... },
-       STATUS_LABELS: { ... },
-       STATUS_DESCRIPTIONS: { ... },
-       DATA_SOURCES: [ ... ]
-   };
-   
+```bash
+git add cds-onehouse-upgrade-roadmap.html
+git commit -m "Configure roadmap for Project Alpha"
+git push -u origin project-alpha/roadmap
+```
+
+This branch now “owns” Project Alpha’s roadmap.
+
+#### Switching between project configurations
+
+Each time you need to work with another project’s roadmap:
+
+```bash
+git fetch
+git checkout project-alpha/roadmap   # or another project branch
+```
+
+Then open `cds-onehouse-upgrade-roadmap.html` in your browser from that branch.  
+Because the configuration is stored in Git, **each branch shows only its own milestones**.
+
+#### Keeping branches up to date with common changes
+
+Sometimes you will update shared layout or styling (e.g. CSS, new export behavior) in `main` and want other project branches to benefit without overwriting their data.
+
+Typical workflow:
+
+1. Make and commit shared changes on `main` (without changing project-specific `CONFIG` data).
+2. Update each project branch by merging or rebasing:
+
+```bash
+git checkout main
+git pull
+
+git checkout project-alpha/roadmap
+git merge main   # or: git rebase main
+```
+
+3. Resolve any conflicts **carefully**:
+   - Keep that branch’s `CONFIG` values (timeline, data sources, risk flags).
+   - Bring over generic structural changes (CSS, layout, export logic).
+
+After conflicts are resolved:
+
+```bash
+git add .
+git commit
+git push
+```
+
+Now Project Alpha has the latest visual enhancements while preserving its own milestones.
+
+#### Exporting for each project
+
+When you export PNGs:
+
+- Make sure you are on the correct branch for the project (`git status` should show the right branch).
+- Open `cds-onehouse-upgrade-roadmap.html` from that branch.
+- Use the export buttons as usual.
+
+The exported PNGs will reflect **only the configuration of the currently checked-out branch**, so each project gets its own accurate dashboard snapshot.
