@@ -23,10 +23,7 @@ A powerful, simple roadmap dashboard that gives clear visibility of project prog
 
 ### 1. Clone
 
-```bash
-git clone https://github.com/<username>/RoadmapSnap.git my-project-roadmap
-cd my-project-roadmap
-```
+Clone your repository.
 
 ### 2. Customize
 
@@ -40,17 +37,15 @@ Open `roadmap_dashboard.html` in a browser to view. No server needed.
 
 ### 3. Use as a Separate Repo
 
-**Option A — Clone and re-point:**
+To push to your own private repo:
 
 ```bash
-git clone https://github.com/<username>/RoadmapSnap.git my-project-roadmap
-cd my-project-roadmap
 git remote rename origin template
 git remote add origin <YOUR_PRIVATE_REPO_URL>
 git push -u origin main
 ```
 
-Customize privately, then commit and push:
+Then customize and push:
 
 ```bash
 $EDITOR js/config.js
@@ -58,8 +53,6 @@ git add js/config.js
 git commit -m "Configure roadmap for My Project"
 git push
 ```
-
-**Option B — Use “Use this template”** on GitHub (or equivalent) to create a new repo, then clone and edit.
 
 ### 4. Keep in Sync with Template
 
@@ -84,4 +77,4 @@ docs/preview.png         # Preview screenshot
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT License — see [LICENSE](LICENSE). Feel free to improve the tool under these terms.
