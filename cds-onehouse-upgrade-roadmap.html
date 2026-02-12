@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Platform Migration Roadmap</title>
+    
+    <!-- html2canvas library for PNG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        /* ============================================
+           BASE STYLES & VARIABLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f4f5f7;
+            color: #172b4d;
+            line-height: 1.4;
+            padding: 20px;
+        }
+        
+        /* Color Variables */
+        :root {
+            --color-dev: #6554c0;     /* Purple - In Development */
+            --color-ns: #c1c7d0;      /* Light Grey - Not Started */
+            --color-m0: #8993a4;
+            --color-m1: #ffab00;
+            --color-m2: #36b37e;
+            --color-m3: #0065ff;
+            --color-risk: #de350b;
+            --color-border: #dfe1e6;
+            --color-bg-white: #ffffff;
+            --color-text-dark: #172b4d;
+            --color-text-light: #6b778c;
+            --color-today: #de350b;
+            --row-height: 36px;
+        }
+        
+        /* ============================================
+           EXPORT CONTROLS
+           ============================================ */
+        .export-controls {
+            max-width: 1400px;
+            margin: 0 auto 16px auto;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #0052cc 0%, #0065ff 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 82, 204, 0.4);
+        }
+        
+        .export-btn:active {
+            transform: translateY(0);
+        }
+        
+        .export-btn.secondary {
+            background: linear-gradient(135deg, #505f79 0%, #6b778c 100%);
+        }
+        
+        .export-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .export-note {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-left: auto;
+        }
+        
+        /* ============================================
+           CONTAINER STYLES
+           ============================================ */
+        .roadmap-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--color-bg-white);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        /* ============================================
+           SUMMARY DASHBOARD STYLES
+           ============================================ */
+        .summary-dashboard {
+            padding: 24px 32px;
+            background: linear-gradient(135deg, #fafbfc 0%, #f4f5f7 100%);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .summary-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text-dark);
+        }
+        
+        .summary-title-note {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--color-text-light);
+            margin-left: 12px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .risk-summary {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(222, 53, 11, 0.1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(222, 53, 11, 0.3);
+        }
+        
+        .risk-summary-icon {
+            color: var(--color-risk);
+            font-size: 14px;
+        }
+        
+        .risk-summary-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-risk);
+        }
+        
+        .today-date-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .today-date-label {
+            font-size: 12px;
+            color: var(--color-text-light);
+            font-weight: 500;
+        }
+        
+        .today-date-value {
+            font-size: 14px;
+            color: var(--color-text-dark);
+            font-weight: 700;
+        }
+        
+        /* KPI Cards */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: white;
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid var(--color-border);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .kpi-card.total {
+            background: linear-gradient(135deg, #172b4d 0%, #344563 100%);
+            color: white;
+        }
+        
+        .kpi-card.ns { border-left: 4px solid var(--color-ns); }
+        .kpi-card.dev { border-left: 4px solid var(--color-dev); }
+        .kpi-card.m0 { border-left: 4px solid var(--color-m0); }
+        .kpi-card.m1 { border-left: 4px solid var(--color-m1); }
+        .kpi-card.m2 { border-left: 4px solid var(--color-m2); }
+        .kpi-card.m3 { border-left: 4px solid var(--color-m3); }
+        
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        
+        .kpi-card.ns .kpi-value { color: var(--color-ns); }
+        .kpi-card.dev .kpi-value { color: var(--color-dev); }
+        .kpi-card.m0 .kpi-value { color: var(--color-m0); }
+        .kpi-card.m1 .kpi-value { color: var(--color-m1); }
+        .kpi-card.m2 .kpi-value { color: var(--color-m2); }
+        .kpi-card.m3 .kpi-value { color: var(--color-m3); }
+        .kpi-card.total .kpi-value { color: white; }
+        
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .kpi-card.total .kpi-label {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .kpi-sublabel {
+            font-size: 9px;
+            color: var(--color-text-light);
+            margin-top: 2px;
+        }
+        
+        .kpi-card.total .kpi-sublabel {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .kpi-breakdown {
+            font-size: 8px;
+            color: var(--color-text-light);
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px dashed var(--color-border);
+        }
+        
+        .kpi-card.total .kpi-breakdown {
+            color: rgba(255,255,255,0.5);
+            border-top-color: rgba(255,255,255,0.2);
+        }
+        
+        /* Progress Bar */
+        .progress-section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .progress-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-dark);
+        }
+        
+        .progress-percentage {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--color-m3);
+        }
+        
+        .progress-bar-container {
+            height: 24px;
+            background: #f4f5f7;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .progress-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-segment.ns { background: var(--color-ns); color: #172b4d; }
+        .progress-segment.dev { background: var(--color-dev); }
+        .progress-segment.m0 { background: var(--color-m0); }
+        .progress-segment.m1 { background: var(--color-m1); color: #172b4d; }
+        .progress-segment.m2 { background: var(--color-m2); }
+        .progress-segment.m3 { background: var(--color-m3); }
+        
+        .progress-legend {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .progress-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--color-text-light);
+        }
+        
+        .progress-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .progress-legend-dot.ns { background: var(--color-ns); }
+        .progress-legend-dot.dev { background: var(--color-dev); }
+        .progress-legend-dot.m0 { background: var(--color-m0); }
+        .progress-legend-dot.m1 { background: var(--color-m1); }
+        .progress-legend-dot.m2 { background: var(--color-m2); }
+        .progress-legend-dot.m3 { background: var(--color-m3); }
+        
+        /* ============================================
+           COMPACT LEGEND
+           ============================================ */
+        .compact-legend {
+            background: #f8f9fa;
+            padding: 12px 32px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .compact-legend-left {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .compact-legend-title {
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .compact-legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .compact-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+        }
+        
+        .compact-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        .compact-legend-color.ns { background: var(--color-ns); }
+        .compact-legend-color.dev { background: var(--color-dev); }
+        .compact-legend-color.m0 { background: var(--color-m0); }
+        .compact-legend-color.m1 { background: var(--color-m1); }
+        .compact-legend-color.m2 { background: var(--color-m2); }
+        .compact-legend-color.m3 { background: var(--color-m3); }
+        
+        .compact-legend-label {
+            color: var(--color-text-dark);
+            font-weight: 500;
+        }
+        
+        .compact-legend-risk {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            color: var(--color-risk);
+            font-weight: 600;
+        }
+        
+        .compact-legend-risk svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .timeline-info {
+            font-size: 11px;
+            color: var(--color-text-light);
+            background: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .timeline-info-count {
+            font-weight: 700;
+            color: var(--color-text-dark);
+        }
+        
+        /* ============================================
+           COMPACT ROADMAP GRID
+           ============================================ */
+        .roadmap-content {
+            padding: 16px 32px 24px;
+            overflow-x: auto;
+        }
+        
+        .roadmap-grid {
+            min-width: 900px;
+        }
+        
+        /* Timeline Header */
+        .timeline-header {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            margin-bottom: 4px;
+        }
+        
+        .timeline-label {
+            font-weight: 600;
+            font-size: 10px;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 10px;
+        }
+        
+        .timeline-months {
+            display: flex;
+            position: relative;
+        }
+        
+        .month-column {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--color-text-dark);
+            padding: 6px 0;
+            border-left: 1px solid var(--color-border);
+            background: #fafbfc;
+        }
+        
+        .month-column:last-child {
+            border-right: 1px solid var(--color-border);
+        }
+        
+        /* Today pointer */
+        .today-pointer {
+            position: absolute;
+            top: 100%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        
+        .today-pointer-arrow {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid var(--color-today);
+            margin: 0 auto;
+        }
+        
+        /* Data Source Rows - Compact */
+        .data-source-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            margin-bottom: 2px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .data-source-row.at-risk {
+            box-shadow: 0 0 0 2px rgba(222, 53, 11, 0.3);
+        }
+        
+        .source-name {
+            padding: 0 10px;
+            height: var(--row-height);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--color-border);
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+            overflow: hidden;
+        }
+        
+        .source-name.status-ns { background: linear-gradient(90deg, rgba(193,199,208,0.15) 0%, #fafbfc 100%); }
+        .source-name.status-dev { background: linear-gradient(90deg, rgba(101,84,192,0.12) 0%, #fafbfc 100%); }
+        .source-name.status-m0 { background: linear-gradient(90deg, rgba(137,147,164,0.12) 0%, #fafbfc 100%); }
+        .source-name.status-m1 { background: linear-gradient(90deg, rgba(255,171,0,0.15) 0%, #fafbfc 100%); }
+        .source-name.status-m2 { background: linear-gradient(90deg, rgba(54,179,126,0.15) 0%, #fafbfc 100%); }
+        .source-name.status-m3 { background: linear-gradient(90deg, rgba(0,101,255,0.15) 0%, #fafbfc 100%); }
+        
+        .risk-indicator {
+            color: var(--color-risk);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .risk-indicator svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .source-name-text {
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--color-text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+        
+        .status-indicator {
+            font-size: 8px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        .status-indicator.ns { background: var(--color-ns); color: #172b4d; }
+        .status-indicator.dev { background: var(--color-dev); color: white; }
+        .status-indicator.m0 { background: var(--color-m0); color: white; }
+        .status-indicator.m1 { background: var(--color-m1); color: #172b4d; }
+        .status-indicator.m2 { background: var(--color-m2); color: white; }
+        .status-indicator.m3 { background: var(--color-m3); color: white; }
+        
+        /* Timeline Track - Compact */
+        .timeline-track {
+            position: relative;
+            height: var(--row-height);
+            background: #f9fafb;
+            border: 1px solid var(--color-border);
+            border-radius: 0 4px 4px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Month Grid Lines */
+        .month-grid-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--color-border);
+        }
+        
+        /* Today guide line */
+        .today-guide-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--color-today);
+            opacity: 0.2;
+            z-index: 1;
+        }
+        
+        /* Milestone Markers - Compact */
+        .milestone-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 22px;
+            height: 16px;
+            padding: 0 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-weight: 700;
+            color: white;
+            z-index: 2;
+            border: 1.5px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .milestone-marker.start { background: var(--color-dev); }
+        .milestone-marker.m0 { background: var(--color-m0); }
+        .milestone-marker.m1 { background: var(--color-m1); color: #172b4d; }
+        .milestone-marker.m2 { background: var(--color-m2); }
+        .milestone-marker.m3 { background: var(--color-m3); }
+        
+        /* Milestone Date - Compact */
+        .milestone-date {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 7px;
+            font-weight: 700;
+            white-space: nowrap;
+            color: var(--color-text-dark);
+        }
+        
+        /* ============================================
+           KEY MILESTONES SECTION
+           ============================================ */
+        .key-milestones {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .milestone-card {
+            background: white;
+            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .milestone-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .milestone-card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .milestone-card-icon.m0 { background: var(--color-m0); }
+        .milestone-card-icon.m1 { background: var(--color-m1); color: #172b4d; }
+        .milestone-card-icon.m2 { background: var(--color-m2); }
+        .milestone-card-icon.m3 { background: var(--color-m3); }
+        
+        .milestone-card-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-dark);
+        }
+        
+        .milestone-card-subtitle {
+            font-size: 10px;
+            color: var(--color-text-light);
+        }
+        
+        .milestone-card-content {
+            font-size: 11px;
+            color: var(--color-text-light);
+        }
+        
+        .milestone-card-date {
+            font-weight: 700;
+            color: var(--color-text-dark);
+        }
+        
+        .milestone-card-source {
+            color: var(--color-text-dark);
+        }
+        
+        /* ============================================
+           PRINT/EXPORT STYLES
+           ============================================ */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .export-controls {
+                display: none;
+            }
+            .roadmap-container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<script>
+/* ============================================
+   CONFIGURATION SECTION - EDIT DATA HERE
+   ============================================ */
+
+const CONFIG = {
+    
+    // Timeline Configuration
+    TIMELINE: {
+        TODAY: "11/02/2026",
+        START_MONTH: "01/2026",
+        END_MONTH: "07/2026",
+    },
+    
+    // Status Labels
+    STATUS_LABELS: {
+        NS: "Not Started",
+        DEV: "In Development",
+        M0: "Dev Complete",
+        M1: "Prod Deployed",
+        M2: "Production Ready",
+        M3: "Switch Complete"
+    },
+    
+    // Status Descriptions (for KPI cards)
+    STATUS_DESCRIPTIONS: {
+        NS: "Not yet started",
+        DEV: "In development",
+        M0: "Development done",
+        M1: "In validation",
+        M2: "Production ready",
+        M3: "Fully migrated"
+    },
+    
+    // Data Sources Configuration
+    // startDate: When development starts (null if already started long ago)
+    // atRisk: true = show warning indicator
+    // showInTimeline: true = visible in timeline, false = hidden but counted in totals
+    DATA_SOURCES: [
+        {
+            name: "MasterMind",
+            startDate: null,
+            atRisk: false,
+            showInTimeline: true,
+            milestones: { 
+                M0: "15/11/2025",
+                M1: "20/11/2025",
+                M2: "15/12/2025",
+                M3: "15/04/2026"
+            }
+        },
+        {
+            name: "SAP Themis B1-B3",
+            startDate: null,
+            atRisk: true,
+            showInTimeline: true,
+            milestones: { 
+                M0: "05/09/2025", 
+                M1: "12/01/2026", 
+                M2: "11/03/2026", 
+                M3: "15/04/2026" 
+            }
+        },
+        {
+            name: "SAP Themis B4-B6",
+            startDate: null,
+            atRisk: true,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "05/09/2025", 
+                M1: "12/01/2026", 
+                M2: "25/03/2026", 
+                M3: "22/04/2026" 
+            }
+        },
+        {
+            name: "SAP Themis B7-B10",
+            startDate: null,
+            atRisk: true,
+            showInTimeline: true,
+            milestones: { 
+                M0: "05/09/2025", 
+                M1: "12/01/2026", 
+                M2: "08/04/2026", 
+                M3: "06/05/2026" 
+            }
+        },
+        {
+            name: "CFIN DS",
+            startDate: null,
+            atRisk: false,
+            showInTimeline: true,
+            milestones: { 
+                M0: "05/09/2025", 
+                M1: "12/01/2026", 
+                M2: "01/03/2026", 
+                M3: "15/04/2026" 
+            }
+        },
+        {
+            name: "Bamboo",
+            startDate: null,
+            atRisk: false,
+            showInTimeline: true,
+            milestones: { 
+                M0: "05/09/2025", 
+                M1: "12/01/2026", 
+                M2: "02/02/2026", 
+                M3: "20/05/2026" 
+            }
+        },
+        {
+            name: "Sievo",
+            startDate: null,
+            atRisk: true,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "30/01/2026", 
+                M1: "06/02/2026", 
+                M2: "01/03/2026", 
+                M3: "06/05/2026" 
+            }
+        },
+        {
+            name: "Coupa",
+            startDate: null,
+            atRisk: false,
+            showInTimeline: true,
+            milestones: { 
+                M0: "30/01/2026", 
+                M1: "06/02/2026", 
+                M2: "20/02/2026", 
+                M3: "06/05/2026" 
+            }
+        },
+        {
+            name: "Basware",
+            startDate: "15/01/2026",
+            atRisk: false,
+            showInTimeline: true,
+            milestones: { 
+                M0: "10/02/2026", 
+                M1: "16/02/2026", 
+                M2: "23/02/2026", 
+                M3: "13/05/2026" 
+            }
+        },
+        {
+            name: "Service Now",
+            startDate: "15/01/2026",
+            atRisk: false,
+            showInTimeline: true,
+            milestones: { 
+                M0: "10/02/2026", 
+                M1: "16/02/2026", 
+                M2: "23/02/2026", 
+                M3: "13/05/2026" 
+            }
+        },
+        {
+            name: "Magnitude",
+            startDate: "01/02/2025",
+            atRisk: true,
+            showInTimeline: true,
+            milestones: { 
+                M0: "05/09/2025", 
+                M1: "11/03/2026", 
+                M2: "18/03/2026", 
+                M3: "22/04/2026" 
+            }
+        },
+        {
+            name: "Gigya",
+            startDate: "01/11/2025",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "15/12/2025",
+                M1: "27/02/2026",
+                M2: "10/04/2026",
+                M3: "20/05/2026"
+            }
+        },
+        {
+            name: "Tagetik",
+            startDate: "01/03/2026",  // Development starts
+            atRisk: true,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "01/06/2026",
+                M1: "15/06/2026",
+                M2: "30/06/2026",
+                M3: "15/07/2026"
+            }
+        },
+        {
+            name: "SFMC",
+            startDate: "02/02/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "27/02/2026",
+                M1: "20/03/2026",
+                M2: "10/04/2026",
+                M3: "03/06/2026"
+            }
+        },
+        {
+            name: "GA4",
+            startDate: "02/02/2026",  // Development starts
+            atRisk: true,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "27/02/2026",
+                M1: "20/03/2026",
+                M2: "17/04/2026",
+                M3: "03/06/2026"
+            }
+        },
+        {
+            name: "TTM",
+            startDate: "15/01/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "13/02/2026",
+                M1: "20/03/2026",
+                M2: "24/04/2026",
+                M3: "10/06/2026"
+            }
+        },
+        {
+            name: "Commerce Tools",
+            startDate: "02/02/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "13/02/2026",
+                M1: "20/03/2026",
+                M2: "24/04/2026",
+                M3: "10/06/2026"
+            }
+        },
+        {
+            name: "ChargeBee",
+            startDate: "02/02/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "13/02/2026",
+                M1: "20/03/2026",
+                M2: "24/04/2026",
+                M3: "10/06/2026"
+            }
+        },
+        {
+            name: "SEED SF CG Cloud",
+            startDate: "02/02/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "20/03/2026",
+                M1: "01/04/2026",
+                M2: "10/04/2026",
+                M3: "15/07/2026"
+            }
+        },
+        {
+            name: "Pitcher",
+            startDate: "14/02/2026",  // Development starts
+            atRisk: true,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "27/03/2026",
+                M1: "13/04/2026",
+                M2: "27/04/2026",
+                M3: "15/07/2026"
+            }
+        },
+        {
+            name: "OCE",
+            startDate: "01/04/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "01/05/2026",
+                M1: "10/05/2026",
+                M2: "24/05/2026",
+                M3: "17/06/2026"
+            }
+        },
+        {
+            name: "Acumen JPN",
+            startDate: "01/11/2025",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "01/01/2026",
+                M1: "11/03/2026",
+                M2: "18/03/2026",
+                M3: "24/03/2026"
+            }
+        },
+        {
+            name: "Tekdan",
+            startDate: "05/01/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "20/01/2026",
+                M1: "20/02/2026",
+                M2: "20/03/2026",
+                M3: "24/04/2026"
+            }
+        },
+        {
+            name: "Zycus",
+            startDate: "01/05/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "20/05/2026",
+                M1: "27/05/2026",
+                M2: "04/06/2026",
+                M3: "17/06/2026"
+            }
+        },
+        {
+            name: "SF Customer Voice",
+            startDate: "01/06/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "15/06/2026",
+                M1: "23/06/2026",
+                M2: "04/07/2026",
+                M3: "15/07/2026"
+            }
+        },
+        {
+            name: "SAP ATTP",
+            startDate: "01/06/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "15/06/2026",
+                M1: "23/06/2026",
+                M2: "04/07/2026",
+                M3: "15/07/2026"
+            }
+        },
+        {
+            name: "Kantar",
+            startDate: "01/03/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "20/03/2026",
+                M1: "04/04/2026",
+                M2: "18/04/2026",
+                M3: "15/07/2026"
+            }
+        },
+        {
+            name: "Dan Performance",
+            startDate: "01/04/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "01/05/2026",
+                M1: "15/05/2026",
+                M2: "24/05/2026",
+                M3: "22/07/2026"
+            }
+        },
+        {
+            name: "C&P Forecast",
+            startDate: "16/02/2026",  // Development starts
+            atRisk: false,  // AT RISK
+            showInTimeline: true,
+            milestones: { 
+                M0: "27/02/2026",
+                M1: "07/03/2026",
+                M2: "17/03/2026",
+                M3: "22/07/2026"
+            }
+        },
+        // Hidden data sources (completed long ago)
+        {
+            name: "Artemis",
+            startDate: null,
+            atRisk: false,
+            showInTimeline: false,
+            milestones: { 
+                M0: "20/07/2025", 
+                M1: "01/08/2025", 
+                M2: "15/09/2025", 
+                M3: "20/10/2025" 
+            }
+        },
+        {
+            name: "CFIN SLT",
+            startDate: null,
+            atRisk: false,
+            showInTimeline: false,
+            milestones: { 
+                M0: "20/07/2025", 
+                M1: "01/08/2025", 
+                M2: "15/09/2025", 
+                M3: "20/10/2025" 
+            }
+        },
+        
+        /* Template for new data source:
+        {
+            name: "New Source Name",
+            startDate: "DD/MM/YYYY",  // When dev starts, null if already started
+            atRisk: false,            // Set to true to show risk warning
+            showInTimeline: true,     // Set to false to hide from timeline
+            milestones: { 
+                M0: "DD/MM/YYYY",      // Dev Complete date
+                M1: "DD/MM/YYYY",      // Prod Deployment date
+                M2: "DD/MM/YYYY",      // Prod Ready date
+                M3: "DD/MM/YYYY"       // Switch date
+            }
+        },
+        */
+    ]
+};
+
+/* ============================================
+   END OF CONFIGURATION
+   ============================================ */
+
+// Utility Functions
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    const [day, month, year] = dateStr.split('/').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function parseMonthYear(monthYearStr) {
+    const [month, year] = monthYearStr.split('/').map(Number);
+    return new Date(year, month - 1, 1);
+}
+
+function formatDateDisplay(dateStr) {
+    const [day, month] = dateStr.split('/');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${parseInt(day)} ${months[parseInt(month) - 1]}`;
+}
+
+function formatShortDate(dateStr) {
+    const [day, month, year] = dateStr.split('/');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
+}
+
+function getMonthName(date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function generateMonths() {
+    const months = [];
+    const start = parseMonthYear(CONFIG.TIMELINE.START_MONTH);
+    const end = parseMonthYear(CONFIG.TIMELINE.END_MONTH);
+    
+    let current = new Date(start);
+    while (current <= end) {
+        months.push({
+            date: new Date(current),
+            name: getMonthName(current),
+            daysInMonth: new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()
+        });
+        current.setMonth(current.getMonth() + 1);
+    }
+    return months;
+}
+
+function calculatePosition(dateStr, months) {
+    const date = parseDate(dateStr);
+    if (!date) return null;
+    
+    const timelineStart = months[0].date;
+    const timelineEnd = new Date(months[months.length - 1].date);
+    timelineEnd.setMonth(timelineEnd.getMonth() + 1);
+    
+    const totalDays = (timelineEnd - timelineStart) / (1000 * 60 * 60 * 24);
+    const daysFromStart = (date - timelineStart) / (1000 * 60 * 60 * 24);
+    
+    return Math.max(0, Math.min(100, (daysFromStart / totalDays) * 100));
+}
+
+function isDateInRange(dateStr, months) {
+    const date = parseDate(dateStr);
+    if (!date) return false;
+    
+    const timelineStart = months[0].date;
+    const timelineEnd = new Date(months[months.length - 1].date);
+    timelineEnd.setMonth(timelineEnd.getMonth() + 1);
+    
+    return date >= timelineStart && date <= timelineEnd;
+}
+
+// Determine current status based on dates
+function getCurrentStatus(source) {
+    const today = parseDate(CONFIG.TIMELINE.TODAY);
+    const startDate = parseDate(source.startDate);
+    const m0Date = parseDate(source.milestones.M0);
+    const m1Date = parseDate(source.milestones.M1);
+    const m2Date = parseDate(source.milestones.M2);
+    const m3Date = parseDate(source.milestones.M3);
+    
+    // If M3 date has passed, status is M3
+    if (m3Date && today >= m3Date) return 'M3';
+    
+    // If M2 date has passed, status is M2
+    if (m2Date && today >= m2Date) return 'M2';
+    
+    // If M1 date has passed, status is M1
+    if (m1Date && today >= m1Date) return 'M1';
+    
+    // If M0 date has passed, status is M0
+    if (m0Date && today >= m0Date) return 'M0';
+    
+    // If start date exists and has passed, status is DEV (in development)
+    if (startDate && today >= startDate) return 'DEV';
+    
+    // If start date exists but hasn't passed, status is NS (not started)
+    if (startDate && today < startDate) return 'NS';
+    
+    // If no start date but M0 hasn't passed, assume in development
+    if (!startDate && m0Date && today < m0Date) return 'DEV';
+    
+    return 'DEV';
+}
+
+// Get visible data sources
+function getVisibleDataSources() {
+    return CONFIG.DATA_SOURCES.filter(source => source.showInTimeline);
+}
+
+// Calculate Statistics
+function calculateStats() {
+    const allSources = CONFIG.DATA_SOURCES;
+    const visibleSources = getVisibleDataSources();
+    
+    const stats = { 
+        NS: 0, DEV: 0, M0: 0, M1: 0, M2: 0, M3: 0, 
+        total: allSources.length,
+        visible: visibleSources.length,
+        hidden: allSources.length - visibleSources.length,
+        atRisk: 0,
+        visibleByStatus: { NS: 0, DEV: 0, M0: 0, M1: 0, M2: 0, M3: 0 },
+        hiddenByStatus: { NS: 0, DEV: 0, M0: 0, M1: 0, M2: 0, M3: 0 }
+    };
+    
+    allSources.forEach(source => {
+        const status = getCurrentStatus(source);
+        stats[status]++;
+        
+        if (source.atRisk) stats.atRisk++;
+        
+        if (source.showInTimeline) {
+            stats.visibleByStatus[status]++;
+        } else {
+            stats.hiddenByStatus[status]++;
+        }
+    });
+    
+    stats.completionPercentage = Math.round((stats.M3 / stats.total) * 100);
+    stats.productionReadyPercentage = Math.round(((stats.M2 + stats.M3) / stats.total) * 100);
+    
+    return stats;
+}
+
+// Find upcoming milestones
+function getUpcomingMilestones() {
+    const today = parseDate(CONFIG.TIMELINE.TODAY);
+    const upcoming = { M0: null, M1: null, M2: null, M3: null };
+    const visibleSources = getVisibleDataSources();
+    
+    ['M0', 'M1', 'M2', 'M3'].forEach(milestone => {
+        let nearest = null;
+        let nearestDate = null;
+        
+        visibleSources.forEach(source => {
+            const date = parseDate(source.milestones[milestone]);
+            if (date && date >= today) {
+                if (!nearestDate || date < nearestDate) {
+                    nearestDate = date;
+                    nearest = { source: source.name, date: source.milestones[milestone], atRisk: source.atRisk };
+                }
+            }
+        });
+        
+        upcoming[milestone] = nearest;
+    });
+    
+    return upcoming;
+}
+
+// Risk icon SVG
+const riskIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+    <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+</svg>`;
+
+// Render Functions
+function renderRoadmap() {
+    const months = generateMonths();
+    const monthWidth = 100 / months.length;
+    const todayPosition = calculatePosition(CONFIG.TIMELINE.TODAY, months);
+    const stats = calculateStats();
+    const upcoming = getUpcomingMilestones();
+    const visibleSources = getVisibleDataSources();
+    
+    // Generate month columns
+    const monthColumnsHTML = months.map(m => 
+        `<div class="month-column">${m.name}</div>`
+    ).join('');
+    
+    // Generate grid lines
+    const gridLinesHTML = months.slice(1).map((m, i) => 
+        `<div class="month-grid-line" style="left: ${(i + 1) * monthWidth}%;"></div>`
+    ).join('');
+    
+    // Generate data source rows
+    const dataSourceRowsHTML = visibleSources.map(source => {
+        const status = getCurrentStatus(source);
+        const statusClass = `status-${status.toLowerCase()}`;
+        const indicatorClass = status.toLowerCase();
+        const atRiskClass = source.atRisk ? 'at-risk' : '';
+        
+        // Generate start marker
+        let startMarkerHTML = '';
+        if (source.startDate && isDateInRange(source.startDate, months)) {
+            const position = calculatePosition(source.startDate, months);
+            startMarkerHTML = `
+                <div class="milestone-marker start" style="left: ${position}%;">
+                    <span>START</span>
+                    <div class="milestone-date">${formatDateDisplay(source.startDate)}</div>
+                </div>
+            `;
+        }
+        
+        // Generate milestone markers
+        const milestonesHTML = ['M0', 'M1', 'M2', 'M3'].map(milestone => {
+            const date = source.milestones[milestone];
+            
+            if (!isDateInRange(date, months)) {
+                return '';
+            }
+            
+            const position = calculatePosition(date, months);
+            
+            return `
+                <div class="milestone-marker ${milestone.toLowerCase()}" style="left: ${position}%;">
+                    <span>${milestone}</span>
+                    <div class="milestone-date">${formatDateDisplay(date)}</div>
+                </div>
+            `;
+        }).join('');
+        
+        // Risk indicator
+        const riskIndicatorHTML = source.atRisk ? 
+            `<div class="risk-indicator" title="At Risk">${riskIconSVG}</div>` : '';
+        
+        return `
+            <div class="data-source-row ${atRiskClass}">
+                <div class="source-name ${statusClass}">
+                    ${riskIndicatorHTML}
+                    <span class="source-name-text">${source.name}</span>
+                    <span class="status-indicator ${indicatorClass}">${status}</span>
+                </div>
+                <div class="timeline-track">
+                    ${gridLinesHTML}
+                    <div class="today-guide-line" style="left: ${todayPosition}%;"></div>
+                    ${startMarkerHTML}
+                    ${milestonesHTML}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Helper function for breakdown text
+    function getBreakdownText(status) {
+        const visible = stats.visibleByStatus[status];
+        const hidden = stats.hiddenByStatus[status];
+        if (hidden > 0) {
+            return `${visible} shown + ${hidden} hidden`;
+        }
+        return '';
+    }
+    
+    // Build HTML
+    const roadmapHTML = `
+        <!-- Export Controls -->
+        <div class="export-controls">
+            <button class="export-btn" onclick="exportToPNG('roadmap-export', 'Full-Roadmap')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export Full Roadmap
+            </button>
+            <button class="export-btn secondary" onclick="exportToPNG('summary-section', 'Summary-Dashboard')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Export Summary Only
+            </button>
+            <button class="export-btn secondary" onclick="exportToPNG('timeline-section', 'Timeline-Only')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Export Timeline Only
+            </button>
+            <span class="export-note">Export different views for your presentation</span>
+        </div>
+        
+        <!-- Full Roadmap Container -->
+        <div class="roadmap-container" id="roadmap-export">
+            
+            <!-- Summary Dashboard Section -->
+            <div class="summary-dashboard" id="summary-section">
+                <div class="summary-header">
+                    <div class="summary-title">
+                        Data Platform Migration Dashboard
+                        <span class="summary-title-note">(${stats.total} total sources, ${stats.visible} shown in timeline)</span>
+                    </div>
+                    <div class="header-right">
+                        ${stats.atRisk > 0 ? `
+                        <div class="risk-summary">
+                            <span class="risk-summary-icon">${riskIconSVG}</span>
+                            <span class="risk-summary-text">${stats.atRisk} At Risk</span>
+                        </div>
+                        ` : ''}
+                        <div class="today-date-container">
+                            <span class="today-date-label">Today:</span>
+                            <span class="today-date-value">${formatShortDate(CONFIG.TIMELINE.TODAY)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- KPI Cards -->
+                <div class="kpi-section">
+                    <div class="kpi-card total">
+                        <div class="kpi-value">${stats.total}</div>
+                        <div class="kpi-label">Total Sources</div>
+                        <div class="kpi-sublabel">In migration scope</div>
+                        ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
+                    </div>
+                    <div class="kpi-card ns">
+                        <div class="kpi-value">${stats.NS}</div>
+                        <div class="kpi-label">Not Started</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.NS}</div>
+                        ${getBreakdownText('NS') ? `<div class="kpi-breakdown">${getBreakdownText('NS')}</div>` : ''}
+                    </div>
+                    <div class="kpi-card dev">
+                        <div class="kpi-value">${stats.DEV}</div>
+                        <div class="kpi-label">In Development</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.DEV}</div>
+                        ${getBreakdownText('DEV') ? `<div class="kpi-breakdown">${getBreakdownText('DEV')}</div>` : ''}
+                    </div>
+                    <div class="kpi-card m0">
+                        <div class="kpi-value">${stats.M0}</div>
+                        <div class="kpi-label">M0 - Dev Complete</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M0}</div>
+                        ${getBreakdownText('M0') ? `<div class="kpi-breakdown">${getBreakdownText('M0')}</div>` : ''}
+                    </div>
+                    <div class="kpi-card m1">
+                        <div class="kpi-value">${stats.M1}</div>
+                        <div class="kpi-label">M1 - Deployed</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M1}</div>
+                        ${getBreakdownText('M1') ? `<div class="kpi-breakdown">${getBreakdownText('M1')}</div>` : ''}
+                    </div>
+                    <div class="kpi-card m2">
+                        <div class="kpi-value">${stats.M2}</div>
+                        <div class="kpi-label">M2 - Ready</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M2}</div>
+                        ${getBreakdownText('M2') ? `<div class="kpi-breakdown">${getBreakdownText('M2')}</div>` : ''}
+                    </div>
+                    <div class="kpi-card m3">
+                        <div class="kpi-value">${stats.M3}</div>
+                        <div class="kpi-label">M3 - Complete</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M3}</div>
+                        ${getBreakdownText('M3') ? `<div class="kpi-breakdown">${getBreakdownText('M3')}</div>` : ''}
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <div class="progress-title">Overall Migration Progress (All ${stats.total} Sources)</div>
+                        <div class="progress-percentage">${stats.productionReadyPercentage}% Production Ready</div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-segment m3" style="width: ${(stats.M3 / stats.total) * 100}%;">${stats.M3 > 0 ? stats.M3 : ''}</div>
+                        <div class="progress-segment m2" style="width: ${(stats.M2 / stats.total) * 100}%;">${stats.M2 > 0 ? stats.M2 : ''}</div>
+                        <div class="progress-segment m1" style="width: ${(stats.M1 / stats.total) * 100}%;">${stats.M1 > 0 ? stats.M1 : ''}</div>
+                        <div class="progress-segment m0" style="width: ${(stats.M0 / stats.total) * 100}%;">${stats.M0 > 0 ? stats.M0 : ''}</div>
+                        <div class="progress-segment dev" style="width: ${(stats.DEV / stats.total) * 100}%;">${stats.DEV > 0 ? stats.DEV : ''}</div>
+                        <div class="progress-segment ns" style="width: ${(stats.NS / stats.total) * 100}%;">${stats.NS > 0 ? stats.NS : ''}</div>
+                    </div>
+                    <div class="progress-legend">
+                        <div class="progress-legend-item">
+                            <div class="progress-legend-dot m3"></div>
+                            <span>M3 Switched</span>
+                        </div>
+                        <div class="progress-legend-item">
+                            <div class="progress-legend-dot m2"></div>
+                            <span>M2 Production Ready</span>
+                        </div>
+                        <div class="progress-legend-item">
+                            <div class="progress-legend-dot m1"></div>
+                            <span>M1 Production Deployed</span>
+                        </div>
+                        <div class="progress-legend-item">
+                            <div class="progress-legend-dot m0"></div>
+                            <span>M0 Development Done</span>
+                        </div>
+                        <div class="progress-legend-item">
+                            <div class="progress-legend-dot dev"></div>
+                            <span>In Dev</span>
+                        </div>
+                        <div class="progress-legend-item">
+                            <div class="progress-legend-dot ns"></div>
+                            <span>Not Started</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Milestones -->
+                <div class="key-milestones">
+                    <div class="milestone-card">
+                        <div class="milestone-card-header">
+                            <div class="milestone-card-icon m0">M0</div>
+                            <div>
+                                <div class="milestone-card-title">Next Dev Complete</div>
+                                <div class="milestone-card-subtitle">Development Finished</div>
+                            </div>
+                        </div>
+                        <div class="milestone-card-content">
+                            ${upcoming.M0 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M0.date)}</span> - <span class="milestone-card-source">${upcoming.M0.source}</span>${upcoming.M0.atRisk ? ' ⚠️' : ''}` : 'All development complete'}
+                        </div>
+                    </div>
+                    <div class="milestone-card">
+                        <div class="milestone-card-header">
+                            <div class="milestone-card-icon m1">M1</div>
+                            <div>
+                                <div class="milestone-card-title">Next Deployment</div>
+                                <div class="milestone-card-subtitle">Production Deployment</div>
+                            </div>
+                        </div>
+                        <div class="milestone-card-content">
+                            ${upcoming.M1 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M1.date)}</span> - <span class="milestone-card-source">${upcoming.M1.source}</span>${upcoming.M1.atRisk ? ' ⚠️' : ''}` : 'All deployments complete'}
+                        </div>
+                    </div>
+                    <div class="milestone-card">
+                        <div class="milestone-card-header">
+                            <div class="milestone-card-icon m2">M2</div>
+                            <div>
+                                <div class="milestone-card-title">Next Go-Live</div>
+                                <div class="milestone-card-subtitle">Production Ready</div>
+                            </div>
+                        </div>
+                        <div class="milestone-card-content">
+                            ${upcoming.M2 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M2.date)}</span> - <span class="milestone-card-source">${upcoming.M2.source}</span>${upcoming.M2.atRisk ? ' ⚠️' : ''}` : 'All sources ready'}
+                        </div>
+                    </div>
+                    <div class="milestone-card">
+                        <div class="milestone-card-header">
+                            <div class="milestone-card-icon m3">M3</div>
+                            <div>
+                                <div class="milestone-card-title">Next Switch</div>
+                                <div class="milestone-card-subtitle">OneSource 1.0 Switch</div>
+                            </div>
+                        </div>
+                        <div class="milestone-card-content">
+                            ${upcoming.M3 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M3.date)}</span> - <span class="milestone-card-source">${upcoming.M3.source}</span>${upcoming.M3.atRisk ? ' ⚠️' : ''}` : 'All switches complete'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline Section -->
+            <div id="timeline-section">
+                <!-- Compact Legend -->
+                <div class="compact-legend">
+                    <div class="compact-legend-left">
+                        <span class="compact-legend-title">Legend:</span>
+                        <div class="compact-legend-items">
+                            <div class="compact-legend-item">
+                                <div class="compact-legend-color ns"></div>
+                                <span class="compact-legend-label">Not Started</span>
+                            </div>
+                            <div class="compact-legend-item">
+                                <div class="compact-legend-color dev"></div>
+                                <span class="compact-legend-label">In Dev</span>
+                            </div>
+                            <div class="compact-legend-item">
+                                <div class="compact-legend-color m0"></div>
+                                <span class="compact-legend-label">M0 Development Done</span>
+                            </div>
+                            <div class="compact-legend-item">
+                                <div class="compact-legend-color m1"></div>
+                                <span class="compact-legend-label">M1 Production Deployed</span>
+                            </div>
+                            <div class="compact-legend-item">
+                                <div class="compact-legend-color m2"></div>
+                                <span class="compact-legend-label">M2 Production Ready</span>
+                            </div>
+                            <div class="compact-legend-item">
+                                <div class="compact-legend-color m3"></div>
+                                <span class="compact-legend-label">M3 Switched</span>
+                            </div>
+                            <div class="compact-legend-risk">
+                                ${riskIconSVG}
+                                <span>At Risk</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-info">
+                        Showing <span class="timeline-info-count">${stats.visible}</span> of <span class="timeline-info-count">${stats.total}</span> data sources
+                        ${stats.hidden > 0 ? `(${stats.hidden} completed hidden)` : ''}
+                    </div>
+                </div>
+                
+                <!-- Compact Roadmap -->
+                <div class="roadmap-content">
+                    <div class="roadmap-grid">
+                        
+                        <!-- Timeline Header -->
+                        <div class="timeline-header">
+                            <div class="timeline-label">Data Source</div>
+                            <div class="timeline-months">
+                                ${monthColumnsHTML}
+                                <div class="today-pointer" style="left: ${todayPosition}%;">
+                                    <div class="today-pointer-arrow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Data Source Rows -->
+                        ${dataSourceRowsHTML}
+                        
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    `;
+    
+    document.body.innerHTML = roadmapHTML;
+}
+
+// Export to PNG Function
+function exportToPNG(elementId, fileNamePrefix) {
+    const element = document.getElementById(elementId);
+    const buttons = document.querySelectorAll('.export-btn');
+    
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+    });
+    
+    html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true
+    }).then(canvas => {
+        const link = document.createElement('a');
+        const today = CONFIG.TIMELINE.TODAY.replace(/\//g, '-');
+        link.download = `${fileNamePrefix}-${today}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+        
+    }).catch(err => {
+        console.error('Export failed:', err);
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', renderRoadmap);
+</script>
+
+</body>
+</html>
