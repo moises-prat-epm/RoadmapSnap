@@ -44,3 +44,12 @@ TIMELINE: {
     START_MONTH: "12/2025",     // Timeline start (MM/YYYY format)
     END_MONTH: "05/2026",       // Timeline end (MM/YYYY format)
 }
+
+STATUS_LABELS: {
+    NS: "Not Started",
+    DEV: "In Development",
+    M0: "Dev Complete",
+    M1: "Prod Deployed",
+    M2: "Production Ready",
+    M3: "Switch Complete"
+}
