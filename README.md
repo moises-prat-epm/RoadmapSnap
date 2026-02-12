@@ -1,4 +1,4 @@
-## Project Roadmap Dashboard (Template)
+## RoadmapSnap: A Project Roadmap Dashboard
 
 A self-contained, interactive **roadmap dashboard** you can reuse for any project to track items (deliverables, features, workstreams, epics, etc.) across milestones. It runs entirely in the browser with **no backend** and **no build step**.
 
