@@ -300,3 +300,67 @@ You can then paste these PNGs into slide decks, documents, or emails.
 - **Export** PNGs for reporting using the built-in buttons.
 
 That’s all you need to maintain and share a project roadmap using this single HTML file.
+
+---
+
+### 🧭 How to use this project in your organization
+
+This repository is intended as a **generic roadmap template** that teams can clone and adapt.
+
+#### 1. As a public, generic template (organization-wide)
+
+In your shared/public repo:
+
+- Keep `roadmap_dashboard.html` **generic**:
+  - Neutral labels in `ENTITY_LABELS` (e.g. “Deliverable” / “Workstream”).
+  - Fictional/sample data in `DATA_SOURCES` (no sensitive information).
+- Keep this repo as the **reference template**; do not put project-specific secrets or timelines here.
+
+Teams can:
+
+- Clone this repo.
+- Edit `roadmap_dashboard.html` in their own fork/clone or private repo.
+
+#### 2. Create a private project from the template
+
+From your machine:
+
+```bash
+# 1) Clone the public template
+git clone <PUBLIC_TEMPLATE_REPO_URL> my-project-roadmap
+cd my-project-roadmap
+
+# 2) Point this clone at your new private repo
+git remote remove origin
+git remote add origin <YOUR_PRIVATE_REPO_URL>
+
+# 3) Push the generic template into the private repo
+git push -u origin main
+```
+
+You now have a **private copy** of the generic roadmap project.
+
+#### 3. Customize roadmap in your private repo
+
+In your private repo:
+
+1. Open `roadmap_dashboard.html` in a code editor.
+2. Update:
+   - `TIMELINE` – your project’s dates.
+   - `ENTITY_LABELS` – what you call your items (Deliverables, Features, Workstreams, etc.).
+   - `DASHBOARD_TEXT` – project-specific title and subtitles.
+   - `MILESTONE_TEXT` – what M0–M3 mean for your project.
+   - `DATA_SOURCES` – your real deliverables and milestone dates.
+3. Open `roadmap_dashboard.html` in a browser to validate the view.
+4. Commit and push:
+
+```bash
+git add roadmap_dashboard.html
+git commit -m "Configure roadmap for <My Project>"
+git push
+```
+
+Going forward, you only need to:
+
+- Edit `roadmap_dashboard.html` when your plan changes.
+- Re-export PNGs as needed for reporting.
