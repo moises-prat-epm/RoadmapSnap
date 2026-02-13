@@ -43,7 +43,7 @@ All settings live in `js/config.js`. **Start by renaming `js/config_base.js` to 
 
 | Parameter | Format | Meaning |
 |-----------|--------|---------|
-| `TODAY` | `"DD/MM/YYYY"` | Reference date for status calculation and "today" marker |
+| `TODAY` | `"DD/MM/YYYY"` or `""` | Reference date for status calculation and "today" marker. **Leave empty to use current date automatically.** |
 | `START_MONTH` | `"MM/YYYY"` | First month shown on the timeline |
 | `END_MONTH` | `"MM/YYYY"` | Last month shown on the timeline |
 

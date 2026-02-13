@@ -1308,7 +1308,7 @@ function initOriginalTimeline() {
 function setDateRange(months) {
     initOriginalTimeline();
     
-    const today = parseDate(CONFIG.TIMELINE.TODAY);
+    const today = parseDate(getTodayDate());
     
     if (months === 'all') {
         // Reset to original range
@@ -1424,6 +1424,21 @@ function getLastMilestoneKey() {
 }
 
 // ============================================
+// AUTO-POPULATE TODAY'S DATE
+// ============================================
+function getTodayDate() {
+    // Use CONFIG.TIMELINE.TODAY if set, otherwise use actual current date
+    if (CONFIG.TIMELINE.TODAY) {
+        return CONFIG.TIMELINE.TODAY;
+    }
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 function escapeHtmlAttr(str) {
@@ -1507,7 +1522,7 @@ function isDateInRange(dateStr, months) {
 
 // Determine current status based on dates (dynamic milestones)
 function getCurrentStatus(source) {
-    const today = parseDate(CONFIG.TIMELINE.TODAY);
+    const today = parseDate(getTodayDate());
     const startDate = parseDate(source.startDate);
     const milestones = getMilestones();
     
@@ -1608,7 +1623,7 @@ function calculateStats() {
 
 // Find upcoming milestones (dynamic)
 function getUpcomingMilestones() {
-    const today = parseDate(CONFIG.TIMELINE.TODAY);
+    const today = parseDate(getTodayDate());
     const milestones = getMilestones();
     const upcoming = {};
     const visibleSources = getAllVisibleDataSources();
@@ -1647,7 +1662,7 @@ const riskIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 function renderRoadmap() {
     const months = generateMonths();
     const monthWidth = 100 / months.length;
-    const todayPosition = calculatePosition(CONFIG.TIMELINE.TODAY, months);
+    const todayPosition = calculatePosition(getTodayDate(), months);
     const stats = calculateStats();
     const upcoming = getUpcomingMilestones();
     const visibleSources = getVisibleDataSources();
@@ -1926,7 +1941,7 @@ function renderRoadmap() {
                         ` : ''}
                         <div class="today-date-container">
                             <span class="today-date-label">Today:</span>
-                            <span class="today-date-value">${formatShortDate(CONFIG.TIMELINE.TODAY)}</span>
+                            <span class="today-date-value">${formatShortDate(getTodayDate())}</span>
                         </div>
                     </div>
                 </div>
@@ -2093,7 +2108,7 @@ function exportToPNG(elementId, fileNamePrefix) {
         useCORS: true
     }).then(canvas => {
         const link = document.createElement('a');
-        const today = CONFIG.TIMELINE.TODAY.replace(/\//g, '-');
+        const today = getTodayDate().replace(/\//g, '-');
         link.download = `${fileNamePrefix}-${today}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
