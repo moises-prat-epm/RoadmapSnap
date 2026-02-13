@@ -58,6 +58,7 @@ const CONFIG = {
             startDate: null,
             atRisk: false,
             showInTimeline: true,
+            link: "https://example.com/docs/deliverable-1",  // optional - opens in new tab
             milestones: { 
                 M0: "15/11/2025",
                 M1: "20/11/2025",
@@ -158,6 +159,7 @@ const CONFIG = {
             startDate: "DD/MM/YYYY",  // When dev starts, null if already started
             atRisk: false,            // Set to true to show risk warning
             showInTimeline: true,     // Set to false to hide from timeline
+            link: "https://...",      // Optional - shows info icon, opens in new tab
             milestones: { 
                 M0: "DD/MM/YYYY",      // Dev Complete date
                 M1: "DD/MM/YYYY",      // Prod Deployment date
