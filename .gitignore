@@ -9,5 +9,6 @@
 node_modules/
 dist/
 
-# Local config (template is config_base.js — users rename to config.js)
+# Local config (users customize this file locally)
 js/config.js
+js/config_onehouse.js
