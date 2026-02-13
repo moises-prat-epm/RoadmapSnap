@@ -1096,6 +1096,28 @@
         }
         
         /* ============================================
+           FOOTER STYLES
+           ============================================ */
+        .page-footer {
+            max-width: 1400px;
+            margin: 24px auto 0 auto;
+            padding: 16px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--color-text-light);
+        }
+        
+        .page-footer a {
+            color: var(--color-text-light);
+            text-decoration: none;
+        }
+        
+        .page-footer a:hover {
+            color: var(--color-text-dark);
+            text-decoration: underline;
+        }
+        
+        /* ============================================
            PRINT/EXPORT STYLES
            ============================================ */
         @media print {
@@ -2132,6 +2154,11 @@ function renderRoadmap() {
             </div>
             
         </div>
+        
+        <!-- Footer -->
+        <footer class="page-footer">
+            © 2026 RoadmapSnap · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a>
+        </footer>
     `;
     
     document.body.innerHTML = roadmapHTML;
