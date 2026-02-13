@@ -2,7 +2,7 @@ const CONFIG = {
     
     // Timeline Configuration
     TIMELINE: {
-        TODAY: "",  // Leave empty to use current date automatically
+        TODAY: "11/02/2026",  // Leave empty to use current date automatically
         START_MONTH: "01/2026",
         END_MONTH: "12/2026",
     },
