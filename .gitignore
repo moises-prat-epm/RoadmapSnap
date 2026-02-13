@@ -9,6 +9,3 @@
 node_modules/
 dist/
 
-# Local config (users customize this file locally)
-js/config.js
-js/config_onehouse.js
