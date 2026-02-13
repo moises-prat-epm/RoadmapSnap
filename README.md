@@ -29,7 +29,7 @@ A powerful, simple roadmap dashboard that gives clear visibility of project prog
 ## Quick Start
 
 1. **Clone** the repository.
-2. **Edit** `js/config.js` to customize your roadmap with your own deliverables and milestones.
+2. **Edit** `js/config_base.js` to customize your roadmap with your own deliverables and milestones. Rename it to `js/config.js`
 3. **Open** `roadmap_dashboard.html` in a browser to view. No server needed—refresh the page after editing the config to see changes.
 
 ---
@@ -115,7 +115,7 @@ Array of items to track. Each item:
 
 ```
 roadmap_dashboard.html   # Main dashboard (open in browser)
-js/config.js             # Your configuration file (customize this)
+js/config_base.js        # Your configuration file (customize this and rename it to config.js)
 docs/preview.png         # Preview screenshot
 ```
 
