@@ -26,7 +26,7 @@
             padding: 20px;
         }
         
-        /* Color Variables */
+        /* Color Variables - Light Mode (Default) */
         :root {
             --color-dev: #6554c0;     /* Purple - In Development */
             --color-ns: #c1c7d0;      /* Light Grey - Not Started */
@@ -37,10 +37,105 @@
             --color-risk: #de350b;
             --color-border: #dfe1e6;
             --color-bg-white: #ffffff;
+            --color-bg-page: #f4f5f7;
+            --color-bg-secondary: #fafbfc;
             --color-text-dark: #172b4d;
             --color-text-light: #6b778c;
             --color-today: #de350b;
             --row-height: 36px;
+        }
+        
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --color-border: #3d4f5f;
+            --color-bg-white: #1a2332;
+            --color-bg-page: #0d1117;
+            --color-bg-secondary: #161b22;
+            --color-text-dark: #e6edf3;
+            --color-text-light: #8b949e;
+        }
+        
+        [data-theme="dark"] body {
+            background: var(--color-bg-page);
+        }
+        
+        [data-theme="dark"] .roadmap-container {
+            background: var(--color-bg-white);
+        }
+        
+        [data-theme="dark"] .summary-dashboard {
+            background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-white) 100%);
+        }
+        
+        [data-theme="dark"] .kpi-card {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .kpi-card.total {
+            background: linear-gradient(135deg, #2d333b 0%, #3d4f5f 100%);
+        }
+        
+        [data-theme="dark"] .progress-section {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .progress-bar-container {
+            background: #2d333b;
+        }
+        
+        [data-theme="dark"] .milestone-card {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .compact-legend {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .timeline-info {
+            background: var(--color-bg-white);
+        }
+        
+        [data-theme="dark"] .month-column {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .source-name.status-ns { background: linear-gradient(90deg, rgba(193,199,208,0.1) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-dev { background: linear-gradient(90deg, rgba(101,84,192,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m0 { background: linear-gradient(90deg, rgba(137,147,164,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m1 { background: linear-gradient(90deg, rgba(255,171,0,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m2 { background: linear-gradient(90deg, rgba(54,179,126,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m3 { background: linear-gradient(90deg, rgba(0,101,255,0.15) 0%, var(--color-bg-secondary) 100%); }
+        
+        [data-theme="dark"] .timeline-track {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .today-date-container {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .filter-bar {
+            background: var(--color-bg-white);
+        }
+        
+        [data-theme="dark"] .filter-select,
+        [data-theme="dark"] .filter-input {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-dark);
+        }
+        
+        [data-theme="dark"] .filter-toggle {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-dark);
+        }
+        
+        [data-theme="dark"] .filter-clear {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .group-control-btn {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-light);
         }
         
         /* ============================================
@@ -680,6 +775,152 @@
             height: 14px;
         }
         
+        /* Group Header Styles */
+        .group-header {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            margin-bottom: 2px;
+            margin-top: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .group-header:first-child {
+            margin-top: 0;
+        }
+        
+        .group-header-name {
+            padding: 8px 10px;
+            background: linear-gradient(135deg, #344563 0%, #505f79 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 4px 0 0 4px;
+            transition: background 0.2s ease;
+        }
+        
+        .group-header-name:hover {
+            background: linear-gradient(135deg, #3d5170 0%, #5a6a87 100%);
+        }
+        
+        .group-chevron {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .group-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .group-stats {
+            font-size: 10px;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-left: auto;
+        }
+        
+        .group-stats-risk {
+            color: #ffab00;
+        }
+        
+        .group-header-track {
+            background: #505f79;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .group-item .source-name {
+            padding-left: 24px;
+        }
+        
+        /* Group controls */
+        .group-controls {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+        }
+        
+        .group-control-btn {
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: white;
+            color: var(--color-text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .group-control-btn:hover {
+            background: #f4f5f7;
+            color: var(--color-text-dark);
+        }
+        
+        /* Dark Mode Toggle Button */
+        .theme-toggle {
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-bg-white);
+            color: var(--color-text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-toggle:hover {
+            border-color: #0065ff;
+            background: rgba(0, 101, 255, 0.05);
+        }
+        
+        .theme-toggle svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Date Range Zoom Buttons */
+        .zoom-controls {
+            display: flex;
+            gap: 4px;
+            margin-left: 12px;
+        }
+        
+        .zoom-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: var(--color-bg-white);
+            color: var(--color-text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .zoom-btn:hover {
+            border-color: #0065ff;
+            color: var(--color-text-dark);
+        }
+        
+        .zoom-btn.active {
+            background: #0065ff;
+            border-color: #0065ff;
+            color: white;
+        }
+        
+        [data-theme="dark"] .zoom-btn {
+            background: var(--color-bg-secondary);
+        }
+        
         .source-name-text {
             font-weight: 600;
             font-size: 11px;
@@ -863,7 +1104,324 @@
 <script src="./js/config.js"></script>
 
 <script>
-// Utility Functions
+// ============================================
+// FILTER & SORT STATE
+// ============================================
+let filterState = {
+    status: 'ALL',
+    riskOnly: false,
+    search: '',
+    sortBy: 'name',
+    sortOrder: 'asc'
+};
+
+// ============================================
+// FILTER & SORT FUNCTIONS
+// ============================================
+function filterDeliverables(sources) {
+    return sources.filter(source => {
+        // Status filter
+        if (filterState.status !== 'ALL') {
+            const status = getCurrentStatus(source);
+            if (status !== filterState.status) return false;
+        }
+        
+        // Risk filter
+        if (filterState.riskOnly && !source.atRisk) return false;
+        
+        // Search filter
+        if (filterState.search) {
+            const searchLower = filterState.search.toLowerCase();
+            const nameMatch = source.name.toLowerCase().includes(searchLower);
+            const tagsMatch = source.tags && source.tags.some(tag => 
+                tag.toLowerCase().includes(searchLower)
+            );
+            if (!nameMatch && !tagsMatch) return false;
+        }
+        
+        return true;
+    });
+}
+
+function sortDeliverables(sources) {
+    const sorted = [...sources];
+    const milestones = getMilestones();
+    const lastMilestoneKey = getLastMilestoneKey();
+    
+    sorted.sort((a, b) => {
+        let comparison = 0;
+        
+        switch (filterState.sortBy) {
+            case 'name':
+                comparison = a.name.localeCompare(b.name);
+                break;
+            case 'status':
+                const statusOrder = ['NS', 'DEV', ...milestones.map(m => m.key)];
+                const statusA = statusOrder.indexOf(getCurrentStatus(a));
+                const statusB = statusOrder.indexOf(getCurrentStatus(b));
+                comparison = statusA - statusB;
+                break;
+            case 'm3date':
+                // Use the last milestone date for sorting
+                const dateA = parseDate(a.milestones?.[lastMilestoneKey]) || new Date(9999, 11, 31);
+                const dateB = parseDate(b.milestones?.[lastMilestoneKey]) || new Date(9999, 11, 31);
+                comparison = dateA - dateB;
+                break;
+            case 'risk':
+                comparison = (b.atRisk ? 1 : 0) - (a.atRisk ? 1 : 0);
+                break;
+        }
+        
+        return filterState.sortOrder === 'desc' ? -comparison : comparison;
+    });
+    
+    return sorted;
+}
+
+function updateFilter(key, value) {
+    filterState[key] = value;
+    renderRoadmap();
+}
+
+function clearFilters() {
+    filterState = {
+        status: 'ALL',
+        riskOnly: false,
+        search: '',
+        sortBy: 'name',
+        sortOrder: 'asc'
+    };
+    renderRoadmap();
+}
+
+function toggleRiskFilter() {
+    filterState.riskOnly = !filterState.riskOnly;
+    renderRoadmap();
+}
+
+// ============================================
+// GROUPING FUNCTIONS
+// ============================================
+let groupCollapsedState = {};
+
+function groupDeliverables(sources) {
+    const groups = {};
+    const ungrouped = [];
+    
+    sources.forEach(source => {
+        const groupName = source.group || null;
+        if (groupName) {
+            if (!groups[groupName]) {
+                groups[groupName] = [];
+            }
+            groups[groupName].push(source);
+        } else {
+            ungrouped.push(source);
+        }
+    });
+    
+    return { groups, ungrouped };
+}
+
+function hasAnyGroups(sources) {
+    return sources.some(source => source.group);
+}
+
+function toggleGroup(groupName) {
+    groupCollapsedState[groupName] = !groupCollapsedState[groupName];
+    renderRoadmap();
+}
+
+function expandAllGroups() {
+    const sources = CONFIG.DELIVERABLES;
+    sources.forEach(source => {
+        if (source.group) {
+            groupCollapsedState[source.group] = false;
+        }
+    });
+    renderRoadmap();
+}
+
+function collapseAllGroups() {
+    const sources = CONFIG.DELIVERABLES;
+    sources.forEach(source => {
+        if (source.group) {
+            groupCollapsedState[source.group] = true;
+        }
+    });
+    renderRoadmap();
+}
+
+function getGroupStats(sources) {
+    const atRiskCount = sources.filter(s => s.atRisk).length;
+    return {
+        total: sources.length,
+        atRisk: atRiskCount
+    };
+}
+
+// ============================================
+// DARK MODE FUNCTIONS
+// ============================================
+function getStoredTheme() {
+    return localStorage.getItem('roadmapsnap-theme') || 'light';
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('roadmapsnap-theme', theme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    renderRoadmap();
+}
+
+// Apply stored theme on load
+(function initTheme() {
+    const storedTheme = getStoredTheme();
+    if (storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+})();
+
+// ============================================
+// DATE RANGE ZOOM FUNCTIONS
+// ============================================
+let originalTimelineStart = null;
+let originalTimelineEnd = null;
+let currentZoom = 'all';
+
+function initOriginalTimeline() {
+    if (originalTimelineStart === null) {
+        originalTimelineStart = CONFIG.TIMELINE.START_MONTH;
+        originalTimelineEnd = CONFIG.TIMELINE.END_MONTH;
+    }
+}
+
+function setDateRange(months) {
+    initOriginalTimeline();
+    
+    const today = parseDate(CONFIG.TIMELINE.TODAY);
+    
+    if (months === 'all') {
+        // Reset to original range
+        CONFIG.TIMELINE.START_MONTH = originalTimelineStart;
+        CONFIG.TIMELINE.END_MONTH = originalTimelineEnd;
+        currentZoom = 'all';
+    } else {
+        // Calculate new range centered around today
+        const halfMonths = Math.floor(months / 2);
+        
+        const startDate = new Date(today);
+        startDate.setMonth(startDate.getMonth() - halfMonths);
+        
+        const endDate = new Date(today);
+        endDate.setMonth(endDate.getMonth() + halfMonths);
+        
+        // Format as MM/YYYY
+        const formatMonthYear = (date) => {
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${m}/${y}`;
+        };
+        
+        CONFIG.TIMELINE.START_MONTH = formatMonthYear(startDate);
+        CONFIG.TIMELINE.END_MONTH = formatMonthYear(endDate);
+        currentZoom = months + 'mo';
+    }
+    
+    renderRoadmap();
+}
+
+// ============================================
+// DATA EXPORT FUNCTIONS (CSV/JSON)
+// ============================================
+function exportToCSV() {
+    const milestones = getMilestones();
+    const headers = ['Name', 'Group', 'Status', 'At Risk', 'Start Date', 'Tags', 'Link'];
+    milestones.forEach(m => headers.push(m.key));
+    
+    const rows = [headers.join(',')];
+    
+    CONFIG.DELIVERABLES.forEach(source => {
+        const status = getCurrentStatus(source);
+        const row = [
+            `"${(source.name || '').replace(/"/g, '""')}"`,
+            `"${source.group || ''}"`,
+            status,
+            source.atRisk ? 'Yes' : 'No',
+            source.startDate || '',
+            `"${(source.tags || []).join('; ')}"`,
+            `"${source.link || ''}"`
+        ];
+        milestones.forEach(m => {
+            row.push(source.milestones?.[m.key] || '');
+        });
+        rows.push(row.join(','));
+    });
+    
+    const csvContent = rows.join('\n');
+    downloadFile(csvContent, 'deliverables.csv', 'text/csv');
+}
+
+function exportToJSON() {
+    const exportData = {
+        exportDate: new Date().toISOString(),
+        timeline: CONFIG.TIMELINE,
+        milestones: getMilestones(),
+        deliverables: CONFIG.DELIVERABLES.map(source => ({
+            ...source,
+            currentStatus: getCurrentStatus(source)
+        }))
+    };
+    
+    const jsonContent = JSON.stringify(exportData, null, 2);
+    downloadFile(jsonContent, 'deliverables.json', 'application/json');
+}
+
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// ============================================
+// DYNAMIC MILESTONES
+// ============================================
+function getMilestones() {
+    // Return CONFIG.MILESTONES if defined, otherwise fall back to default M0-M3
+    if (CONFIG.MILESTONES && Array.isArray(CONFIG.MILESTONES)) {
+        return CONFIG.MILESTONES;
+    }
+    // Default milestones for backwards compatibility
+    return [
+        { key: 'M0', short: 'M0', title: CONFIG.MILESTONE_TEXT?.M0?.title || 'Dev Complete', subtitle: CONFIG.MILESTONE_TEXT?.M0?.subtitle || '', color: '#8993a4' },
+        { key: 'M1', short: 'M1', title: CONFIG.MILESTONE_TEXT?.M1?.title || 'Deployed', subtitle: CONFIG.MILESTONE_TEXT?.M1?.subtitle || '', color: '#ffab00' },
+        { key: 'M2', short: 'M2', title: CONFIG.MILESTONE_TEXT?.M2?.title || 'Ready', subtitle: CONFIG.MILESTONE_TEXT?.M2?.subtitle || '', color: '#36b37e' },
+        { key: 'M3', short: 'M3', title: CONFIG.MILESTONE_TEXT?.M3?.title || 'Complete', subtitle: CONFIG.MILESTONE_TEXT?.M3?.subtitle || '', color: '#0065ff' }
+    ];
+}
+
+function getMilestoneByKey(key) {
+    const milestones = getMilestones();
+    return milestones.find(m => m.key === key) || null;
+}
+
+function getLastMilestoneKey() {
+    const milestones = getMilestones();
+    return milestones[milestones.length - 1]?.key || 'M3';
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 function escapeHtmlAttr(str) {
     if (!str) return '';
     return String(str)
@@ -943,26 +1501,20 @@ function isDateInRange(dateStr, months) {
     return date >= timelineStart && date <= timelineEnd;
 }
 
-// Determine current status based on dates
+// Determine current status based on dates (dynamic milestones)
 function getCurrentStatus(source) {
     const today = parseDate(CONFIG.TIMELINE.TODAY);
     const startDate = parseDate(source.startDate);
-    const m0Date = parseDate(source.milestones.M0);
-    const m1Date = parseDate(source.milestones.M1);
-    const m2Date = parseDate(source.milestones.M2);
-    const m3Date = parseDate(source.milestones.M3);
+    const milestones = getMilestones();
     
-    // If M3 date has passed, status is M3
-    if (m3Date && today >= m3Date) return 'M3';
-    
-    // If M2 date has passed, status is M2
-    if (m2Date && today >= m2Date) return 'M2';
-    
-    // If M1 date has passed, status is M1
-    if (m1Date && today >= m1Date) return 'M1';
-    
-    // If M0 date has passed, status is M0
-    if (m0Date && today >= m0Date) return 'M0';
+    // Check milestones in reverse order (latest first)
+    for (let i = milestones.length - 1; i >= 0; i--) {
+        const milestone = milestones[i];
+        const milestoneDate = parseDate(source.milestones?.[milestone.key]);
+        if (milestoneDate && today >= milestoneDate) {
+            return milestone.key;
+        }
+    }
     
     // If start date exists and has passed, status is DEV (in development)
     if (startDate && today >= startDate) return 'DEV';
@@ -970,72 +1522,108 @@ function getCurrentStatus(source) {
     // If start date exists but hasn't passed, status is NS (not started)
     if (startDate && today < startDate) return 'NS';
     
-    // If no start date but M0 hasn't passed, assume in development
-    if (!startDate && m0Date && today < m0Date) return 'DEV';
+    // If no start date but first milestone hasn't passed, assume in development
+    const firstMilestoneDate = parseDate(source.milestones?.[milestones[0]?.key]);
+    if (!startDate && firstMilestoneDate && today < firstMilestoneDate) return 'DEV';
     
     return 'DEV';
 }
 
-// Get visible data sources
+// Get visible data sources (with filters applied)
 function getVisibleDataSources() {
+    let sources = CONFIG.DELIVERABLES.filter(source => source.showInTimeline);
+    sources = filterDeliverables(sources);
+    sources = sortDeliverables(sources);
+    return sources;
+}
+
+// Get all visible sources (without filters, for stats)
+function getAllVisibleDataSources() {
     return CONFIG.DELIVERABLES.filter(source => source.showInTimeline);
 }
 
-// Calculate Statistics
+// Calculate Statistics (uses all deliverables, not filtered)
 function calculateStats() {
     const allSources = CONFIG.DELIVERABLES;
-    const visibleSources = getVisibleDataSources();
+    const visibleSources = getAllVisibleDataSources();
+    const milestones = getMilestones();
+    const lastMilestoneKey = getLastMilestoneKey();
     
+    // Initialize stats dynamically
     const stats = { 
-        NS: 0, DEV: 0, M0: 0, M1: 0, M2: 0, M3: 0, 
+        NS: 0, 
+        DEV: 0, 
         total: allSources.length,
         visible: visibleSources.length,
         hidden: allSources.length - visibleSources.length,
         atRisk: 0,
-        visibleByStatus: { NS: 0, DEV: 0, M0: 0, M1: 0, M2: 0, M3: 0 },
-        hiddenByStatus: { NS: 0, DEV: 0, M0: 0, M1: 0, M2: 0, M3: 0 }
+        visibleByStatus: { NS: 0, DEV: 0 },
+        hiddenByStatus: { NS: 0, DEV: 0 },
+        milestoneKeys: milestones.map(m => m.key)
     };
+    
+    // Initialize milestone counts
+    milestones.forEach(m => {
+        stats[m.key] = 0;
+        stats.visibleByStatus[m.key] = 0;
+        stats.hiddenByStatus[m.key] = 0;
+    });
     
     allSources.forEach(source => {
         const status = getCurrentStatus(source);
-        stats[status]++;
+        if (stats[status] !== undefined) {
+            stats[status]++;
+        }
         
         if (source.atRisk) stats.atRisk++;
         
         if (source.showInTimeline) {
-            stats.visibleByStatus[status]++;
+            if (stats.visibleByStatus[status] !== undefined) {
+                stats.visibleByStatus[status]++;
+            }
         } else {
-            stats.hiddenByStatus[status]++;
+            if (stats.hiddenByStatus[status] !== undefined) {
+                stats.hiddenByStatus[status]++;
+            }
         }
     });
     
-    stats.completionPercentage = Math.round((stats.M3 / stats.total) * 100);
-    stats.productionReadyPercentage = Math.round(((stats.M2 + stats.M3) / stats.total) * 100);
+    // Calculate completion percentage (last milestone = complete)
+    stats.completionPercentage = Math.round((stats[lastMilestoneKey] / stats.total) * 100);
+    
+    // Calculate production ready (last 2 milestones)
+    if (milestones.length >= 2) {
+        const secondLastKey = milestones[milestones.length - 2].key;
+        stats.productionReadyPercentage = Math.round(((stats[secondLastKey] + stats[lastMilestoneKey]) / stats.total) * 100);
+    } else {
+        stats.productionReadyPercentage = stats.completionPercentage;
+    }
     
     return stats;
 }
 
-// Find upcoming milestones
+// Find upcoming milestones (dynamic)
 function getUpcomingMilestones() {
     const today = parseDate(CONFIG.TIMELINE.TODAY);
-    const upcoming = { M0: null, M1: null, M2: null, M3: null };
-    const visibleSources = getVisibleDataSources();
+    const milestones = getMilestones();
+    const upcoming = {};
+    const visibleSources = getAllVisibleDataSources();
     
-    ['M0', 'M1', 'M2', 'M3'].forEach(milestone => {
+    milestones.forEach(m => {
         let nearest = null;
         let nearestDate = null;
         
         visibleSources.forEach(source => {
-            const date = parseDate(source.milestones[milestone]);
+            const date = parseDate(source.milestones?.[m.key]);
             if (date && date >= today) {
                 if (!nearestDate || date < nearestDate) {
                     nearestDate = date;
-                    nearest = { source: source.name, date: source.milestones[milestone], atRisk: source.atRisk };
+                    nearest = { source: source.name, date: source.milestones[m.key], atRisk: source.atRisk };
                 }
             }
         });
         
-        upcoming[milestone] = nearest;
+        upcoming[m.key] = nearest;
     });
     
     return upcoming;
@@ -1059,6 +1647,9 @@ function renderRoadmap() {
     const stats = calculateStats();
     const upcoming = getUpcomingMilestones();
     const visibleSources = getVisibleDataSources();
+    const milestonesDef = getMilestones();
+    const lastMilestoneKey = getLastMilestoneKey();
+    const hasGroups = hasAnyGroups(visibleSources);
     
     // Generate month columns
     const monthColumnsHTML = months.map(m => 
@@ -1070,12 +1661,13 @@ function renderRoadmap() {
         `<div class="month-grid-line" style="left: ${(i + 1) * monthWidth}%;"></div>`
     ).join('');
     
-    // Generate data source rows
-    const dataSourceRowsHTML = visibleSources.map(source => {
+    // Helper function to render a single source row
+    function renderSourceRow(source, isGroupItem = false) {
         const status = getCurrentStatus(source);
         const statusClass = `status-${status.toLowerCase()}`;
         const indicatorClass = status.toLowerCase();
         const atRiskClass = source.atRisk ? 'at-risk' : '';
+        const groupItemClass = isGroupItem ? 'group-item' : '';
         
         // Generate start marker
         let startMarkerHTML = '';
@@ -1089,19 +1681,19 @@ function renderRoadmap() {
             `;
         }
         
-        // Generate milestone markers
-        const milestonesHTML = ['M0', 'M1', 'M2', 'M3'].map(milestone => {
-            const date = source.milestones[milestone];
+        // Generate milestone markers (dynamic)
+        const milestonesHTMLArr = milestonesDef.map(m => {
+            const date = source.milestones?.[m.key];
             
-            if (!isDateInRange(date, months)) {
+            if (!date || !isDateInRange(date, months)) {
                 return '';
             }
             
             const position = calculatePosition(date, months);
             
             return `
-                <div class="milestone-marker ${milestone.toLowerCase()}" style="left: ${position}%;">
-                    <span>${milestone}</span>
+                <div class="milestone-marker" style="left: ${position}%; background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''}">
+                    <span>${m.short}</span>
                     <div class="milestone-date">${formatDateDisplay(date)}</div>
                 </div>
             `;
@@ -1116,7 +1708,7 @@ function renderRoadmap() {
             `<a class="info-link" href="${escapeHtmlAttr(source.link)}" target="_blank" rel="noopener noreferrer" title="More info">${infoIconSVG}</a>` : '';
         
         return `
-            <div class="data-source-row ${atRiskClass}">
+            <div class="data-source-row ${atRiskClass} ${groupItemClass}">
                 <div class="source-name ${statusClass}">
                     ${riskIndicatorHTML}
                     <span class="source-name-text">${source.name}</span>
@@ -1127,11 +1719,63 @@ function renderRoadmap() {
                     ${gridLinesHTML}
                     <div class="today-guide-line" style="left: ${todayPosition}%;"></div>
                     ${startMarkerHTML}
-                    ${milestonesHTML}
+                    ${milestonesHTMLArr}
                 </div>
             </div>
         `;
-    }).join('');
+    }
+    
+    // Chevron SVG for group headers
+    const chevronSVG = `<svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" />
+    </svg>`;
+    
+    // Generate data source rows with grouping support
+    let dataSourceRowsHTML = '';
+    
+    if (hasGroups) {
+        const { groups, ungrouped } = groupDeliverables(visibleSources);
+        
+        // Render grouped items
+        Object.keys(groups).sort().forEach(groupName => {
+            const groupSources = groups[groupName];
+            const collapsed = groupCollapsedState[groupName] || false;
+            const groupStats = getGroupStats(groupSources);
+            
+            // Group header
+            dataSourceRowsHTML += `
+                <div class="group-header" onclick="toggleGroup('${escapeHtmlAttr(groupName)}')">
+                    <div class="group-header-name">
+                        <svg class="group-chevron ${collapsed ? 'collapsed' : ''}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" />
+                        </svg>
+                        ${groupName}
+                        <span class="group-stats">
+                            ${groupStats.total} items${groupStats.atRisk > 0 ? ` <span class="group-stats-risk">(${groupStats.atRisk} at risk)</span>` : ''}
+                        </span>
+                    </div>
+                    <div class="group-header-track"></div>
+                </div>
+            `;
+            
+            // Group items (if not collapsed)
+            if (!collapsed) {
+                groupSources.forEach(source => {
+                    dataSourceRowsHTML += renderSourceRow(source, true);
+                });
+            }
+        });
+        
+        // Render ungrouped items at the end
+        ungrouped.forEach(source => {
+            dataSourceRowsHTML += renderSourceRow(source, false);
+        });
+    } else {
+        // No groups - render all items normally
+        visibleSources.forEach(source => {
+            dataSourceRowsHTML += renderSourceRow(source, false);
+        });
+    }
     
     // Helper function for breakdown text
     function getBreakdownText(status) {
@@ -1150,13 +1794,69 @@ function renderRoadmap() {
     const dashboardTitle = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.title) || "Roadmap Dashboard";
     const totalSubtitleSuffix = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.totalSubtitleSuffix) || "in scope";
     
-    const m0Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M0) || { short: "M0", title: "M0", subtitle: "" };
-    const m1Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M1) || { short: "M1", title: "M1", subtitle: "" };
-    const m2Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M2) || { short: "M2", title: "M2", subtitle: "" };
-    const m3Labels = (CONFIG.MILESTONE_TEXT && CONFIG.MILESTONE_TEXT.M3) || { short: "M3", title: "M3", subtitle: "" };
+    // Get total visible for filter results display
+    const allVisible = getAllVisibleDataSources();
+    const filteredCount = visibleSources.length;
+    const totalVisible = allVisible.length;
+    const hasActiveFilters = filterState.status !== 'ALL' || filterState.riskOnly || filterState.search;
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     
     // Build HTML
     const roadmapHTML = `
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <span class="filter-label">Status:</span>
+                <select class="filter-select" onchange="updateFilter('status', this.value)">
+                    <option value="ALL" ${filterState.status === 'ALL' ? 'selected' : ''}>All</option>
+                    <option value="NS" ${filterState.status === 'NS' ? 'selected' : ''}>Not Started</option>
+                    <option value="DEV" ${filterState.status === 'DEV' ? 'selected' : ''}>In Dev</option>
+                    ${milestonesDef.map(m => `<option value="${m.key}" ${filterState.status === m.key ? 'selected' : ''}>${m.short}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <button class="filter-toggle ${filterState.riskOnly ? 'active' : ''}" onclick="toggleRiskFilter()">
+                    ${riskIconSVG}
+                    At Risk Only
+                </button>
+            </div>
+            <div class="filter-group">
+                <input type="text" class="filter-input" placeholder="Search by name..." 
+                       value="${escapeHtmlAttr(filterState.search)}"
+                       oninput="updateFilter('search', this.value)">
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Sort:</span>
+                <select class="filter-select" onchange="updateFilter('sortBy', this.value)">
+                    <option value="name" ${filterState.sortBy === 'name' ? 'selected' : ''}>Name</option>
+                    <option value="status" ${filterState.sortBy === 'status' ? 'selected' : ''}>Status</option>
+                    <option value="m3date" ${filterState.sortBy === 'm3date' ? 'selected' : ''}>${lastMilestoneKey} Date</option>
+                    <option value="risk" ${filterState.sortBy === 'risk' ? 'selected' : ''}>Risk</option>
+                </select>
+                <select class="filter-select" onchange="updateFilter('sortOrder', this.value)">
+                    <option value="asc" ${filterState.sortOrder === 'asc' ? 'selected' : ''}>Asc</option>
+                    <option value="desc" ${filterState.sortOrder === 'desc' ? 'selected' : ''}>Desc</option>
+                </select>
+            </div>
+            ${hasActiveFilters ? `<button class="filter-clear" onclick="clearFilters()">Clear Filters</button>` : ''}
+            ${hasGroups ? `
+            <div class="group-controls">
+                <button class="group-control-btn" onclick="expandAllGroups()">Expand All</button>
+                <button class="group-control-btn" onclick="collapseAllGroups()">Collapse All</button>
+            </div>
+            ` : ''}
+            <div class="zoom-controls">
+                <span class="filter-label">Zoom:</span>
+                <button class="zoom-btn ${currentZoom === '3mo' ? 'active' : ''}" onclick="setDateRange(3)">3mo</button>
+                <button class="zoom-btn ${currentZoom === '6mo' ? 'active' : ''}" onclick="setDateRange(6)">6mo</button>
+                <button class="zoom-btn ${currentZoom === '12mo' ? 'active' : ''}" onclick="setDateRange(12)">12mo</button>
+                <button class="zoom-btn ${currentZoom === 'all' ? 'active' : ''}" onclick="setDateRange('all')">All</button>
+            </div>
+            <div class="filter-results">
+                Showing <strong>${filteredCount}</strong> of <strong>${totalVisible}</strong> ${entityScopeLabel}
+            </div>
+        </div>
+        
         <!-- Export Controls -->
         <div class="export-controls">
             <button class="export-btn" onclick="exportToPNG('roadmap-export', 'Full-Roadmap')">
@@ -1176,6 +1876,29 @@ function renderRoadmap() {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 Export Timeline Only
+            </button>
+            <button class="export-btn secondary" onclick="exportToCSV()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                CSV
+            </button>
+            <button class="export-btn secondary" onclick="exportToJSON()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                </svg>
+                JSON
+            </button>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                ${isDarkMode ? 
+                    `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Light Mode` : 
+                    `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    Dark Mode`}
             </button>
             <span class="export-note">Export different views for your presentation</span>
         </div>
@@ -1204,144 +1927,87 @@ function renderRoadmap() {
                     </div>
                 </div>
                 
-                <!-- KPI Cards -->
-                <div class="kpi-section">
+                <!-- KPI Cards (Dynamic) -->
+                <div class="kpi-section" style="grid-template-columns: repeat(${3 + milestonesDef.length}, 1fr);">
                     <div class="kpi-card total">
                         <div class="kpi-value">${stats.total}</div>
                         <div class="kpi-label">Total ${entityPlural}</div>
                         <div class="kpi-sublabel">${totalSubtitleSuffix}</div>
                         ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
                     </div>
-                    <div class="kpi-card ns">
-                        <div class="kpi-value">${stats.NS}</div>
+                    <div class="kpi-card" style="border-left: 4px solid var(--color-ns);">
+                        <div class="kpi-value" style="color: var(--color-ns);">${stats.NS}</div>
                         <div class="kpi-label">Not Started</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.NS}</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS?.NS || ''}</div>
                         ${getBreakdownText('NS') ? `<div class="kpi-breakdown">${getBreakdownText('NS')}</div>` : ''}
                     </div>
-                    <div class="kpi-card dev">
-                        <div class="kpi-value">${stats.DEV}</div>
+                    <div class="kpi-card" style="border-left: 4px solid var(--color-dev);">
+                        <div class="kpi-value" style="color: var(--color-dev);">${stats.DEV}</div>
                         <div class="kpi-label">In Development</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.DEV}</div>
+                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS?.DEV || ''}</div>
                         ${getBreakdownText('DEV') ? `<div class="kpi-breakdown">${getBreakdownText('DEV')}</div>` : ''}
                     </div>
-                    <div class="kpi-card m0">
-                        <div class="kpi-value">${stats.M0}</div>
-                        <div class="kpi-label">M0 - Dev Complete</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M0}</div>
-                        ${getBreakdownText('M0') ? `<div class="kpi-breakdown">${getBreakdownText('M0')}</div>` : ''}
+                    ${milestonesDef.map(m => `
+                    <div class="kpi-card" style="border-left: 4px solid ${m.color};">
+                        <div class="kpi-value" style="color: ${m.color};">${stats[m.key] || 0}</div>
+                        <div class="kpi-label">${m.short} - ${m.title}</div>
+                        <div class="kpi-sublabel">${m.subtitle || CONFIG.STATUS_DESCRIPTIONS?.[m.key] || ''}</div>
+                        ${getBreakdownText(m.key) ? `<div class="kpi-breakdown">${getBreakdownText(m.key)}</div>` : ''}
                     </div>
-                    <div class="kpi-card m1">
-                        <div class="kpi-value">${stats.M1}</div>
-                        <div class="kpi-label">M1 - Deployed</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M1}</div>
-                        ${getBreakdownText('M1') ? `<div class="kpi-breakdown">${getBreakdownText('M1')}</div>` : ''}
-                    </div>
-                    <div class="kpi-card m2">
-                        <div class="kpi-value">${stats.M2}</div>
-                        <div class="kpi-label">M2 - Ready</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M2}</div>
-                        ${getBreakdownText('M2') ? `<div class="kpi-breakdown">${getBreakdownText('M2')}</div>` : ''}
-                    </div>
-                    <div class="kpi-card m3">
-                        <div class="kpi-value">${stats.M3}</div>
-                        <div class="kpi-label">M3 - Complete</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS.M3}</div>
-                        ${getBreakdownText('M3') ? `<div class="kpi-breakdown">${getBreakdownText('M3')}</div>` : ''}
-                    </div>
+                    `).join('')}
                 </div>
                 
-                <!-- Progress Bar -->
+                <!-- Progress Bar (Dynamic) -->
                 <div class="progress-section">
                     <div class="progress-header">
                         <div class="progress-title">Overall Progress (All ${stats.total} ${entityPlural})</div>
                         <div class="progress-percentage">${stats.productionReadyPercentage}% Production Ready</div>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-segment m3" style="width: ${(stats.M3 / stats.total) * 100}%;">${stats.M3 > 0 ? stats.M3 : ''}</div>
-                        <div class="progress-segment m2" style="width: ${(stats.M2 / stats.total) * 100}%;">${stats.M2 > 0 ? stats.M2 : ''}</div>
-                        <div class="progress-segment m1" style="width: ${(stats.M1 / stats.total) * 100}%;">${stats.M1 > 0 ? stats.M1 : ''}</div>
-                        <div class="progress-segment m0" style="width: ${(stats.M0 / stats.total) * 100}%;">${stats.M0 > 0 ? stats.M0 : ''}</div>
-                        <div class="progress-segment dev" style="width: ${(stats.DEV / stats.total) * 100}%;">${stats.DEV > 0 ? stats.DEV : ''}</div>
-                        <div class="progress-segment ns" style="width: ${(stats.NS / stats.total) * 100}%;">${stats.NS > 0 ? stats.NS : ''}</div>
+                        ${[...milestonesDef].reverse().map(m => {
+                            const count = stats[m.key] || 0;
+                            const textColor = m.color === '#ffab00' ? '#172b4d' : 'white';
+                            return `<div class="progress-segment" style="width: ${(count / stats.total) * 100}%; background: ${m.color}; color: ${textColor};">${count > 0 ? count : ''}</div>`;
+                        }).join('')}
+                        <div class="progress-segment" style="width: ${(stats.DEV / stats.total) * 100}%; background: var(--color-dev);">${stats.DEV > 0 ? stats.DEV : ''}</div>
+                        <div class="progress-segment" style="width: ${(stats.NS / stats.total) * 100}%; background: var(--color-ns); color: #172b4d;">${stats.NS > 0 ? stats.NS : ''}</div>
                     </div>
                     <div class="progress-legend">
+                        ${[...milestonesDef].reverse().map(m => `
                         <div class="progress-legend-item">
-                            <div class="progress-legend-dot m3"></div>
-                            <span>M3 Switched</span>
+                            <div class="progress-legend-dot" style="background: ${m.color};"></div>
+                            <span>${m.short} ${m.title}</span>
                         </div>
+                        `).join('')}
                         <div class="progress-legend-item">
-                            <div class="progress-legend-dot m2"></div>
-                            <span>M2 Production Ready</span>
-                        </div>
-                        <div class="progress-legend-item">
-                            <div class="progress-legend-dot m1"></div>
-                            <span>M1 Production Deployed</span>
-                        </div>
-                        <div class="progress-legend-item">
-                            <div class="progress-legend-dot m0"></div>
-                            <span>M0 Development Done</span>
-                        </div>
-                        <div class="progress-legend-item">
-                            <div class="progress-legend-dot dev"></div>
+                            <div class="progress-legend-dot" style="background: var(--color-dev);"></div>
                             <span>In Dev</span>
                         </div>
                         <div class="progress-legend-item">
-                            <div class="progress-legend-dot ns"></div>
+                            <div class="progress-legend-dot" style="background: var(--color-ns);"></div>
                             <span>Not Started</span>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Upcoming Milestones -->
-                <div class="key-milestones">
+                <!-- Upcoming Milestones (Dynamic) -->
+                <div class="key-milestones" style="grid-template-columns: repeat(${milestonesDef.length}, 1fr);">
+                    ${milestonesDef.map(m => {
+                        const upcomingItem = upcoming[m.key];
+                        return `
                     <div class="milestone-card">
                         <div class="milestone-card-header">
-                            <div class="milestone-card-icon m0">${m0Labels.short || "M0"}</div>
+                            <div class="milestone-card-icon" style="background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''}">${m.short}</div>
                             <div>
-                                <div class="milestone-card-title">${m0Labels.title || "Next Dev Complete"}</div>
-                                <div class="milestone-card-subtitle">${m0Labels.subtitle || "Development Finished"}</div>
+                                <div class="milestone-card-title">Next ${m.title}</div>
+                                <div class="milestone-card-subtitle">${m.subtitle || ''}</div>
                             </div>
                         </div>
                         <div class="milestone-card-content">
-                            ${upcoming.M0 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M0.date)}</span> - <span class="milestone-card-source">${upcoming.M0.source}</span>${upcoming.M0.atRisk ? ' ⚠️' : ''}` : 'All development complete'}
+                            ${upcomingItem ? `<span class="milestone-card-date">${formatShortDate(upcomingItem.date)}</span> - <span class="milestone-card-source">${upcomingItem.source}</span>${upcomingItem.atRisk ? ' ⚠️' : ''}` : `All ${m.title.toLowerCase()} complete`}
                         </div>
-                    </div>
-                    <div class="milestone-card">
-                        <div class="milestone-card-header">
-                            <div class="milestone-card-icon m1">${m1Labels.short || "M1"}</div>
-                            <div>
-                                <div class="milestone-card-title">${m1Labels.title || "Next Deployment"}</div>
-                                <div class="milestone-card-subtitle">${m1Labels.subtitle || "Production Deployment"}</div>
-                            </div>
-                        </div>
-                        <div class="milestone-card-content">
-                            ${upcoming.M1 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M1.date)}</span> - <span class="milestone-card-source">${upcoming.M1.source}</span>${upcoming.M1.atRisk ? ' ⚠️' : ''}` : 'All deployments complete'}
-                        </div>
-                    </div>
-                    <div class="milestone-card">
-                        <div class="milestone-card-header">
-                            <div class="milestone-card-icon m2">${m2Labels.short || "M2"}</div>
-                            <div>
-                                <div class="milestone-card-title">${m2Labels.title || "Next Go-Live"}</div>
-                                <div class="milestone-card-subtitle">${m2Labels.subtitle || "Production Ready"}</div>
-                            </div>
-                        </div>
-                        <div class="milestone-card-content">
-                            ${upcoming.M2 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M2.date)}</span> - <span class="milestone-card-source">${upcoming.M2.source}</span>${upcoming.M2.atRisk ? ' ⚠️' : ''}` : 'All sources ready'}
-                        </div>
-                    </div>
-                    <div class="milestone-card">
-                        <div class="milestone-card-header">
-                            <div class="milestone-card-icon m3">${m3Labels.short || "M3"}</div>
-                            <div>
-                                <div class="milestone-card-title">${m3Labels.title || "Next Switch"}</div>
-                                <div class="milestone-card-subtitle">${m3Labels.subtitle || "Switch milestone"}</div>
-                            </div>
-                        </div>
-                        <div class="milestone-card-content">
-                            ${upcoming.M3 ? `<span class="milestone-card-date">${formatShortDate(upcoming.M3.date)}</span> - <span class="milestone-card-source">${upcoming.M3.source}</span>${upcoming.M3.atRisk ? ' ⚠️' : ''}` : 'All switches complete'}
-                        </div>
-                    </div>
+                    </div>`;
+                    }).join('')}
                 </div>
             </div>
             
@@ -1353,29 +2019,19 @@ function renderRoadmap() {
                         <span class="compact-legend-title">Legend:</span>
                         <div class="compact-legend-items">
                             <div class="compact-legend-item">
-                                <div class="compact-legend-color ns"></div>
-                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS.NS}</span>
+                                <div class="compact-legend-color" style="background: var(--color-ns);"></div>
+                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS?.NS || 'Not Started'}</span>
                             </div>
                             <div class="compact-legend-item">
-                                <div class="compact-legend-color dev"></div>
-                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS.DEV}</span>
+                                <div class="compact-legend-color" style="background: var(--color-dev);"></div>
+                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS?.DEV || 'In Dev'}</span>
                             </div>
+                            ${milestonesDef.map(m => `
                             <div class="compact-legend-item">
-                                <div class="compact-legend-color m0"></div>
-                                <span class="compact-legend-label">${m0Labels.title || "M0"}</span>
+                                <div class="compact-legend-color" style="background: ${m.color};"></div>
+                                <span class="compact-legend-label">${m.title}</span>
                             </div>
-                            <div class="compact-legend-item">
-                                <div class="compact-legend-color m1"></div>
-                                <span class="compact-legend-label">${m1Labels.title || "M1"}</span>
-                            </div>
-                            <div class="compact-legend-item">
-                                <div class="compact-legend-color m2"></div>
-                                <span class="compact-legend-label">${m2Labels.title || "M2"}</span>
-                            </div>
-                            <div class="compact-legend-item">
-                                <div class="compact-legend-color m3"></div>
-                                <span class="compact-legend-label">${m3Labels.title || "M3"}</span>
-                            </div>
+                            `).join('')}
                             <div class="compact-legend-risk">
                                 ${riskIconSVG}
                                 <span>At Risk</span>

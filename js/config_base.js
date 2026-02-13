@@ -20,13 +20,28 @@ const CONFIG = {
         totalSubtitleSuffix: "in roadmap scope" // Subtitle under the Total card
     },
     
-    // Milestone text (generic descriptions per status)
+    // Milestone text (generic descriptions per status) - LEGACY FORMAT
+    // If MILESTONES array below is defined, this section is ignored
     MILESTONE_TEXT: {
         M0: { short: "M0", title: "M0 - Dev Complete",     subtitle: "Development Finished" },
         M1: { short: "M1", title: "M1 - QA Validated",       subtitle: "QA validations Passed" },
         M2: { short: "M2", title: "M2 - UAT OK",          subtitle: "User Acceptance Testing Passed" },
         M3: { short: "M3", title: "M3 - Production Release",           subtitle: "Production Release" }
     },
+    
+    // OPTIONAL: Dynamic milestones array - Uncomment to use custom milestones
+    // When defined, this replaces the default M0-M3 with your own milestone structure
+    // Deliverables should have matching milestone keys in their milestones object
+    /*
+    MILESTONES: [
+        { key: "M0", short: "M0", title: "Dev Complete", subtitle: "Development Finished", color: "#8993a4" },
+        { key: "M1", short: "M1", title: "QA Validated", subtitle: "QA Passed", color: "#ffab00" },
+        { key: "M2", short: "M2", title: "UAT OK", subtitle: "User Acceptance", color: "#36b37e" },
+        { key: "M3", short: "M3", title: "Production", subtitle: "Released", color: "#0065ff" },
+        // Add more milestones as needed:
+        // { key: "M4", short: "M4", title: "Decommission", subtitle: "Legacy Retired", color: "#6554c0" }
+    ],
+    */
     
     // Status Labels
     STATUS_LABELS: {
@@ -52,6 +67,7 @@ const CONFIG = {
     // startDate: When development starts (null if already started long ago)
     // atRisk: true = show warning indicator
     // showInTimeline: true = visible in timeline, false = hidden but counted in totals
+    // tags: Optional array of tags for filtering (e.g., ["backend", "critical"])
     DELIVERABLES: [
         {
             name: "Deliverable 1",
@@ -59,6 +75,8 @@ const CONFIG = {
             atRisk: false,
             showInTimeline: true,
             link: "https://example.com/docs/deliverable-1",  // optional - opens in new tab
+            tags: ["core"],
+            group: "Group 1",
             milestones: { 
                 M0: "15/11/2025",
                 M1: "20/11/2025",
@@ -71,6 +89,8 @@ const CONFIG = {
             startDate: null,
             atRisk: true,
             showInTimeline: true,
+            tags: ["backend"],
+            group: "Group 1",
             milestones: { 
                 M0: "05/09/2025", 
                 M1: "12/01/2026", 
@@ -83,6 +103,7 @@ const CONFIG = {
             startDate: null,
             atRisk: true,  // AT RISK
             showInTimeline: true,
+            group: "Group 2",
             milestones: { 
                 M0: "05/09/2025", 
                 M1: "12/01/2026", 
@@ -95,6 +116,7 @@ const CONFIG = {
             startDate: null,
             atRisk: true,
             showInTimeline: true,
+            group: "Group 2",
             milestones: { 
                 M0: "05/09/2025", 
                 M1: "12/01/2026", 
@@ -106,6 +128,7 @@ const CONFIG = {
             name: "Deliverable 5",
             startDate: null,
             atRisk: false,
+            group: "Group 3",
             showInTimeline: true,
             milestones: { 
                 M0: "05/09/2025", 
@@ -118,6 +141,7 @@ const CONFIG = {
             name: "Deliverable 6",
             startDate: null,
             atRisk: false,
+            group: "Group 3",
             showInTimeline: true,
             milestones: { 
                 M0: "05/09/2025", 
@@ -160,6 +184,8 @@ const CONFIG = {
             atRisk: false,            // Set to true to show risk warning
             showInTimeline: true,     // Set to false to hide from timeline
             link: "https://...",      // Optional - shows info icon, opens in new tab
+            tags: [],                 // Optional - tags for filtering
+            group: "",                // Optional - group name for grouping
             milestones: { 
                 M0: "DD/MM/YYYY",      // Dev Complete date
                 M1: "DD/MM/YYYY",      // Prod Deployment date

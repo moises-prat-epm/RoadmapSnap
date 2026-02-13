@@ -14,8 +14,15 @@ A powerful, simple roadmap dashboard that gives clear visibility of project prog
 | **Compact timeline** | One row per deliverable with milestone markers across months |
 | **Risk visibility** | `atRisk: true` items show a warning indicator |
 | **PNG export** | Export full roadmap, summary-only, or timeline-only views |
+| **CSV/JSON export** | Export deliverable data for reporting and integration |
 | **Customizable labels** | Entity names, milestone text, status labels—all configurable |
 | **Hidden items** | `showInTimeline: false` hides items from the chart but keeps them in totals |
+| **Filtering & Sorting** | Filter by status, risk, search text; sort by name, status, date |
+| **Dynamic milestones** | Define custom milestone tracks beyond the default M0-M3 |
+| **Grouping** | Group deliverables with expand/collapse functionality |
+| **Dark mode** | Toggle between light and dark themes (persisted in localStorage) |
+| **Date zoom** | Quick buttons to zoom timeline to 3/6/12 months or full range |
+| **Info links** | Optional link per deliverable opens in new tab |
 
 ---
 
@@ -76,6 +83,18 @@ Short labels for status chips (NS, DEV, M0, M1, M2, M3). Example: `NS: "Not Star
 
 Descriptions under each KPI card. Example: `NS: "Not yet started"`, `M3: "Fully migrated"`.
 
+### `MILESTONES` *(optional)*
+
+Define custom milestones beyond the default M0-M3. If omitted, defaults to M0-M3 using `MILESTONE_TEXT` values.
+
+```javascript
+MILESTONES: [
+    { key: "M0", short: "M0", title: "Dev Complete", subtitle: "...", color: "#8993a4" },
+    { key: "M1", short: "M1", title: "Deployed", subtitle: "...", color: "#ffab00" },
+    // Add more as needed
+]
+```
+
 ### `DELIVERABLES`
 
 Array of items to track. Each item:
@@ -87,7 +106,9 @@ Array of items to track. Each item:
 | `atRisk` | boolean | Shows warning indicator when `true` |
 | `showInTimeline` | boolean | `false` = hidden from timeline, still counted in totals |
 | `link` | string *(optional)* | URL shown as info icon; opens in new tab when clicked |
-| `milestones` | object | `{ M0, M1, M2, M3 }` — each date as `"DD/MM/YYYY"` |
+| `tags` | array *(optional)* | Tags for filtering (e.g. `["backend", "critical"]`) |
+| `group` | string *(optional)* | Group name for grouping with expand/collapse |
+| `milestones` | object | `{ M0, M1, M2, M3, ... }` — each date as `"DD/MM/YYYY"` |
 
 ---
 

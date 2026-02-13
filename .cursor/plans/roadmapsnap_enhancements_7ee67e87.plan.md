@@ -10,19 +10,19 @@ todos:
     status: completed
   - id: dependencies
     content: Add deliverable dependencies with id/dependsOn and violation warnings
-    status: completed
+    status: cancelled
   - id: grouping
     content: Add group/groupId support with expand/collapse functionality
-    status: in_progress
+    status: completed
   - id: dark-mode
     content: Add dark mode toggle with CSS variables
-    status: pending
+    status: completed
   - id: date-zoom
     content: Add quick date range buttons (3mo, 6mo, 12mo, All)
-    status: pending
+    status: completed
   - id: csv-export
     content: Add CSV/JSON export for deliverable data
-    status: pending
+    status: completed
 isProject: false
 ---
 
