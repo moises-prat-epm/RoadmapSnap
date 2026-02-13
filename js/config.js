@@ -59,6 +59,7 @@ const CONFIG = {
             atRisk: true,
             showInTimeline: true,
             link: "https://danone-commercial-it.atlassian.net/browse/MTO-91",
+            group: "SAP Themis",
             milestones: { 
                 M0: "05/09/2025", 
                 M1: "12/01/2026", 
@@ -71,6 +72,7 @@ const CONFIG = {
             startDate: null,
             atRisk: true,  // AT RISK
             showInTimeline: true,
+            group: "SAP Themis",
             link: "https://danone-commercial-it.atlassian.net/browse/MTO-91",
             milestones: { 
                 M0: "05/09/2025", 
@@ -84,6 +86,7 @@ const CONFIG = {
             link: "https://danone-commercial-it.atlassian.net/browse/MTO-91",
             startDate: null,
             atRisk: true,
+            group: "SAP Themis",
             showInTimeline: true,
             milestones: { 
                 M0: "05/09/2025", 
@@ -467,6 +470,9 @@ const CONFIG = {
             startDate: "DD/MM/YYYY",  // When dev starts, null if already started
             atRisk: false,            // Set to true to show risk warning
             showInTimeline: true,     // Set to false to hide from timeline
+            link: "https://...",      // Optional - shows info icon, opens in new tab
+            tags: [],                 // Optional - tags for filtering
+            group: "",                // Optional - group name for grouping
             milestones: { 
                 M0: "DD/MM/YYYY",      // Dev Complete date
                 M1: "DD/MM/YYYY",      // Prod Deployment date
