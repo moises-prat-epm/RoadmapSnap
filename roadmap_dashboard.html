@@ -1193,7 +1193,22 @@ function sortDeliverables(sources) {
 
 function updateFilter(key, value) {
     filterState[key] = value;
-    renderRoadmap();
+    
+    // For search input, debounce and preserve focus
+    if (key === 'search') {
+        clearTimeout(window.searchDebounceTimer);
+        window.searchDebounceTimer = setTimeout(() => {
+            renderRoadmap();
+            // Restore focus to search input
+            const searchInput = document.querySelector('.filter-input');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            }
+        }, 150);
+    } else {
+        renderRoadmap();
+    }
 }
 
 function clearFilters() {
@@ -2089,8 +2104,8 @@ function renderRoadmap() {
                         </div>
                     </div>
                     <div class="timeline-info">
-                        Showing <span class="timeline-info-count">${stats.visible}</span> of <span class="timeline-info-count">${stats.total}</span> ${entityScopeLabel}
-                        ${stats.hidden > 0 ? `(${stats.hidden} completed hidden)` : ''}
+                        Showing <span class="timeline-info-count">${filteredCount}</span> of <span class="timeline-info-count">${totalVisible}</span> ${entityScopeLabel}
+                        ${hasActiveFilters ? ' (filtered)' : ''}${stats.hidden > 0 ? ` (${stats.hidden} hidden)` : ''}
                     </div>
                 </div>
                 
