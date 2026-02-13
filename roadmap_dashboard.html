@@ -415,6 +415,15 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
+        .kpi-card.clickable {
+            cursor: pointer;
+        }
+        
+        .kpi-card.active {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 3px #0065ff, 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
         .kpi-card.total {
             background: linear-gradient(135deg, #172b4d 0%, #344563 100%);
             color: white;
@@ -1198,6 +1207,28 @@ function clearFilters() {
     renderRoadmap();
 }
 
+function filterByStatus(status, event) {
+    // Prevent event bubbling so body click doesn't immediately clear
+    if (event) event.stopPropagation();
+    
+    // Toggle: if already filtering by this status, clear it
+    if (filterState.status === status) {
+        filterState.status = 'ALL';
+    } else {
+        filterState.status = status;
+    }
+    renderRoadmap();
+}
+
+function clearStatusFilterOnOutsideClick(event) {
+    // Check if click was outside KPI cards
+    const clickedKpi = event.target.closest('.kpi-card.clickable');
+    if (!clickedKpi && filterState.status !== 'ALL') {
+        filterState.status = 'ALL';
+        renderRoadmap();
+    }
+}
+
 function toggleRiskFilter() {
     filterState.riskOnly = !filterState.riskOnly;
     renderRoadmap();
@@ -1954,20 +1985,20 @@ function renderRoadmap() {
                         <div class="kpi-sublabel">${totalSubtitleSuffix}</div>
                         ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
                     </div>
-                    <div class="kpi-card" style="border-left: 4px solid var(--color-ns);">
+                    <div class="kpi-card clickable ${filterState.status === 'NS' ? 'active' : ''}" style="border-left: 4px solid var(--color-ns);" onclick="filterByStatus('NS', event)">
                         <div class="kpi-value" style="color: var(--color-ns);">${stats.NS}</div>
                         <div class="kpi-label">Not Started</div>
                         <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS?.NS || ''}</div>
                         ${getBreakdownText('NS') ? `<div class="kpi-breakdown">${getBreakdownText('NS')}</div>` : ''}
                     </div>
-                    <div class="kpi-card" style="border-left: 4px solid var(--color-dev);">
+                    <div class="kpi-card clickable ${filterState.status === 'DEV' ? 'active' : ''}" style="border-left: 4px solid var(--color-dev);" onclick="filterByStatus('DEV', event)">
                         <div class="kpi-value" style="color: var(--color-dev);">${stats.DEV}</div>
                         <div class="kpi-label">In Development</div>
                         <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS?.DEV || ''}</div>
                         ${getBreakdownText('DEV') ? `<div class="kpi-breakdown">${getBreakdownText('DEV')}</div>` : ''}
                     </div>
                     ${milestonesDef.map(m => `
-                    <div class="kpi-card" style="border-left: 4px solid ${m.color};">
+                    <div class="kpi-card clickable ${filterState.status === m.key ? 'active' : ''}" style="border-left: 4px solid ${m.color};" onclick="filterByStatus('${m.key}', event)">
                         <div class="kpi-value" style="color: ${m.color};">${stats[m.key] || 0}</div>
                         <div class="kpi-label">${m.short} - ${m.title}</div>
                         <div class="kpi-sublabel">${m.subtitle || CONFIG.STATUS_DESCRIPTIONS?.[m.key] || ''}</div>
@@ -2128,7 +2159,11 @@ function exportToPNG(elementId, fileNamePrefix) {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', renderRoadmap);
+document.addEventListener('DOMContentLoaded', () => {
+    renderRoadmap();
+    // Add click listener to clear status filter when clicking outside KPI cards
+    document.addEventListener('click', clearStatusFilterOnOutsideClick);
+});
 </script>
 
 </body>
