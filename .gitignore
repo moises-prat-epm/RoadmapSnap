@@ -8,8 +8,6 @@
 # Node (if you ever add tooling)
 node_modules/
 dist/
-js/config onehouse.js
-js/config_onehouse.js
+
+# Local config (template is config_base.js — users rename to config.js)
 js/config.js
-js/config_base.js
-.gitignore

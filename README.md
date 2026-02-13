@@ -21,13 +21,16 @@ A powerful, simple roadmap dashboard that gives clear visibility of project prog
 
 ## Quick Start
 
-You are free to clone the repository and adjust `js/config.js` to customize the roadmap. Open `roadmap_dashboard.html` in a browser to view. No server needed—refresh the page after editing the config to see changes.
+1. **Clone** the repository.
+2. **Rename** `js/config_base.js` to `js/config.js` (this is the template; your `config.js` stays local and is not committed).
+3. **Edit** `js/config.js` to customize your roadmap.
+4. **Open** `roadmap_dashboard.html` in a browser to view. No server needed—refresh the page after editing the config to see changes.
 
 ---
 
-## Configuration (`js/config.js`)
+## Configuration
 
-All settings live in `js/config.js`. The file defines a global `CONFIG` object. Parameters:
+All settings live in `js/config.js`. **Start by renaming `js/config_base.js` to `js/config.js`** — the template contains sample data you can adjust. The file defines a global `CONFIG` object. Parameters:
 
 ### `TIMELINE`
 
@@ -92,7 +95,8 @@ Array of items to track. Each item:
 
 ```
 roadmap_dashboard.html   # Main dashboard (open in browser)
-js/config.js             # All configuration
+js/config_base.js        # Config template — rename to config.js
+js/config.js             # Your config (create by renaming config_base.js; not committed)
 docs/preview.png         # Preview screenshot
 ```
 
