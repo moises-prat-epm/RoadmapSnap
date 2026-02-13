@@ -4,16 +4,16 @@ overview: Plan to add filtering/sorting, multiple milestone tracks, deliverable 
 todos:
   - id: filter-sort
     content: Implement filtering (status, risk, tags, search) and sorting (name, status, date) controls
-    status: in_progress
+    status: completed
   - id: multiple-milestones
     content: Refactor to support dynamic MILESTONES array instead of hardcoded M0-M3
-    status: pending
+    status: completed
   - id: dependencies
     content: Add deliverable dependencies with id/dependsOn and violation warnings
-    status: pending
+    status: completed
   - id: grouping
     content: Add group/groupId support with expand/collapse functionality
-    status: pending
+    status: in_progress
   - id: dark-mode
     content: Add dark mode toggle with CSS variables
     status: pending
