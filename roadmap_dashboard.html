@@ -971,6 +971,21 @@
             align-items: center;
         }
         
+        /* Gantt Bar Segments */
+        .gantt-bar {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 8px;
+            border-radius: 4px;
+            opacity: 0.8;
+            z-index: 1;
+        }
+        
+        .gantt-bar.gantt-future {
+            opacity: 0.3;
+        }
+        
         /* Month Grid Lines */
         .month-grid-line {
             position: absolute;
@@ -1147,7 +1162,8 @@ let filterState = {
     riskOnly: false,
     search: '',
     sortBy: 'name',
-    sortOrder: 'asc'
+    sortOrder: 'asc',
+    showGantt: true
 };
 
 // ============================================
@@ -1239,7 +1255,8 @@ function clearFilters() {
         riskOnly: false,
         search: '',
         sortBy: 'name',
-        sortOrder: 'asc'
+        sortOrder: 'asc',
+        showGantt: true
     };
     renderRoadmap();
 }
@@ -1268,6 +1285,11 @@ function clearStatusFilterOnOutsideClick(event) {
 
 function toggleRiskFilter() {
     filterState.riskOnly = !filterState.riskOnly;
+    renderRoadmap();
+}
+
+function toggleGanttBars() {
+    filterState.showGantt = !filterState.showGantt;
     renderRoadmap();
 }
 
@@ -1786,6 +1808,77 @@ function renderRoadmap() {
             `;
         }).join('');
         
+        // Generate Gantt bar - shows full timeline with colored segments for each phase
+        // Works dynamically with any milestone configuration
+        // Past portions have full opacity, future portions have reduced opacity
+        // Not Started items show full future bar with reduced opacity
+        let ganttBarsHTML = '';
+        {
+            const segments = [];
+            
+            // Get start date position
+            const startDatePos = source.startDate ? calculatePosition(source.startDate, months) : null;
+            
+            // Get all milestone positions dynamically
+            const milestonePositions = {};
+            milestonesDef.forEach(m => {
+                const date = source.milestones?.[m.key];
+                milestonePositions[m.key] = date ? calculatePosition(date, months) : null;
+            });
+            
+            // Helper function to create a segment, splitting at today if needed
+            function createSegment(start, end, color) {
+                if (start === null || end === null || end <= start) return;
+                
+                // If entirely in the past
+                if (end <= todayPosition) {
+                    segments.push(`<div class="gantt-bar" style="left: ${start}%; width: ${end - start}%; background: ${color};"></div>`);
+                }
+                // If entirely in the future
+                else if (start >= todayPosition) {
+                    segments.push(`<div class="gantt-bar gantt-future" style="left: ${start}%; width: ${end - start}%; background: ${color};"></div>`);
+                }
+                // If spans today - split into two parts
+                else {
+                    // Past portion (full opacity)
+                    const pastWidth = todayPosition - start;
+                    if (pastWidth > 0) {
+                        segments.push(`<div class="gantt-bar" style="left: ${start}%; width: ${pastWidth}%; background: ${color};"></div>`);
+                    }
+                    // Future portion (reduced opacity)
+                    const futureWidth = end - todayPosition;
+                    if (futureWidth > 0) {
+                        segments.push(`<div class="gantt-bar gantt-future" style="left: ${todayPosition}%; width: ${futureWidth}%; background: ${color};"></div>`);
+                    }
+                }
+            }
+            
+            // Generate all segments dynamically based on milestone definitions
+            // Each segment from milestone N to milestone N+1 uses milestone N's color
+            // First segment (START to first milestone) uses first milestone's color
+            for (let i = 0; i < milestonesDef.length; i++) {
+                const currentMilestone = milestonesDef[i];
+                const currentPos = milestonePositions[currentMilestone.key];
+                
+                if (i === 0) {
+                    // First segment: START to first milestone - use first milestone's color
+                    if (currentPos !== null) {
+                        const segStart = startDatePos !== null ? startDatePos : Math.max(0, currentPos - 5);
+                        createSegment(segStart, currentPos, currentMilestone.color);
+                    }
+                }
+                
+                // Segment from current milestone to next milestone
+                if (i < milestonesDef.length - 1) {
+                    const nextMilestone = milestonesDef[i + 1];
+                    const nextPos = milestonePositions[nextMilestone.key];
+                    createSegment(currentPos, nextPos, nextMilestone.color);
+                }
+            }
+            
+            ganttBarsHTML = segments.join('');
+        }
+        
         // Risk indicator
         const riskIndicatorHTML = source.atRisk ? 
             `<div class="risk-indicator" title="At Risk">${riskIconSVG}</div>` : '';
@@ -1804,6 +1897,7 @@ function renderRoadmap() {
                 </div>
                 <div class="timeline-track">
                     ${gridLinesHTML}
+                    ${filterState.showGantt ? ganttBarsHTML : ''}
                     <div class="today-guide-line" style="left: ${todayPosition}%;"></div>
                     ${startMarkerHTML}
                     ${milestonesHTMLArr}
@@ -1905,6 +1999,16 @@ function renderRoadmap() {
                 <button class="filter-toggle ${filterState.riskOnly ? 'active' : ''}" onclick="toggleRiskFilter()">
                     ${riskIconSVG}
                     At Risk Only
+                </button>
+            </div>
+            <div class="filter-group">
+                <button class="filter-toggle ${filterState.showGantt ? 'active' : ''}" onclick="toggleGanttBars()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Gantt Bars
                 </button>
             </div>
             <div class="filter-group">
