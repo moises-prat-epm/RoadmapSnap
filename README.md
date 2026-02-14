@@ -123,5 +123,5 @@ docs/preview.png         # Preview screenshot
 
 ## Try It Live
 
-Check out the live demo at [Try It Live](https://moises-prat-epm.github.io/RoadmapSnap/report_dashboard.html).
+Check out the live demo at [Try It Live](https://moises-prat-epm.github.io/RoadmapSnap/roadmap_dashboard.html).
 
