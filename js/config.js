@@ -60,7 +60,7 @@ const CONFIG = {
         { type: 'state', key: 'STG', short: 'STG', title: 'In Staging', description: 'Staging environment' },
         
         // M4 milestone transitions to PRD state (final)
-        { type: 'milestone', key: 'M4', short: 'END', title: 'Production', subtitle: 'Live in Prod', color: '#229954' },
+        { type: 'milestone', key: 'M4', short:'M4', title: 'Production', subtitle: 'Live in Prod', color: '#229954' },
         { type: 'state', key: 'PRD', short: 'PRD', title: 'In Production', description: 'Live in production' },
     ],
     
