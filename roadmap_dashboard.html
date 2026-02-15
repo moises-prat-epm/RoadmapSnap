@@ -87,13 +87,6 @@
             background: var(--color-bg-secondary);
         }
         
-        [data-theme="dark"] .compact-legend {
-            background: var(--color-bg-secondary);
-        }
-        
-        [data-theme="dark"] .timeline-info {
-            background: var(--color-bg-white);
-        }
         
         [data-theme="dark"] .month-column {
             background: var(--color-bg-secondary);
@@ -360,6 +353,22 @@
             border: 1px solid rgba(222, 53, 11, 0.3);
         }
         
+        .risk-summary.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .risk-summary.clickable:hover {
+            background: rgba(222, 53, 11, 0.2);
+            border-color: rgba(222, 53, 11, 0.5);
+        }
+        
+        .risk-summary.clickable.active {
+            background: rgba(222, 53, 11, 0.25);
+            border-color: var(--color-risk);
+            box-shadow: 0 0 0 2px rgba(222, 53, 11, 0.2);
+        }
+        
         .risk-summary-icon {
             color: var(--color-risk);
             font-size: 14px;
@@ -569,11 +578,11 @@
         .progress-legend-dot.m3 { background: var(--color-m3); }
         
         /* ============================================
-           COMPACT LEGEND
+           STATE LEGEND
            ============================================ */
-        .compact-legend {
+        .state-legend {
             background: #f8f9fa;
-            padding: 12px 32px;
+            padding: 10px 32px;
             border-bottom: 1px solid var(--color-border);
             display: flex;
             flex-wrap: wrap;
@@ -582,68 +591,33 @@
             justify-content: space-between;
         }
         
-        .compact-legend-left {
+        .state-legend-items {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 16px;
             align-items: center;
         }
         
-        .compact-legend-title {
-            font-weight: 600;
+        .state-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
             font-size: 11px;
-            color: var(--color-text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
         
-        .compact-legend-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        
-        .compact-legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 10px;
-        }
-        
-        .compact-legend-color {
-            width: 12px;
-            height: 12px;
+        .state-legend-color {
+            width: 14px;
+            height: 14px;
             border-radius: 3px;
             flex-shrink: 0;
         }
         
-        .compact-legend-color.ns { background: var(--color-ns); }
-        .compact-legend-color.dev { background: var(--color-dev); }
-        .compact-legend-color.m0 { background: var(--color-m0); }
-        .compact-legend-color.m1 { background: var(--color-m1); }
-        .compact-legend-color.m2 { background: var(--color-m2); }
-        .compact-legend-color.m3 { background: var(--color-m3); }
-        
-        .compact-legend-label {
+        .state-legend-label {
             color: var(--color-text-dark);
             font-weight: 500;
         }
         
-        .compact-legend-risk {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 10px;
-            color: var(--color-risk);
-            font-weight: 600;
-        }
-        
-        .compact-legend-risk svg {
-            width: 14px;
-            height: 14px;
-        }
-        
-        .timeline-info {
+        .state-legend-info {
             font-size: 11px;
             color: var(--color-text-light);
             background: white;
@@ -652,9 +626,17 @@
             border: 1px solid var(--color-border);
         }
         
-        .timeline-info-count {
+        .state-legend-info-count {
             font-weight: 700;
             color: var(--color-text-dark);
+        }
+        
+        [data-theme="dark"] .state-legend {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .state-legend-info {
+            background: var(--color-bg-white);
         }
         
         /* ============================================
@@ -1196,7 +1178,7 @@ function filterDeliverables(sources) {
 
 function sortDeliverables(sources) {
     const sorted = [...sources];
-    const milestones = getMilestones();
+    const states = getStates();
     const lastMilestoneKey = getLastMilestoneKey();
     
     sorted.sort((a, b) => {
@@ -1207,15 +1189,16 @@ function sortDeliverables(sources) {
                 comparison = a.name.localeCompare(b.name);
                 break;
             case 'status':
-                const statusOrder = ['NS', 'DEV', ...milestones.map(m => m.key)];
+                // Sort by state order from workflow
+                const statusOrder = states.map(s => s.key);
                 const statusA = statusOrder.indexOf(getCurrentStatus(a));
                 const statusB = statusOrder.indexOf(getCurrentStatus(b));
                 comparison = statusA - statusB;
                 break;
             case 'm3date':
                 // Use the last milestone date for sorting
-                const dateA = parseDate(a.milestones?.[lastMilestoneKey]) || new Date(9999, 11, 31);
-                const dateB = parseDate(b.milestones?.[lastMilestoneKey]) || new Date(9999, 11, 31);
+                const dateA = parseDate(getMilestoneDate(a, lastMilestoneKey)) || new Date(9999, 11, 31);
+                const dateB = parseDate(getMilestoneDate(b, lastMilestoneKey)) || new Date(9999, 11, 31);
                 comparison = dateA - dateB;
                 break;
             case 'risk':
@@ -1271,19 +1254,24 @@ function filterByStatus(status, event) {
     } else {
         filterState.status = status;
     }
+    // Clear risk filter when selecting a status filter
+    filterState.riskOnly = false;
     renderRoadmap();
 }
 
 function clearStatusFilterOnOutsideClick(event) {
-    // Check if click was outside KPI cards
+    // Check if click was outside KPI cards and risk summary
     const clickedKpi = event.target.closest('.kpi-card.clickable');
-    if (!clickedKpi && filterState.status !== 'ALL') {
+    const clickedRiskSummary = event.target.closest('.risk-summary.clickable');
+    if (!clickedKpi && !clickedRiskSummary && (filterState.status !== 'ALL' || filterState.riskOnly)) {
         filterState.status = 'ALL';
+        filterState.riskOnly = false;
         renderRoadmap();
     }
 }
 
-function toggleRiskFilter() {
+function toggleRiskFilter(event) {
+    if (event) event.stopPropagation();
     filterState.riskOnly = !filterState.riskOnly;
     renderRoadmap();
 }
@@ -1435,24 +1423,26 @@ function setDateRange(months) {
 // ============================================
 function exportToCSV() {
     const milestones = getMilestones();
-    const headers = ['Name', 'Group', 'Status', 'At Risk', 'Start Date', 'Tags', 'Link'];
-    milestones.forEach(m => headers.push(m.key));
+    const headers = ['Name', 'Group', 'Current State', 'Next Milestone', 'At Risk', 'Tags', 'Link'];
+    milestones.forEach(m => headers.push(`${m.key} Date`));
     
     const rows = [headers.join(',')];
     
     CONFIG.DELIVERABLES.forEach(source => {
         const status = getCurrentStatus(source);
+        const currentState = getStateByKey(status);
+        const nextMilestone = getNextMilestone(source);
         const row = [
             `"${(source.name || '').replace(/"/g, '""')}"`,
             `"${source.group || ''}"`,
-            status,
+            currentState ? `${currentState.short} - ${currentState.title}` : status,
+            nextMilestone ? nextMilestone.short : 'Complete',
             source.atRisk ? 'Yes' : 'No',
-            source.startDate || '',
             `"${(source.tags || []).join('; ')}"`,
             `"${source.link || ''}"`
         ];
         milestones.forEach(m => {
-            row.push(source.milestones?.[m.key] || '');
+            row.push(getMilestoneDate(source, m.key) || '');
         });
         rows.push(row.join(','));
     });
@@ -1465,11 +1455,18 @@ function exportToJSON() {
     const exportData = {
         exportDate: new Date().toISOString(),
         timeline: CONFIG.TIMELINE,
+        workflow: getWorkflow(),
+        states: getStates(),
         milestones: getMilestones(),
-        deliverables: CONFIG.DELIVERABLES.map(source => ({
-            ...source,
-            currentStatus: getCurrentStatus(source)
-        }))
+        deliverables: CONFIG.DELIVERABLES.map(source => {
+            const currentState = getStateByKey(getCurrentStatus(source));
+            const nextMilestone = getNextMilestone(source);
+            return {
+                ...source,
+                currentState: currentState ? { key: currentState.key, title: currentState.title } : null,
+                nextMilestone: nextMilestone ? { key: nextMilestone.key, title: nextMilestone.title } : null
+            };
+        })
     };
     
     const jsonContent = JSON.stringify(exportData, null, 2);
@@ -1487,30 +1484,147 @@ function downloadFile(content, filename, mimeType) {
 }
 
 // ============================================
-// DYNAMIC MILESTONES
+// WORKFLOW: STATES & MILESTONES
 // ============================================
-function getMilestones() {
-    // Return CONFIG.MILESTONES if defined, otherwise fall back to default M0-M3
-    if (CONFIG.MILESTONES && Array.isArray(CONFIG.MILESTONES)) {
-        return CONFIG.MILESTONES;
-    }
-    // Default milestones for backwards compatibility
-    return [
-        { key: 'M0', short: 'M0', title: CONFIG.MILESTONE_TEXT?.M0?.title || 'Dev Complete', subtitle: CONFIG.MILESTONE_TEXT?.M0?.subtitle || '', color: '#8993a4' },
-        { key: 'M1', short: 'M1', title: CONFIG.MILESTONE_TEXT?.M1?.title || 'Deployed', subtitle: CONFIG.MILESTONE_TEXT?.M1?.subtitle || '', color: '#ffab00' },
-        { key: 'M2', short: 'M2', title: CONFIG.MILESTONE_TEXT?.M2?.title || 'Ready', subtitle: CONFIG.MILESTONE_TEXT?.M2?.subtitle || '', color: '#36b37e' },
-        { key: 'M3', short: 'M3', title: CONFIG.MILESTONE_TEXT?.M3?.title || 'Complete', subtitle: CONFIG.MILESTONE_TEXT?.M3?.subtitle || '', color: '#0065ff' }
-    ];
+// The WORKFLOW defines the sequence: state -> milestone -> state -> milestone -> ... -> final state
+// States represent the current phase; Milestones are transition points with dates.
+
+// Helper function to darken a hex color by a percentage (0-1)
+function darkenColor(hex, percent) {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse RGB values
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+    
+    // Darken by reducing each component
+    r = Math.max(0, Math.floor(r * (1 - percent)));
+    g = Math.max(0, Math.floor(g * (1 - percent)));
+    b = Math.max(0, Math.floor(b * (1 - percent)));
+    
+    // Convert back to hex
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
+function getWorkflow() {
+    // Return CONFIG.WORKFLOW if defined, otherwise fall back to legacy format
+    if (CONFIG.WORKFLOW && Array.isArray(CONFIG.WORKFLOW)) {
+        return CONFIG.WORKFLOW;
+    }
+    
+    // Legacy fallback: convert old MILESTONES format to new WORKFLOW format
+    const legacyMilestones = CONFIG.MILESTONES || [
+        { key: 'M0', short: 'M0', title: 'Dev Complete', subtitle: '', color: '#8993a4' },
+        { key: 'M1', short: 'M1', title: 'Deployed', subtitle: '', color: '#ffab00' },
+        { key: 'M2', short: 'M2', title: 'Ready', subtitle: '', color: '#36b37e' },
+        { key: 'M3', short: 'M3', title: 'Complete', subtitle: '', color: '#0065ff' }
+    ];
+    
+    // Build a simple workflow from legacy format
+    const workflow = [
+        { type: 'state', key: 'NS', short: 'NS', title: 'Not Started', description: 'Pending kickoff' },
+        { type: 'milestone', key: 'START', short: 'START', title: 'Start', subtitle: 'Kickoff', color: '#6554c0' },
+        { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development', description: 'Active development' }
+    ];
+    
+    legacyMilestones.forEach((m, index) => {
+        workflow.push({ type: 'milestone', key: m.key, short: m.short, title: m.title, subtitle: m.subtitle, color: m.color });
+        // Add a state after each milestone (except possibly the last one)
+        if (index < legacyMilestones.length - 1) {
+            workflow.push({ type: 'state', key: `S${index + 1}`, short: `S${index + 1}`, title: `Phase ${index + 2}`, description: '' });
+        } else {
+            workflow.push({ type: 'state', key: 'DONE', short: 'DONE', title: 'Done', description: 'Complete' });
+        }
+    });
+    
+    return workflow;
+}
+
+// Get all states from workflow
+function getStates() {
+    const workflow = getWorkflow();
+    return workflow.filter(item => item.type === 'state');
+}
+
+// Get all milestones from workflow
+function getMilestones() {
+    const workflow = getWorkflow();
+    return workflow.filter(item => item.type === 'milestone');
+}
+
+// Get state by key
+function getStateByKey(key) {
+    const states = getStates();
+    return states.find(s => s.key === key) || null;
+}
+
+// Get milestone by key
 function getMilestoneByKey(key) {
     const milestones = getMilestones();
     return milestones.find(m => m.key === key) || null;
 }
 
+// Get the state that follows a given milestone
+function getStateAfterMilestone(milestoneKey) {
+    const workflow = getWorkflow();
+    const milestoneIndex = workflow.findIndex(item => item.type === 'milestone' && item.key === milestoneKey);
+    if (milestoneIndex === -1) return null;
+    
+    // Find the next state after this milestone
+    for (let i = milestoneIndex + 1; i < workflow.length; i++) {
+        if (workflow[i].type === 'state') {
+            return workflow[i];
+        }
+    }
+    return null;
+}
+
+// Get the first state (initial state before any milestone)
+function getFirstState() {
+    const states = getStates();
+    return states[0] || { key: 'NS', short: 'NS', title: 'Not Started', description: '' };
+}
+
+// Get the last state (final state)
+function getLastState() {
+    const states = getStates();
+    return states[states.length - 1] || { key: 'DONE', short: 'DONE', title: 'Done', description: '' };
+}
+
+// Get the last milestone key
 function getLastMilestoneKey() {
     const milestones = getMilestones();
-    return milestones[milestones.length - 1]?.key || 'M3';
+    return milestones[milestones.length - 1]?.key || 'M4';
+}
+
+// Get the next milestone for a deliverable (the one not yet reached)
+function getNextMilestone(source) {
+    const today = parseDate(getTodayDate());
+    const milestones = getMilestones();
+    
+    for (const milestone of milestones) {
+        const milestoneDate = parseDate(getMilestoneDate(source, milestone.key));
+        if (milestoneDate && today < milestoneDate) {
+            return milestone;
+        }
+    }
+    
+    return null; // All milestones passed
+}
+
+// Get milestone date from source (handles both new format and legacy startDate)
+function getMilestoneDate(source, milestoneKey) {
+    // Check in milestones object first
+    if (source.milestones && source.milestones[milestoneKey]) {
+        return source.milestones[milestoneKey];
+    }
+    // Legacy support: startDate maps to START milestone
+    if (milestoneKey === 'START' && source.startDate) {
+        return source.startDate;
+    }
+    return null;
 }
 
 // ============================================
@@ -1610,32 +1724,27 @@ function isDateInRange(dateStr, months) {
     return date >= timelineStart && date <= timelineEnd;
 }
 
-// Determine current status based on dates (dynamic milestones)
+// Determine current STATE based on milestone dates
+// The state is determined by finding the latest milestone that has passed,
+// then returning the state that follows that milestone.
 function getCurrentStatus(source) {
     const today = parseDate(getTodayDate());
-    const startDate = parseDate(source.startDate);
     const milestones = getMilestones();
     
     // Check milestones in reverse order (latest first)
+    // The state is the one that comes AFTER the last passed milestone
     for (let i = milestones.length - 1; i >= 0; i--) {
         const milestone = milestones[i];
-        const milestoneDate = parseDate(source.milestones?.[milestone.key]);
+        const milestoneDate = parseDate(getMilestoneDate(source, milestone.key));
         if (milestoneDate && today >= milestoneDate) {
-            return milestone.key;
+            // Return the state that follows this milestone
+            const nextState = getStateAfterMilestone(milestone.key);
+            return nextState ? nextState.key : getLastState().key;
         }
     }
     
-    // If start date exists and has passed, status is DEV (in development)
-    if (startDate && today >= startDate) return 'DEV';
-    
-    // If start date exists but hasn't passed, status is NS (not started)
-    if (startDate && today < startDate) return 'NS';
-    
-    // If no start date but first milestone hasn't passed, assume in development
-    const firstMilestoneDate = parseDate(source.milestones?.[milestones[0]?.key]);
-    if (!startDate && firstMilestoneDate && today < firstMilestoneDate) return 'DEV';
-    
-    return 'DEV';
+    // No milestone has passed yet - return the first state
+    return getFirstState().key;
 }
 
 // Get visible data sources (with filters applied)
@@ -1652,30 +1761,29 @@ function getAllVisibleDataSources() {
 }
 
 // Calculate Statistics (uses all deliverables, not filtered)
+// Now counts by STATES instead of milestones
 function calculateStats() {
     const allSources = CONFIG.DELIVERABLES;
     const visibleSources = getAllVisibleDataSources();
-    const milestones = getMilestones();
-    const lastMilestoneKey = getLastMilestoneKey();
+    const states = getStates();
+    const lastState = getLastState();
     
-    // Initialize stats dynamically
+    // Initialize stats dynamically with states
     const stats = { 
-        NS: 0, 
-        DEV: 0, 
         total: allSources.length,
         visible: visibleSources.length,
         hidden: allSources.length - visibleSources.length,
         atRisk: 0,
-        visibleByStatus: { NS: 0, DEV: 0 },
-        hiddenByStatus: { NS: 0, DEV: 0 },
-        milestoneKeys: milestones.map(m => m.key)
+        visibleByStatus: {},
+        hiddenByStatus: {},
+        stateKeys: states.map(s => s.key)
     };
     
-    // Initialize milestone counts
-    milestones.forEach(m => {
-        stats[m.key] = 0;
-        stats.visibleByStatus[m.key] = 0;
-        stats.hiddenByStatus[m.key] = 0;
+    // Initialize state counts
+    states.forEach(s => {
+        stats[s.key] = 0;
+        stats.visibleByStatus[s.key] = 0;
+        stats.hiddenByStatus[s.key] = 0;
     });
     
     allSources.forEach(source => {
@@ -1697,13 +1805,14 @@ function calculateStats() {
         }
     });
     
-    // Calculate completion percentage (last milestone = complete)
-    stats.completionPercentage = Math.round((stats[lastMilestoneKey] / stats.total) * 100);
+    // Calculate completion percentage (last state = complete/production)
+    const lastStateKey = lastState.key;
+    stats.completionPercentage = Math.round((stats[lastStateKey] / stats.total) * 100);
     
-    // Calculate production ready (last 2 milestones)
-    if (milestones.length >= 2) {
-        const secondLastKey = milestones[milestones.length - 2].key;
-        stats.productionReadyPercentage = Math.round(((stats[secondLastKey] + stats[lastMilestoneKey]) / stats.total) * 100);
+    // Calculate "advanced" percentage (last 2 states)
+    if (states.length >= 2) {
+        const secondLastState = states[states.length - 2];
+        stats.productionReadyPercentage = Math.round(((stats[secondLastState.key] + stats[lastStateKey]) / stats.total) * 100);
     } else {
         stats.productionReadyPercentage = stats.completionPercentage;
     }
@@ -1723,11 +1832,12 @@ function getUpcomingMilestones() {
         let nearestDate = null;
         
         visibleSources.forEach(source => {
-            const date = parseDate(source.milestones?.[m.key]);
+            const milestoneDate = getMilestoneDate(source, m.key);
+            const date = parseDate(milestoneDate);
             if (date && date >= today) {
                 if (!nearestDate || date < nearestDate) {
                     nearestDate = date;
-                    nearest = { source: source.name, date: source.milestones[m.key], atRisk: source.atRisk };
+                    nearest = { source: source.name, date: milestoneDate, atRisk: source.atRisk };
                 }
             }
         });
@@ -1752,12 +1862,16 @@ const riskIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 function renderRoadmap() {
     const months = generateMonths();
     const monthWidth = 100 / months.length;
+    const today = parseDate(getTodayDate());
     const todayPosition = calculatePosition(getTodayDate(), months);
     const stats = calculateStats();
     const upcoming = getUpcomingMilestones();
     const visibleSources = getVisibleDataSources();
+    const workflow = getWorkflow();
+    const statesDef = getStates();
     const milestonesDef = getMilestones();
     const lastMilestoneKey = getLastMilestoneKey();
+    const lastState = getLastState();
     const hasGroups = hasAnyGroups(visibleSources);
     
     // Generate month columns
@@ -1773,37 +1887,71 @@ function renderRoadmap() {
     // Helper function to render a single source row
     function renderSourceRow(source, isGroupItem = false) {
         const status = getCurrentStatus(source);
+        const currentState = getStateByKey(status);
         const statusClass = `status-${status.toLowerCase()}`;
         const indicatorClass = status.toLowerCase();
         const atRiskClass = source.atRisk ? 'at-risk' : '';
         const groupItemClass = isGroupItem ? 'group-item' : '';
         
-        // Generate start marker
+        // Get state color (use first matching milestone color or default)
+        const workflow = getWorkflow();
+        const stateIndex = workflow.findIndex(item => item.type === 'state' && item.key === status);
+        let stateColor = '#c1c7d0'; // default grey
+        // Find the NEXT milestone after this state to get the relevant color
+        let foundNext = false;
+        for (let i = stateIndex + 1; i < workflow.length; i++) {
+            if (workflow[i].type === 'milestone') {
+                stateColor = workflow[i].color;
+                foundNext = true;
+                break;
+            }
+        }
+        // For final state (no next milestone), use a darker shade of the previous milestone's color
+        if (!foundNext && stateIndex > 0) {
+            for (let i = stateIndex - 1; i >= 0; i--) {
+                if (workflow[i].type === 'milestone') {
+                    // Darken the color for final state to distinguish from previous state
+                    stateColor = darkenColor(workflow[i].color, 0.25);
+                    break;
+                }
+            }
+        }
+        
+        // Check if activity has started (START date has passed)
+        const activityStartDate = getMilestoneDate(source, 'START');
+        const hasStarted = activityStartDate && parseDate(activityStartDate) <= today;
+        const stateOpacity = hasStarted ? '0.8' : '0.3';
+        
+        // Generate start marker using START milestone date
+        // Hide label if position < 2% to avoid overlap with status indicator
         let startMarkerHTML = '';
-        if (source.startDate && isDateInRange(source.startDate, months)) {
-            const position = calculatePosition(source.startDate, months);
+        const startDate = getMilestoneDate(source, 'START');
+        if (startDate && isDateInRange(startDate, months)) {
+            const position = calculatePosition(startDate, months);
+            const startMilestone = getMilestoneByKey('START');
+            const hideLabel = position < 2;
             startMarkerHTML = `
-                <div class="milestone-marker start" style="left: ${position}%;">
-                    <span>START</span>
-                    <div class="milestone-date">${formatDateDisplay(source.startDate)}</div>
+                <div class="milestone-marker start" style="left: ${position}%; background: ${startMilestone?.color || '#6554c0'}; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
+                    ${hideLabel ? '' : `<span>START</span><div class="milestone-date">${formatDateDisplay(startDate)}</div>`}
                 </div>
             `;
         }
         
-        // Generate milestone markers (dynamic)
-        const milestonesHTMLArr = milestonesDef.map(m => {
-            const date = source.milestones?.[m.key];
+        // Generate milestone markers (dynamic) - skip START as it has its own marker
+        // Hide label if position < 2% to avoid overlap with status indicator
+        const milestonesHTMLArr = milestonesDef.filter(m => m.key !== 'START').map(m => {
+            const date = getMilestoneDate(source, m.key);
             
             if (!date || !isDateInRange(date, months)) {
                 return '';
             }
             
             const position = calculatePosition(date, months);
+            const hideLabel = position < 2;
             
             return `
-                <div class="milestone-marker" style="left: ${position}%; background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''}">
-                    <span>${m.short}</span>
-                    <div class="milestone-date">${formatDateDisplay(date)}</div>
+                <div class="milestone-marker" style="left: ${position}%; background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''} ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
+                    ${hideLabel ? '' : `<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(date)}</div>`}
                 </div>
             `;
         }).join('');
@@ -1816,13 +1964,14 @@ function renderRoadmap() {
         {
             const segments = [];
             
-            // Get start date position
-            const startDatePos = source.startDate ? calculatePosition(source.startDate, months) : null;
+            // Get start date position (using START milestone)
+            const startDate = getMilestoneDate(source, 'START');
+            const startDatePos = startDate ? calculatePosition(startDate, months) : null;
             
             // Get all milestone positions dynamically
             const milestonePositions = {};
             milestonesDef.forEach(m => {
-                const date = source.milestones?.[m.key];
+                const date = getMilestoneDate(source, m.key);
                 milestonePositions[m.key] = date ? calculatePosition(date, months) : null;
             });
             
@@ -1893,7 +2042,7 @@ function renderRoadmap() {
                     ${riskIndicatorHTML}
                     <span class="source-name-text">${source.name}</span>
                     ${infoLinkHTML}
-                    <span class="status-indicator ${indicatorClass}">${status}</span>
+                    <span class="status-indicator" style="background: ${stateColor}; opacity: ${stateOpacity}; ${stateColor === '#ffab00' ? 'color: #172b4d;' : 'color: white;'}" title="${currentState?.title || status}">${currentState?.short || status}</span>
                 </div>
                 <div class="timeline-track">
                     ${gridLinesHTML}
@@ -1986,21 +2135,6 @@ function renderRoadmap() {
     const roadmapHTML = `
         <!-- Filter Bar -->
         <div class="filter-bar">
-            <div class="filter-group">
-                <span class="filter-label">Status:</span>
-                <select class="filter-select" onchange="updateFilter('status', this.value)">
-                    <option value="ALL" ${filterState.status === 'ALL' ? 'selected' : ''}>All</option>
-                    <option value="NS" ${filterState.status === 'NS' ? 'selected' : ''}>Not Started</option>
-                    <option value="DEV" ${filterState.status === 'DEV' ? 'selected' : ''}>In Dev</option>
-                    ${milestonesDef.map(m => `<option value="${m.key}" ${filterState.status === m.key ? 'selected' : ''}>${m.short}</option>`).join('')}
-                </select>
-            </div>
-            <div class="filter-group">
-                <button class="filter-toggle ${filterState.riskOnly ? 'active' : ''}" onclick="toggleRiskFilter()">
-                    ${riskIconSVG}
-                    At Risk Only
-                </button>
-            </div>
             <div class="filter-group">
                 <button class="filter-toggle ${filterState.showGantt ? 'active' : ''}" onclick="toggleGanttBars()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2106,7 +2240,7 @@ function renderRoadmap() {
                     </div>
                     <div class="header-right">
                         ${stats.atRisk > 0 ? `
-                        <div class="risk-summary">
+                        <div class="risk-summary clickable ${filterState.riskOnly ? 'active' : ''}" onclick="toggleRiskFilter(event)" title="Click to filter At Risk items">
                             <span class="risk-summary-icon">${riskIconSVG}</span>
                             <span class="risk-summary-text">${stats.atRisk} At Risk</span>
                         </div>
@@ -2118,66 +2252,109 @@ function renderRoadmap() {
                     </div>
                 </div>
                 
-                <!-- KPI Cards (Dynamic) -->
-                <div class="kpi-section" style="grid-template-columns: repeat(${3 + milestonesDef.length}, 1fr);">
+                <!-- KPI Cards (Dynamic - by STATE) -->
+                <div class="kpi-section" style="grid-template-columns: repeat(${1 + statesDef.length}, 1fr);">
                     <div class="kpi-card total">
                         <div class="kpi-value">${stats.total}</div>
                         <div class="kpi-label">Total ${entityPlural}</div>
                         <div class="kpi-sublabel">${totalSubtitleSuffix}</div>
                         ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
                     </div>
-                    <div class="kpi-card clickable ${filterState.status === 'NS' ? 'active' : ''}" style="border-left: 4px solid var(--color-ns);" onclick="filterByStatus('NS', event)">
-                        <div class="kpi-value" style="color: var(--color-ns);">${stats.NS}</div>
-                        <div class="kpi-label">Not Started</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS?.NS || ''}</div>
-                        ${getBreakdownText('NS') ? `<div class="kpi-breakdown">${getBreakdownText('NS')}</div>` : ''}
-                    </div>
-                    <div class="kpi-card clickable ${filterState.status === 'DEV' ? 'active' : ''}" style="border-left: 4px solid var(--color-dev);" onclick="filterByStatus('DEV', event)">
-                        <div class="kpi-value" style="color: var(--color-dev);">${stats.DEV}</div>
-                        <div class="kpi-label">In Development</div>
-                        <div class="kpi-sublabel">${CONFIG.STATUS_DESCRIPTIONS?.DEV || ''}</div>
-                        ${getBreakdownText('DEV') ? `<div class="kpi-breakdown">${getBreakdownText('DEV')}</div>` : ''}
-                    </div>
-                    ${milestonesDef.map(m => `
-                    <div class="kpi-card clickable ${filterState.status === m.key ? 'active' : ''}" style="border-left: 4px solid ${m.color};" onclick="filterByStatus('${m.key}', event)">
-                        <div class="kpi-value" style="color: ${m.color};">${stats[m.key] || 0}</div>
-                        <div class="kpi-label">${m.short} - ${m.title}</div>
-                        <div class="kpi-sublabel">${m.subtitle || CONFIG.STATUS_DESCRIPTIONS?.[m.key] || ''}</div>
-                        ${getBreakdownText(m.key) ? `<div class="kpi-breakdown">${getBreakdownText(m.key)}</div>` : ''}
-                    </div>
-                    `).join('')}
+                    ${statesDef.map((s, index) => {
+                        // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
+                        let stateColor = '#c1c7d0'; // default grey
+                        const stateIndex = workflow.indexOf(s);
+                        let foundNext = false;
+                        for (let i = stateIndex + 1; i < workflow.length; i++) {
+                            if (workflow[i].type === 'milestone') {
+                                stateColor = workflow[i].color;
+                                foundNext = true;
+                                break;
+                            }
+                        }
+                        // For final state (no next milestone), use a darker shade of the previous milestone's color
+                        if (!foundNext && stateIndex > 0) {
+                            for (let i = stateIndex - 1; i >= 0; i--) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = darkenColor(workflow[i].color, 0.25);
+                                    break;
+                                }
+                            }
+                        }
+                        return `
+                    <div class="kpi-card clickable ${filterState.status === s.key ? 'active' : ''}" style="border-left: 4px solid ${stateColor};" onclick="filterByStatus('${s.key}', event)">
+                        <div class="kpi-value" style="color: ${stateColor};">${stats[s.key] || 0}</div>
+                        <div class="kpi-label">${s.short} - ${s.title}</div>
+                        <div class="kpi-sublabel">${s.description || ''}</div>
+                        ${getBreakdownText(s.key) ? `<div class="kpi-breakdown">${getBreakdownText(s.key)}</div>` : ''}
+                    </div>`;
+                    }).join('')}
                 </div>
                 
-                <!-- Progress Bar (Dynamic) -->
+                <!-- Progress Bar (Dynamic - by STATE) -->
                 <div class="progress-section">
                     <div class="progress-header">
                         <div class="progress-title">Overall Progress (All ${stats.total} ${entityPlural})</div>
-                        <div class="progress-percentage">${stats.productionReadyPercentage}% Production Ready</div>
+                        <div class="progress-percentage">${stats.productionReadyPercentage}% ${lastState.title}</div>
                     </div>
                     <div class="progress-bar-container">
-                        ${[...milestonesDef].reverse().map(m => {
-                            const count = stats[m.key] || 0;
-                            const textColor = m.color === '#ffab00' ? '#172b4d' : 'white';
-                            return `<div class="progress-segment" style="width: ${(count / stats.total) * 100}%; background: ${m.color}; color: ${textColor};">${count > 0 ? count : ''}</div>`;
+                        ${statesDef.map((s, index) => {
+                            const count = stats[s.key] || 0;
+                            // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
+                            let stateColor = '#c1c7d0'; // default grey
+                            const stateIndex = workflow.indexOf(s);
+                            let foundNext = false;
+                            for (let i = stateIndex + 1; i < workflow.length; i++) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = workflow[i].color;
+                                    foundNext = true;
+                                    break;
+                                }
+                            }
+                            // For final state (no next milestone), use a darker shade of the previous milestone's color
+                            if (!foundNext && stateIndex > 0) {
+                                for (let i = stateIndex - 1; i >= 0; i--) {
+                                    if (workflow[i].type === 'milestone') {
+                                        stateColor = darkenColor(workflow[i].color, 0.25);
+                                        break;
+                                    }
+                                }
+                            }
+                            const textColor = stateColor === '#ffab00' || stateColor === '#c1c7d0' ? '#172b4d' : 'white';
+                            // Highlight filtered state, fade others when filtering
+                            const isFiltering = filterState.status && filterState.status !== 'ALL';
+                            const isActiveFilter = filterState.status === s.key;
+                            const segmentOpacity = isFiltering ? (isActiveFilter ? '1' : '0.3') : '1';
+                            return `<div class="progress-segment" style="width: ${(count / stats.total) * 100}%; background: ${stateColor}; color: ${textColor}; opacity: ${segmentOpacity};">${count > 0 ? count : ''}</div>`;
                         }).join('')}
-                        <div class="progress-segment" style="width: ${(stats.DEV / stats.total) * 100}%; background: var(--color-dev);">${stats.DEV > 0 ? stats.DEV : ''}</div>
-                        <div class="progress-segment" style="width: ${(stats.NS / stats.total) * 100}%; background: var(--color-ns); color: #172b4d;">${stats.NS > 0 ? stats.NS : ''}</div>
                     </div>
                     <div class="progress-legend">
-                        ${[...milestonesDef].reverse().map(m => `
+                        ${statesDef.map((s, index) => {
+                            let stateColor = '#c1c7d0';
+                            const stateIndex = workflow.indexOf(s);
+                            let foundNext = false;
+                            for (let i = stateIndex + 1; i < workflow.length; i++) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = workflow[i].color;
+                                    foundNext = true;
+                                    break;
+                                }
+                            }
+                            // For final state (no next milestone), use a darker shade of the previous milestone's color
+                            if (!foundNext && stateIndex > 0) {
+                                for (let i = stateIndex - 1; i >= 0; i--) {
+                                    if (workflow[i].type === 'milestone') {
+                                        stateColor = darkenColor(workflow[i].color, 0.25);
+                                        break;
+                                    }
+                                }
+                            }
+                            return `
                         <div class="progress-legend-item">
-                            <div class="progress-legend-dot" style="background: ${m.color};"></div>
-                            <span>${m.short} ${m.title}</span>
-                        </div>
-                        `).join('')}
-                        <div class="progress-legend-item">
-                            <div class="progress-legend-dot" style="background: var(--color-dev);"></div>
-                            <span>In Dev</span>
-                        </div>
-                        <div class="progress-legend-item">
-                            <div class="progress-legend-dot" style="background: var(--color-ns);"></div>
-                            <span>Not Started</span>
-                        </div>
+                            <div class="progress-legend-dot" style="background: ${stateColor};"></div>
+                            <span>${s.short} ${s.title}</span>
+                        </div>`;
+                        }).join('')}
                     </div>
                 </div>
                 
@@ -2204,34 +2381,42 @@ function renderRoadmap() {
             
             <!-- Timeline Section -->
             <div id="timeline-section">
-                <!-- Compact Legend -->
-                <div class="compact-legend">
-                    <div class="compact-legend-left">
-                        <span class="compact-legend-title">Legend:</span>
-                        <div class="compact-legend-items">
-                            <div class="compact-legend-item">
-                                <div class="compact-legend-color" style="background: var(--color-ns);"></div>
-                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS?.NS || 'Not Started'}</span>
-                            </div>
-                            <div class="compact-legend-item">
-                                <div class="compact-legend-color" style="background: var(--color-dev);"></div>
-                                <span class="compact-legend-label">${CONFIG.STATUS_LABELS?.DEV || 'In Dev'}</span>
-                            </div>
-                            ${milestonesDef.map(m => `
-                            <div class="compact-legend-item">
-                                <div class="compact-legend-color" style="background: ${m.color};"></div>
-                                <span class="compact-legend-label">${m.title}</span>
-                            </div>
-                            `).join('')}
-                            <div class="compact-legend-risk">
-                                ${riskIconSVG}
-                                <span>At Risk</span>
-                            </div>
-                        </div>
+                <!-- State Legend -->
+                <div class="state-legend">
+                    <div class="state-legend-items">
+                        ${statesDef.map((s, index) => {
+                            // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
+                            let stateColor = '#c1c7d0'; // default grey
+                            let isFirstState = index === 0;
+                            const stateIndex = workflow.indexOf(s);
+                            let foundNext = false;
+                            for (let i = stateIndex + 1; i < workflow.length; i++) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = workflow[i].color;
+                                    foundNext = true;
+                                    break;
+                                }
+                            }
+                            // For final state (no next milestone), use a darker shade of the previous milestone's color
+                            if (!foundNext && stateIndex > 0) {
+                                for (let i = stateIndex - 1; i >= 0; i--) {
+                                    if (workflow[i].type === 'milestone') {
+                                        stateColor = darkenColor(workflow[i].color, 0.25);
+                                        break;
+                                    }
+                                }
+                            }
+                            // For first state (Not Started), use lower opacity like future gantt bars
+                            const opacity = isFirstState ? '0.3' : '0.8';
+                            return `
+                        <div class="state-legend-item">
+                            <div class="state-legend-color" style="background: ${stateColor}; opacity: ${opacity};"></div>
+                            <span class="state-legend-label">${s.title}</span>
+                        </div>`;
+                        }).join('')}
                     </div>
-                    <div class="timeline-info">
-                        Showing <span class="timeline-info-count">${filteredCount}</span> of <span class="timeline-info-count">${totalVisible}</span> ${entityScopeLabel}
-                        ${hasActiveFilters ? ' (filtered)' : ''}${stats.hidden > 0 ? ` (${stats.hidden} hidden)` : ''}
+                    <div class="state-legend-info">
+                        Timeline: <span class="state-legend-info-count">${months[0].name}</span> - <span class="state-legend-info-count">${months[months.length - 1].name}</span>
                     </div>
                 </div>
                 
