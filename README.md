@@ -1,6 +1,7 @@
 # RoadmapSnap
 
 A powerful, simple roadmap dashboard that gives clear visibility of project progress to any stakeholder—collaborators, third parties, and executive leadership. Runs entirely in the browser: no backend, no build step.
+Check out the live demo [here](https://roadmapsnap.pages.dev) with a sample project 
 
 ![RoadmapSnap Preview](docs/preview.png)
 
@@ -118,10 +119,3 @@ roadmap_dashboard.html   # Main dashboard (open in browser)
 js/config_base.js        # Your configuration file (customize this and rename it to config.js)
 docs/preview.png         # Preview screenshot
 ```
-
----
-
-## Try It Live
-
-Check out the live demo at [Try It Live](https://moises-prat-epm.github.io/RoadmapSnap/roadmap_dashboard.html).
-
