@@ -605,9 +605,10 @@
             font-size: 11px;
         }
         
-        .state-legend-color {
-            width: 14px;
-            height: 14px;
+        .state-legend-badge {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
             border-radius: 3px;
             flex-shrink: 0;
         }
@@ -1917,10 +1918,6 @@ function renderRoadmap() {
             }
         }
         
-        // Check if activity has started (START date has passed)
-        const activityStartDate = getMilestoneDate(source, 'START');
-        const hasStarted = activityStartDate && parseDate(activityStartDate) <= today;
-        const stateOpacity = hasStarted ? '0.8' : '0.3';
         
         // Generate start marker using START milestone date
         // Hide label if position < 2% to avoid overlap with status indicator
@@ -1932,7 +1929,7 @@ function renderRoadmap() {
             const hideLabel = position < 2;
             startMarkerHTML = `
                 <div class="milestone-marker start" style="left: ${position}%; background: ${startMilestone?.color || '#6554c0'}; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
-                    ${hideLabel ? '' : `<span>START</span><div class="milestone-date">${formatDateDisplay(startDate)}</div>`}
+                    ${hideLabel ? '' : `<span>${startMilestone?.short || 'GO'}</span><div class="milestone-date">${formatDateDisplay(startDate)}</div>`}
                 </div>
             `;
         }
@@ -2042,7 +2039,7 @@ function renderRoadmap() {
                     ${riskIndicatorHTML}
                     <span class="source-name-text">${source.name}</span>
                     ${infoLinkHTML}
-                    <span class="status-indicator" style="background: ${stateColor}; opacity: ${stateOpacity}; ${stateColor === '#ffab00' ? 'color: #172b4d;' : 'color: white;'}" title="${currentState?.title || status}">${currentState?.short || status}</span>
+                    <span class="status-indicator" style="background: ${stateColor}; ${stateColor === '#ffab00' ? 'color: #172b4d;' : 'color: white;'}" title="${currentState?.title || status}">${currentState?.short || status}</span>
                 </div>
                 <div class="timeline-track">
                     ${gridLinesHTML}
@@ -2284,7 +2281,7 @@ function renderRoadmap() {
                         return `
                     <div class="kpi-card clickable ${filterState.status === s.key ? 'active' : ''}" style="border-left: 4px solid ${stateColor};" onclick="filterByStatus('${s.key}', event)">
                         <div class="kpi-value" style="color: ${stateColor};">${stats[s.key] || 0}</div>
-                        <div class="kpi-label">${s.short} - ${s.title}</div>
+                        <div class="kpi-label">${s.title}</div>
                         <div class="kpi-sublabel">${s.description || ''}</div>
                         ${getBreakdownText(s.key) ? `<div class="kpi-breakdown">${getBreakdownText(s.key)}</div>` : ''}
                     </div>`;
@@ -2387,7 +2384,6 @@ function renderRoadmap() {
                         ${statesDef.map((s, index) => {
                             // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
                             let stateColor = '#c1c7d0'; // default grey
-                            let isFirstState = index === 0;
                             const stateIndex = workflow.indexOf(s);
                             let foundNext = false;
                             for (let i = stateIndex + 1; i < workflow.length; i++) {
@@ -2406,11 +2402,10 @@ function renderRoadmap() {
                                     }
                                 }
                             }
-                            // For first state (Not Started), use lower opacity like future gantt bars
-                            const opacity = isFirstState ? '0.3' : '0.8';
+                            const textColor = stateColor === '#ffab00' || stateColor === '#c1c7d0' ? '#172b4d' : 'white';
                             return `
                         <div class="state-legend-item">
-                            <div class="state-legend-color" style="background: ${stateColor}; opacity: ${opacity};"></div>
+                            <span class="state-legend-badge" style="background: ${stateColor}; color: ${textColor};">${s.short}</span>
                             <span class="state-legend-label">${s.title}</span>
                         </div>`;
                         }).join('')}
