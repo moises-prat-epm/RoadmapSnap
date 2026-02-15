@@ -1792,8 +1792,13 @@ function toggleDependencyGraph(sourceName, event) {
         // Clicking same item - deactivate
         activeDependencyGraph = null;
     } else {
-        // Activate new graph
+        // Activate new graph - clear all filters so all dependencies are visible
         activeDependencyGraph = sourceName;
+        
+        // Clear filters but preserve view options
+        filterState.status = 'ALL';
+        filterState.riskOnly = false;
+        filterState.search = '';
     }
     
     renderRoadmap();
