@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Roadmap Dashboard</title>
+    
+    <!-- html2canvas library for PNG export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        /* ============================================
+           BASE STYLES & VARIABLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f4f5f7;
+            color: #172b4d;
+            line-height: 1.4;
+            padding: 20px;
+        }
+        
+        /* Color Variables - Light Mode (Default) */
+        :root {
+            --color-dev: #6554c0;     /* Purple - In Development */
+            --color-ns: #c1c7d0;      /* Light Grey - Not Started */
+            --color-m0: #8993a4;
+            --color-m1: #ffab00;
+            --color-m2: #36b37e;
+            --color-m3: #0065ff;
+            --color-risk: #de350b;
+            --color-border: #dfe1e6;
+            --color-bg-white: #ffffff;
+            --color-bg-page: #f4f5f7;
+            --color-bg-secondary: #fafbfc;
+            --color-text-dark: #172b4d;
+            --color-text-light: #6b778c;
+            --color-today: #de350b;
+            --row-height: 36px;
+        }
+        
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --color-border: #3d4f5f;
+            --color-bg-white: #1a2332;
+            --color-bg-page: #0d1117;
+            --color-bg-secondary: #161b22;
+            --color-text-dark: #e6edf3;
+            --color-text-light: #8b949e;
+        }
+        
+        [data-theme="dark"] body {
+            background: var(--color-bg-page);
+        }
+        
+        [data-theme="dark"] .roadmap-container {
+            background: var(--color-bg-white);
+        }
+        
+        [data-theme="dark"] .summary-dashboard {
+            background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-white) 100%);
+        }
+        
+        [data-theme="dark"] .kpi-card {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .kpi-card.total {
+            background: linear-gradient(135deg, #2d333b 0%, #3d4f5f 100%);
+        }
+        
+        [data-theme="dark"] .progress-section {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .progress-bar-container {
+            background: #2d333b;
+        }
+        
+        [data-theme="dark"] .milestone-card {
+            background: var(--color-bg-secondary);
+        }
+        
+        
+        [data-theme="dark"] .month-column {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .source-name.status-ns { background: linear-gradient(90deg, rgba(193,199,208,0.1) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-dev { background: linear-gradient(90deg, rgba(101,84,192,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m0 { background: linear-gradient(90deg, rgba(137,147,164,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m1 { background: linear-gradient(90deg, rgba(255,171,0,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m2 { background: linear-gradient(90deg, rgba(54,179,126,0.15) 0%, var(--color-bg-secondary) 100%); }
+        [data-theme="dark"] .source-name.status-m3 { background: linear-gradient(90deg, rgba(0,101,255,0.15) 0%, var(--color-bg-secondary) 100%); }
+        
+        [data-theme="dark"] .timeline-track {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .today-date-container {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .filter-bar {
+            background: var(--color-bg-white);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        [data-theme="dark"] .filter-select,
+        [data-theme="dark"] .filter-input {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-dark);
+        }
+        
+        [data-theme="dark"] .filter-toggle {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-dark);
+        }
+        
+        [data-theme="dark"] .filter-clear {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .group-control-btn {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-light);
+        }
+        
+        /* ============================================
+           FILTER BAR
+           ============================================ */
+        .filter-bar {
+            max-width: 1400px;
+            margin: 0 auto 12px auto;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .filter-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-select, .filter-input {
+            padding: 6px 10px;
+            font-size: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: white;
+            color: var(--color-text-dark);
+            cursor: pointer;
+        }
+        
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: #0065ff;
+            box-shadow: 0 0 0 2px rgba(0, 101, 255, 0.1);
+        }
+        
+        .filter-input {
+            width: 160px;
+        }
+        
+        .filter-input::placeholder {
+            color: var(--color-text-light);
+        }
+        
+        .filter-toggle {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: white;
+            color: var(--color-text-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-toggle:hover {
+            border-color: var(--color-risk);
+        }
+        
+        .filter-toggle.active {
+            background: rgba(222, 53, 11, 0.1);
+            border-color: var(--color-risk);
+            color: var(--color-risk);
+        }
+        
+        .filter-toggle svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .filter-clear {
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            background: #f4f5f7;
+            color: var(--color-text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-clear:hover {
+            background: #e4e6e8;
+            color: var(--color-text-dark);
+        }
+        
+        .filter-results {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--color-text-light);
+        }
+        
+        .filter-results strong {
+            color: var(--color-text-dark);
+        }
+        
+        /* ============================================
+           EXPORT CONTROLS
+           ============================================ */
+        .export-controls {
+            max-width: 1400px;
+            margin: 0 auto 16px auto;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #0052cc 0%, #0065ff 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 82, 204, 0.4);
+        }
+        
+        .export-btn:active {
+            transform: translateY(0);
+        }
+        
+        .export-btn.secondary {
+            background: linear-gradient(135deg, #505f79 0%, #6b778c 100%);
+        }
+        
+        .export-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .export-note {
+            font-size: 12px;
+            color: var(--color-text-light);
+            margin-left: auto;
+        }
+        
+        /* ============================================
+           CONTAINER STYLES
+           ============================================ */
+        .roadmap-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--color-bg-white);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        /* ============================================
+           SUMMARY DASHBOARD STYLES
+           ============================================ */
+        .summary-dashboard {
+            padding: 24px 32px;
+            background: linear-gradient(135deg, #fafbfc 0%, #f4f5f7 100%);
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .summary-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text-dark);
+        }
+        
+        .summary-title-note {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--color-text-light);
+            margin-left: 12px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .risk-summary {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(222, 53, 11, 0.1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(222, 53, 11, 0.3);
+        }
+        
+        .risk-summary.clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .risk-summary.clickable:hover {
+            background: rgba(222, 53, 11, 0.2);
+            border-color: rgba(222, 53, 11, 0.5);
+        }
+        
+        .risk-summary.clickable.active {
+            background: rgba(222, 53, 11, 0.25);
+            border-color: var(--color-risk);
+            box-shadow: 0 0 0 2px rgba(222, 53, 11, 0.2);
+        }
+        
+        .risk-summary-icon {
+            color: var(--color-risk);
+            font-size: 14px;
+        }
+        
+        .risk-summary-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-risk);
+        }
+        
+        .today-date-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .today-date-label {
+            font-size: 12px;
+            color: var(--color-text-light);
+            font-weight: 500;
+        }
+        
+        .today-date-value {
+            font-size: 14px;
+            color: var(--color-text-dark);
+            font-weight: 700;
+        }
+        
+        /* KPI Cards */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: white;
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid var(--color-border);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .kpi-card.clickable {
+            cursor: pointer;
+        }
+        
+        .kpi-card.active {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 3px #0065ff, 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .kpi-card.total {
+            background: linear-gradient(135deg, #172b4d 0%, #344563 100%);
+            color: white;
+        }
+        
+        .kpi-card.ns { border-left: 4px solid var(--color-ns); }
+        .kpi-card.dev { border-left: 4px solid var(--color-dev); }
+        .kpi-card.m0 { border-left: 4px solid var(--color-m0); }
+        .kpi-card.m1 { border-left: 4px solid var(--color-m1); }
+        .kpi-card.m2 { border-left: 4px solid var(--color-m2); }
+        .kpi-card.m3 { border-left: 4px solid var(--color-m3); }
+        
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        
+        .kpi-card.ns .kpi-value { color: var(--color-ns); }
+        .kpi-card.dev .kpi-value { color: var(--color-dev); }
+        .kpi-card.m0 .kpi-value { color: var(--color-m0); }
+        .kpi-card.m1 .kpi-value { color: var(--color-m1); }
+        .kpi-card.m2 .kpi-value { color: var(--color-m2); }
+        .kpi-card.m3 .kpi-value { color: var(--color-m3); }
+        .kpi-card.total .kpi-value { color: white; }
+        
+        .kpi-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .kpi-card.total .kpi-label {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .kpi-sublabel {
+            font-size: 9px;
+            color: var(--color-text-light);
+            margin-top: 2px;
+        }
+        
+        .kpi-card.total .kpi-sublabel {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .kpi-breakdown {
+            font-size: 8px;
+            color: var(--color-text-light);
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px dashed var(--color-border);
+        }
+        
+        .kpi-card.total .kpi-breakdown {
+            color: rgba(255,255,255,0.5);
+            border-top-color: rgba(255,255,255,0.2);
+        }
+        
+        /* Progress Bar */
+        .progress-section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px 20px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .progress-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-dark);
+        }
+        
+        .progress-percentage {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--color-m3);
+        }
+        
+        .progress-bar-container {
+            height: 24px;
+            background: #f4f5f7;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .progress-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-segment.ns { background: var(--color-ns); color: #172b4d; }
+        .progress-segment.dev { background: var(--color-dev); }
+        .progress-segment.m0 { background: var(--color-m0); }
+        .progress-segment.m1 { background: var(--color-m1); color: #172b4d; }
+        .progress-segment.m2 { background: var(--color-m2); }
+        .progress-segment.m3 { background: var(--color-m3); }
+        
+        .progress-legend {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .progress-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--color-text-light);
+        }
+        
+        .progress-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .progress-legend-dot.ns { background: var(--color-ns); }
+        .progress-legend-dot.dev { background: var(--color-dev); }
+        .progress-legend-dot.m0 { background: var(--color-m0); }
+        .progress-legend-dot.m1 { background: var(--color-m1); }
+        .progress-legend-dot.m2 { background: var(--color-m2); }
+        .progress-legend-dot.m3 { background: var(--color-m3); }
+        
+        /* ============================================
+           STATE LEGEND
+           ============================================ */
+        .state-legend {
+            background: #f8f9fa;
+            padding: 10px 32px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .state-legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .state-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+        
+        .state-legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        .state-legend-label {
+            color: var(--color-text-dark);
+            font-weight: 500;
+        }
+        
+        .state-legend-info {
+            font-size: 11px;
+            color: var(--color-text-light);
+            background: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .state-legend-info-count {
+            font-weight: 700;
+            color: var(--color-text-dark);
+        }
+        
+        [data-theme="dark"] .state-legend {
+            background: var(--color-bg-secondary);
+        }
+        
+        [data-theme="dark"] .state-legend-info {
+            background: var(--color-bg-white);
+        }
+        
+        /* ============================================
+           COMPACT ROADMAP GRID
+           ============================================ */
+        .roadmap-content {
+            padding: 16px 32px 24px;
+            overflow-x: auto;
+        }
+        
+        .roadmap-grid {
+            min-width: 900px;
+        }
+        
+        /* Timeline Header */
+        .timeline-header {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            margin-bottom: 4px;
+        }
+        
+        .timeline-label {
+            font-weight: 600;
+            font-size: 10px;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 10px;
+        }
+        
+        .timeline-months {
+            display: flex;
+            position: relative;
+        }
+        
+        .month-column {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--color-text-dark);
+            padding: 6px 0;
+            border-left: 1px solid var(--color-border);
+            background: #fafbfc;
+        }
+        
+        .month-column:last-child {
+            border-right: 1px solid var(--color-border);
+        }
+        
+        /* Today pointer */
+        .today-pointer {
+            position: absolute;
+            top: 100%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        
+        .today-pointer-arrow {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid var(--color-today);
+            margin: 0 auto;
+        }
+        
+        /* Data Source Rows - Compact */
+        .data-source-row {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            margin-bottom: 2px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .data-source-row.at-risk {
+            box-shadow: 0 0 0 2px rgba(222, 53, 11, 0.3);
+        }
+        
+        .source-name {
+            padding: 6px 10px;
+            min-height: var(--row-height);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--color-border);
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .source-name.status-ns { background: linear-gradient(90deg, rgba(193,199,208,0.15) 0%, #fafbfc 100%); }
+        .source-name.status-dev { background: linear-gradient(90deg, rgba(101,84,192,0.12) 0%, #fafbfc 100%); }
+        .source-name.status-m0 { background: linear-gradient(90deg, rgba(137,147,164,0.12) 0%, #fafbfc 100%); }
+        .source-name.status-m1 { background: linear-gradient(90deg, rgba(255,171,0,0.15) 0%, #fafbfc 100%); }
+        .source-name.status-m2 { background: linear-gradient(90deg, rgba(54,179,126,0.15) 0%, #fafbfc 100%); }
+        .source-name.status-m3 { background: linear-gradient(90deg, rgba(0,101,255,0.15) 0%, #fafbfc 100%); }
+        
+        .risk-indicator {
+            color: var(--color-risk);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .risk-indicator svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .info-link {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #0065ff;
+            opacity: 0.8;
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+        
+        .info-link:hover {
+            opacity: 1;
+        }
+        
+        .info-link svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        /* Group Header Styles */
+        .group-header {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            margin-bottom: 2px;
+            margin-top: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .group-header:first-child {
+            margin-top: 0;
+        }
+        
+        .group-header-name {
+            padding: 8px 10px;
+            background: linear-gradient(135deg, #344563 0%, #505f79 100%);
+            color: white;
+            font-weight: 700;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 4px 0 0 4px;
+            transition: background 0.2s ease;
+        }
+        
+        .group-header-name:hover {
+            background: linear-gradient(135deg, #3d5170 0%, #5a6a87 100%);
+        }
+        
+        .group-chevron {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .group-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .group-stats {
+            font-size: 10px;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-left: auto;
+        }
+        
+        .group-stats-risk {
+            color: #ffab00;
+        }
+        
+        .group-header-track {
+            background: #505f79;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .group-item .source-name {
+            padding-left: 24px;
+        }
+        
+        /* Group controls */
+        .group-controls {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+        }
+        
+        .group-control-btn {
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: white;
+            color: var(--color-text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .group-control-btn:hover {
+            background: #f4f5f7;
+            color: var(--color-text-dark);
+        }
+        
+        /* Dark Mode Toggle Button */
+        .theme-toggle {
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-bg-white);
+            color: var(--color-text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-toggle:hover {
+            border-color: #0065ff;
+            background: rgba(0, 101, 255, 0.05);
+        }
+        
+        .theme-toggle svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Date Range Zoom Buttons */
+        .zoom-controls {
+            display: flex;
+            gap: 4px;
+            margin-left: 12px;
+        }
+        
+        .zoom-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            background: var(--color-bg-white);
+            color: var(--color-text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .zoom-btn:hover {
+            border-color: #0065ff;
+            color: var(--color-text-dark);
+        }
+        
+        .zoom-btn.active {
+            background: #0065ff;
+            border-color: #0065ff;
+            color: white;
+        }
+        
+        [data-theme="dark"] .zoom-btn {
+            background: var(--color-bg-secondary);
+        }
+        
+        .source-name-text {
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--color-text-dark);
+            word-wrap: break-word;
+            word-break: break-word;
+            flex: 1;
+            min-width: 0;
+            line-height: 1.3;
+        }
+        
+        .status-indicator {
+            font-size: 8px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        .status-indicator.ns { background: var(--color-ns); color: #172b4d; }
+        .status-indicator.dev { background: var(--color-dev); color: white; }
+        .status-indicator.m0 { background: var(--color-m0); color: white; }
+        .status-indicator.m1 { background: var(--color-m1); color: #172b4d; }
+        .status-indicator.m2 { background: var(--color-m2); color: white; }
+        .status-indicator.m3 { background: var(--color-m3); color: white; }
+        
+        /* Timeline Track - Compact */
+        .timeline-track {
+            position: relative;
+            min-height: var(--row-height);
+            background: #f9fafb;
+            border: 1px solid var(--color-border);
+            border-radius: 0 4px 4px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Gantt Bar Segments */
+        .gantt-bar {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 8px;
+            border-radius: 4px;
+            opacity: 0.8;
+            z-index: 1;
+        }
+        
+        .gantt-bar.gantt-future {
+            opacity: 0.3;
+        }
+        
+        /* Month Grid Lines */
+        .month-grid-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--color-border);
+        }
+        
+        /* Today guide line */
+        .today-guide-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--color-today);
+            opacity: 0.2;
+            z-index: 1;
+        }
+        
+        /* Milestone Markers - Compact */
+        .milestone-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 22px;
+            height: 16px;
+            padding: 0 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-weight: 700;
+            color: white;
+            z-index: 2;
+            border: 1.5px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .milestone-marker.start { background: var(--color-dev); }
+        .milestone-marker.m0 { background: var(--color-m0); }
+        .milestone-marker.m1 { background: var(--color-m1); color: #172b4d; }
+        .milestone-marker.m2 { background: var(--color-m2); }
+        .milestone-marker.m3 { background: var(--color-m3); }
+        
+        /* Milestone Date - Compact */
+        .milestone-date {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 7px;
+            font-weight: 700;
+            white-space: nowrap;
+            color: var(--color-text-dark);
+        }
+        
+        /* ============================================
+           KEY MILESTONES SECTION
+           ============================================ */
+        .key-milestones {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .milestone-card {
+            background: white;
+            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .milestone-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .milestone-card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .milestone-card-icon.m0 { background: var(--color-m0); }
+        .milestone-card-icon.m1 { background: var(--color-m1); color: #172b4d; }
+        .milestone-card-icon.m2 { background: var(--color-m2); }
+        .milestone-card-icon.m3 { background: var(--color-m3); }
+        
+        .milestone-card-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-dark);
+        }
+        
+        .milestone-card-subtitle {
+            font-size: 10px;
+            color: var(--color-text-light);
+        }
+        
+        .milestone-card-content {
+            font-size: 11px;
+            color: var(--color-text-light);
+        }
+        
+        .milestone-card-date {
+            font-weight: 700;
+            color: var(--color-text-dark);
+        }
+        
+        .milestone-card-source {
+            color: var(--color-text-dark);
+        }
+        
+        /* ============================================
+           FOOTER STYLES
+           ============================================ */
+        .page-footer {
+            max-width: 1400px;
+            margin: 24px auto 0 auto;
+            padding: 16px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--color-text-light);
+        }
+        
+        .page-footer a {
+            color: var(--color-text-light);
+            text-decoration: none;
+        }
+        
+        .page-footer a:hover {
+            color: var(--color-text-dark);
+            text-decoration: underline;
+        }
+        
+        /* ============================================
+           PRINT/EXPORT STYLES
+           ============================================ */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .export-controls {
+                display: none;
+            }
+            .roadmap-container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<script src="./js/config.js"></script>
+
+<script>
+// ============================================
+// FILTER & SORT STATE
+// ============================================
+let filterState = {
+    status: 'ALL',
+    riskOnly: false,
+    search: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    showGantt: true
+};
+
+// ============================================
+// FILTER & SORT FUNCTIONS
+// ============================================
+function filterDeliverables(sources) {
+    return sources.filter(source => {
+        // Status filter
+        if (filterState.status !== 'ALL') {
+            const status = getCurrentStatus(source);
+            if (status !== filterState.status) return false;
+        }
+        
+        // Risk filter
+        if (filterState.riskOnly && !source.atRisk) return false;
+        
+        // Search filter
+        if (filterState.search) {
+            const searchLower = filterState.search.toLowerCase();
+            const nameMatch = source.name.toLowerCase().includes(searchLower);
+            const tagsMatch = source.tags && source.tags.some(tag => 
+                tag.toLowerCase().includes(searchLower)
+            );
+            if (!nameMatch && !tagsMatch) return false;
+        }
+        
+        return true;
+    });
+}
+
+function sortDeliverables(sources) {
+    const sorted = [...sources];
+    const states = getStates();
+    const lastMilestoneKey = getLastMilestoneKey();
+    
+    sorted.sort((a, b) => {
+        let comparison = 0;
+        
+        switch (filterState.sortBy) {
+            case 'name':
+                comparison = a.name.localeCompare(b.name);
+                break;
+            case 'status':
+                // Sort by state order from workflow
+                const statusOrder = states.map(s => s.key);
+                const statusA = statusOrder.indexOf(getCurrentStatus(a));
+                const statusB = statusOrder.indexOf(getCurrentStatus(b));
+                comparison = statusA - statusB;
+                break;
+            case 'm3date':
+                // Use the last milestone date for sorting
+                const dateA = parseDate(getMilestoneDate(a, lastMilestoneKey)) || new Date(9999, 11, 31);
+                const dateB = parseDate(getMilestoneDate(b, lastMilestoneKey)) || new Date(9999, 11, 31);
+                comparison = dateA - dateB;
+                break;
+            case 'risk':
+                comparison = (b.atRisk ? 1 : 0) - (a.atRisk ? 1 : 0);
+                break;
+        }
+        
+        return filterState.sortOrder === 'desc' ? -comparison : comparison;
+    });
+    
+    return sorted;
+}
+
+function updateFilter(key, value) {
+    filterState[key] = value;
+    
+    // For search input, debounce and preserve focus
+    if (key === 'search') {
+        clearTimeout(window.searchDebounceTimer);
+        window.searchDebounceTimer = setTimeout(() => {
+            renderRoadmap();
+            // Restore focus to search input
+            const searchInput = document.querySelector('.filter-input');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            }
+        }, 150);
+    } else {
+        renderRoadmap();
+    }
+}
+
+function clearFilters() {
+    filterState = {
+        status: 'ALL',
+        riskOnly: false,
+        search: '',
+        sortBy: 'name',
+        sortOrder: 'asc',
+        showGantt: true
+    };
+    renderRoadmap();
+}
+
+function filterByStatus(status, event) {
+    // Prevent event bubbling so body click doesn't immediately clear
+    if (event) event.stopPropagation();
+    
+    // Toggle: if already filtering by this status, clear it
+    if (filterState.status === status) {
+        filterState.status = 'ALL';
+    } else {
+        filterState.status = status;
+    }
+    // Clear risk filter when selecting a status filter
+    filterState.riskOnly = false;
+    renderRoadmap();
+}
+
+function clearStatusFilterOnOutsideClick(event) {
+    // Check if click was outside KPI cards and risk summary
+    const clickedKpi = event.target.closest('.kpi-card.clickable');
+    const clickedRiskSummary = event.target.closest('.risk-summary.clickable');
+    if (!clickedKpi && !clickedRiskSummary && (filterState.status !== 'ALL' || filterState.riskOnly)) {
+        filterState.status = 'ALL';
+        filterState.riskOnly = false;
+        renderRoadmap();
+    }
+}
+
+function toggleRiskFilter(event) {
+    if (event) event.stopPropagation();
+    filterState.riskOnly = !filterState.riskOnly;
+    renderRoadmap();
+}
+
+function toggleGanttBars() {
+    filterState.showGantt = !filterState.showGantt;
+    renderRoadmap();
+}
+
+// ============================================
+// GROUPING FUNCTIONS
+// ============================================
+let groupCollapsedState = {};
+
+function groupDeliverables(sources) {
+    const groups = {};
+    const ungrouped = [];
+    
+    sources.forEach(source => {
+        const groupName = source.group || null;
+        if (groupName) {
+            if (!groups[groupName]) {
+                groups[groupName] = [];
+            }
+            groups[groupName].push(source);
+        } else {
+            ungrouped.push(source);
+        }
+    });
+    
+    return { groups, ungrouped };
+}
+
+function hasAnyGroups(sources) {
+    return sources.some(source => source.group);
+}
+
+function toggleGroup(groupName) {
+    groupCollapsedState[groupName] = !groupCollapsedState[groupName];
+    renderRoadmap();
+}
+
+function expandAllGroups() {
+    const sources = CONFIG.DELIVERABLES;
+    sources.forEach(source => {
+        if (source.group) {
+            groupCollapsedState[source.group] = false;
+        }
+    });
+    renderRoadmap();
+}
+
+function collapseAllGroups() {
+    const sources = CONFIG.DELIVERABLES;
+    sources.forEach(source => {
+        if (source.group) {
+            groupCollapsedState[source.group] = true;
+        }
+    });
+    renderRoadmap();
+}
+
+function getGroupStats(sources) {
+    const atRiskCount = sources.filter(s => s.atRisk).length;
+    return {
+        total: sources.length,
+        atRisk: atRiskCount
+    };
+}
+
+// ============================================
+// DARK MODE FUNCTIONS
+// ============================================
+function getStoredTheme() {
+    return localStorage.getItem('roadmapsnap-theme') || 'light';
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('roadmapsnap-theme', theme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    renderRoadmap();
+}
+
+// Apply stored theme on load
+(function initTheme() {
+    const storedTheme = getStoredTheme();
+    if (storedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+})();
+
+// ============================================
+// DATE RANGE ZOOM FUNCTIONS
+// ============================================
+let originalTimelineStart = null;
+let originalTimelineEnd = null;
+let currentZoom = 'all';
+
+function initOriginalTimeline() {
+    if (originalTimelineStart === null) {
+        originalTimelineStart = CONFIG.TIMELINE.START_MONTH;
+        originalTimelineEnd = CONFIG.TIMELINE.END_MONTH;
+    }
+}
+
+function setDateRange(months) {
+    initOriginalTimeline();
+    
+    const today = parseDate(getTodayDate());
+    
+    if (months === 'all') {
+        // Reset to original range
+        CONFIG.TIMELINE.START_MONTH = originalTimelineStart;
+        CONFIG.TIMELINE.END_MONTH = originalTimelineEnd;
+        currentZoom = 'all';
+    } else {
+        // Calculate new range centered around today
+        const halfMonths = Math.floor(months / 2);
+        
+        const startDate = new Date(today);
+        startDate.setMonth(startDate.getMonth() - halfMonths);
+        
+        const endDate = new Date(today);
+        endDate.setMonth(endDate.getMonth() + halfMonths);
+        
+        // Format as MM/YYYY
+        const formatMonthYear = (date) => {
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${m}/${y}`;
+        };
+        
+        CONFIG.TIMELINE.START_MONTH = formatMonthYear(startDate);
+        CONFIG.TIMELINE.END_MONTH = formatMonthYear(endDate);
+        currentZoom = months + 'mo';
+    }
+    
+    renderRoadmap();
+}
+
+// ============================================
+// DATA EXPORT FUNCTIONS (CSV/JSON)
+// ============================================
+function exportToCSV() {
+    const milestones = getMilestones();
+    const headers = ['Name', 'Group', 'Current State', 'Next Milestone', 'At Risk', 'Tags', 'Link'];
+    milestones.forEach(m => headers.push(`${m.key} Date`));
+    
+    const rows = [headers.join(',')];
+    
+    CONFIG.DELIVERABLES.forEach(source => {
+        const status = getCurrentStatus(source);
+        const currentState = getStateByKey(status);
+        const nextMilestone = getNextMilestone(source);
+        const row = [
+            `"${(source.name || '').replace(/"/g, '""')}"`,
+            `"${source.group || ''}"`,
+            currentState ? `${currentState.short} - ${currentState.title}` : status,
+            nextMilestone ? nextMilestone.short : 'Complete',
+            source.atRisk ? 'Yes' : 'No',
+            `"${(source.tags || []).join('; ')}"`,
+            `"${source.link || ''}"`
+        ];
+        milestones.forEach(m => {
+            row.push(getMilestoneDate(source, m.key) || '');
+        });
+        rows.push(row.join(','));
+    });
+    
+    const csvContent = rows.join('\n');
+    downloadFile(csvContent, 'deliverables.csv', 'text/csv');
+}
+
+function exportToJSON() {
+    const exportData = {
+        exportDate: new Date().toISOString(),
+        timeline: CONFIG.TIMELINE,
+        workflow: getWorkflow(),
+        states: getStates(),
+        milestones: getMilestones(),
+        deliverables: CONFIG.DELIVERABLES.map(source => {
+            const currentState = getStateByKey(getCurrentStatus(source));
+            const nextMilestone = getNextMilestone(source);
+            return {
+                ...source,
+                currentState: currentState ? { key: currentState.key, title: currentState.title } : null,
+                nextMilestone: nextMilestone ? { key: nextMilestone.key, title: nextMilestone.title } : null
+            };
+        })
+    };
+    
+    const jsonContent = JSON.stringify(exportData, null, 2);
+    downloadFile(jsonContent, 'deliverables.json', 'application/json');
+}
+
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// ============================================
+// WORKFLOW: STATES & MILESTONES
+// ============================================
+// The WORKFLOW defines the sequence: state -> milestone -> state -> milestone -> ... -> final state
+// States represent the current phase; Milestones are transition points with dates.
+
+// Helper function to darken a hex color by a percentage (0-1)
+function darkenColor(hex, percent) {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse RGB values
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+    
+    // Darken by reducing each component
+    r = Math.max(0, Math.floor(r * (1 - percent)));
+    g = Math.max(0, Math.floor(g * (1 - percent)));
+    b = Math.max(0, Math.floor(b * (1 - percent)));
+    
+    // Convert back to hex
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+function getWorkflow() {
+    // Return CONFIG.WORKFLOW if defined, otherwise fall back to legacy format
+    if (CONFIG.WORKFLOW && Array.isArray(CONFIG.WORKFLOW)) {
+        return CONFIG.WORKFLOW;
+    }
+    
+    // Legacy fallback: convert old MILESTONES format to new WORKFLOW format
+    const legacyMilestones = CONFIG.MILESTONES || [
+        { key: 'M0', short: 'M0', title: 'Dev Complete', subtitle: '', color: '#8993a4' },
+        { key: 'M1', short: 'M1', title: 'Deployed', subtitle: '', color: '#ffab00' },
+        { key: 'M2', short: 'M2', title: 'Ready', subtitle: '', color: '#36b37e' },
+        { key: 'M3', short: 'M3', title: 'Complete', subtitle: '', color: '#0065ff' }
+    ];
+    
+    // Build a simple workflow from legacy format
+    const workflow = [
+        { type: 'state', key: 'NS', short: 'NS', title: 'Not Started', description: 'Pending kickoff' },
+        { type: 'milestone', key: 'START', short: 'START', title: 'Start', subtitle: 'Kickoff', color: '#6554c0' },
+        { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development', description: 'Active development' }
+    ];
+    
+    legacyMilestones.forEach((m, index) => {
+        workflow.push({ type: 'milestone', key: m.key, short: m.short, title: m.title, subtitle: m.subtitle, color: m.color });
+        // Add a state after each milestone (except possibly the last one)
+        if (index < legacyMilestones.length - 1) {
+            workflow.push({ type: 'state', key: `S${index + 1}`, short: `S${index + 1}`, title: `Phase ${index + 2}`, description: '' });
+        } else {
+            workflow.push({ type: 'state', key: 'DONE', short: 'DONE', title: 'Done', description: 'Complete' });
+        }
+    });
+    
+    return workflow;
+}
+
+// Get all states from workflow
+function getStates() {
+    const workflow = getWorkflow();
+    return workflow.filter(item => item.type === 'state');
+}
+
+// Get all milestones from workflow
+function getMilestones() {
+    const workflow = getWorkflow();
+    return workflow.filter(item => item.type === 'milestone');
+}
+
+// Get state by key
+function getStateByKey(key) {
+    const states = getStates();
+    return states.find(s => s.key === key) || null;
+}
+
+// Get milestone by key
+function getMilestoneByKey(key) {
+    const milestones = getMilestones();
+    return milestones.find(m => m.key === key) || null;
+}
+
+// Get the state that follows a given milestone
+function getStateAfterMilestone(milestoneKey) {
+    const workflow = getWorkflow();
+    const milestoneIndex = workflow.findIndex(item => item.type === 'milestone' && item.key === milestoneKey);
+    if (milestoneIndex === -1) return null;
+    
+    // Find the next state after this milestone
+    for (let i = milestoneIndex + 1; i < workflow.length; i++) {
+        if (workflow[i].type === 'state') {
+            return workflow[i];
+        }
+    }
+    return null;
+}
+
+// Get the first state (initial state before any milestone)
+function getFirstState() {
+    const states = getStates();
+    return states[0] || { key: 'NS', short: 'NS', title: 'Not Started', description: '' };
+}
+
+// Get the last state (final state)
+function getLastState() {
+    const states = getStates();
+    return states[states.length - 1] || { key: 'DONE', short: 'DONE', title: 'Done', description: '' };
+}
+
+// Get the last milestone key
+function getLastMilestoneKey() {
+    const milestones = getMilestones();
+    return milestones[milestones.length - 1]?.key || 'M4';
+}
+
+// Get the next milestone for a deliverable (the one not yet reached)
+function getNextMilestone(source) {
+    const today = parseDate(getTodayDate());
+    const milestones = getMilestones();
+    
+    for (const milestone of milestones) {
+        const milestoneDate = parseDate(getMilestoneDate(source, milestone.key));
+        if (milestoneDate && today < milestoneDate) {
+            return milestone;
+        }
+    }
+    
+    return null; // All milestones passed
+}
+
+// Get milestone date from source (handles both new format and legacy startDate)
+function getMilestoneDate(source, milestoneKey) {
+    // Check in milestones object first
+    if (source.milestones && source.milestones[milestoneKey]) {
+        return source.milestones[milestoneKey];
+    }
+    // Legacy support: startDate maps to START milestone
+    if (milestoneKey === 'START' && source.startDate) {
+        return source.startDate;
+    }
+    return null;
+}
+
+// ============================================
+// AUTO-POPULATE TODAY'S DATE
+// ============================================
+function getTodayDate() {
+    // Use CONFIG.TIMELINE.TODAY if set, otherwise use actual current date
+    if (CONFIG.TIMELINE.TODAY) {
+        return CONFIG.TIMELINE.TODAY;
+    }
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+function escapeHtmlAttr(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    const [day, month, year] = dateStr.split('/').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function parseMonthYear(monthYearStr) {
+    const [month, year] = monthYearStr.split('/').map(Number);
+    return new Date(year, month - 1, 1);
+}
+
+function formatDateDisplay(dateStr) {
+    const [day, month] = dateStr.split('/');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${parseInt(day)} ${months[parseInt(month) - 1]}`;
+}
+
+function formatShortDate(dateStr) {
+    const [day, month, year] = dateStr.split('/');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
+}
+
+function getMonthName(date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function generateMonths() {
+    const months = [];
+    const start = parseMonthYear(CONFIG.TIMELINE.START_MONTH);
+    const end = parseMonthYear(CONFIG.TIMELINE.END_MONTH);
+    
+    let current = new Date(start);
+    while (current <= end) {
+        months.push({
+            date: new Date(current),
+            name: getMonthName(current),
+            daysInMonth: new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate()
+        });
+        current.setMonth(current.getMonth() + 1);
+    }
+    return months;
+}
+
+function calculatePosition(dateStr, months) {
+    const date = parseDate(dateStr);
+    if (!date) return null;
+    
+    const timelineStart = months[0].date;
+    const timelineEnd = new Date(months[months.length - 1].date);
+    timelineEnd.setMonth(timelineEnd.getMonth() + 1);
+    
+    const totalDays = (timelineEnd - timelineStart) / (1000 * 60 * 60 * 24);
+    const daysFromStart = (date - timelineStart) / (1000 * 60 * 60 * 24);
+    
+    return Math.max(0, Math.min(100, (daysFromStart / totalDays) * 100));
+}
+
+function isDateInRange(dateStr, months) {
+    const date = parseDate(dateStr);
+    if (!date) return false;
+    
+    const timelineStart = months[0].date;
+    const timelineEnd = new Date(months[months.length - 1].date);
+    timelineEnd.setMonth(timelineEnd.getMonth() + 1);
+    
+    return date >= timelineStart && date <= timelineEnd;
+}
+
+// Determine current STATE based on milestone dates
+// The state is determined by finding the latest milestone that has passed,
+// then returning the state that follows that milestone.
+function getCurrentStatus(source) {
+    const today = parseDate(getTodayDate());
+    const milestones = getMilestones();
+    
+    // Check milestones in reverse order (latest first)
+    // The state is the one that comes AFTER the last passed milestone
+    for (let i = milestones.length - 1; i >= 0; i--) {
+        const milestone = milestones[i];
+        const milestoneDate = parseDate(getMilestoneDate(source, milestone.key));
+        if (milestoneDate && today >= milestoneDate) {
+            // Return the state that follows this milestone
+            const nextState = getStateAfterMilestone(milestone.key);
+            return nextState ? nextState.key : getLastState().key;
+        }
+    }
+    
+    // No milestone has passed yet - return the first state
+    return getFirstState().key;
+}
+
+// Get visible data sources (with filters applied)
+function getVisibleDataSources() {
+    let sources = CONFIG.DELIVERABLES.filter(source => source.showInTimeline);
+    sources = filterDeliverables(sources);
+    sources = sortDeliverables(sources);
+    return sources;
+}
+
+// Get all visible sources (without filters, for stats)
+function getAllVisibleDataSources() {
+    return CONFIG.DELIVERABLES.filter(source => source.showInTimeline);
+}
+
+// Calculate Statistics (uses all deliverables, not filtered)
+// Now counts by STATES instead of milestones
+function calculateStats() {
+    const allSources = CONFIG.DELIVERABLES;
+    const visibleSources = getAllVisibleDataSources();
+    const states = getStates();
+    const lastState = getLastState();
+    
+    // Initialize stats dynamically with states
+    const stats = { 
+        total: allSources.length,
+        visible: visibleSources.length,
+        hidden: allSources.length - visibleSources.length,
+        atRisk: 0,
+        visibleByStatus: {},
+        hiddenByStatus: {},
+        stateKeys: states.map(s => s.key)
+    };
+    
+    // Initialize state counts
+    states.forEach(s => {
+        stats[s.key] = 0;
+        stats.visibleByStatus[s.key] = 0;
+        stats.hiddenByStatus[s.key] = 0;
+    });
+    
+    allSources.forEach(source => {
+        const status = getCurrentStatus(source);
+        if (stats[status] !== undefined) {
+            stats[status]++;
+        }
+        
+        if (source.atRisk) stats.atRisk++;
+        
+        if (source.showInTimeline) {
+            if (stats.visibleByStatus[status] !== undefined) {
+                stats.visibleByStatus[status]++;
+            }
+        } else {
+            if (stats.hiddenByStatus[status] !== undefined) {
+                stats.hiddenByStatus[status]++;
+            }
+        }
+    });
+    
+    // Calculate completion percentage (last state = complete/production)
+    const lastStateKey = lastState.key;
+    stats.completionPercentage = Math.round((stats[lastStateKey] / stats.total) * 100);
+    
+    // Calculate "advanced" percentage (last 2 states)
+    if (states.length >= 2) {
+        const secondLastState = states[states.length - 2];
+        stats.productionReadyPercentage = Math.round(((stats[secondLastState.key] + stats[lastStateKey]) / stats.total) * 100);
+    } else {
+        stats.productionReadyPercentage = stats.completionPercentage;
+    }
+    
+    return stats;
+}
+
+// Find upcoming milestones (dynamic)
+function getUpcomingMilestones() {
+    const today = parseDate(getTodayDate());
+    const milestones = getMilestones();
+    const upcoming = {};
+    const visibleSources = getAllVisibleDataSources();
+    
+    milestones.forEach(m => {
+        let nearest = null;
+        let nearestDate = null;
+        
+        visibleSources.forEach(source => {
+            const milestoneDate = getMilestoneDate(source, m.key);
+            const date = parseDate(milestoneDate);
+            if (date && date >= today) {
+                if (!nearestDate || date < nearestDate) {
+                    nearestDate = date;
+                    nearest = { source: source.name, date: milestoneDate, atRisk: source.atRisk };
+                }
+            }
+        });
+        
+        upcoming[m.key] = nearest;
+    });
+    
+    return upcoming;
+}
+
+// Info icon SVG (for optional link)
+const infoIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm9-3.75a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H12a.75.75 0 01-.75-.75V8.25zm.75 2.25a.75.75 0 00-.75.75v4.5c0 .414.336.75.75.75h.008a.75.75 0 00.75-.75v-4.5a.75.75 0 00-.75-.75H12z" clip-rule="evenodd" />
+</svg>`;
+
+// Risk icon SVG
+const riskIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+    <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+</svg>`;
+
+// Render Functions
+function renderRoadmap() {
+    const months = generateMonths();
+    const monthWidth = 100 / months.length;
+    const today = parseDate(getTodayDate());
+    const todayPosition = calculatePosition(getTodayDate(), months);
+    const stats = calculateStats();
+    const upcoming = getUpcomingMilestones();
+    const visibleSources = getVisibleDataSources();
+    const workflow = getWorkflow();
+    const statesDef = getStates();
+    const milestonesDef = getMilestones();
+    const lastMilestoneKey = getLastMilestoneKey();
+    const lastState = getLastState();
+    const hasGroups = hasAnyGroups(visibleSources);
+    
+    // Generate month columns
+    const monthColumnsHTML = months.map(m => 
+        `<div class="month-column">${m.name}</div>`
+    ).join('');
+    
+    // Generate grid lines
+    const gridLinesHTML = months.slice(1).map((m, i) => 
+        `<div class="month-grid-line" style="left: ${(i + 1) * monthWidth}%;"></div>`
+    ).join('');
+    
+    // Helper function to render a single source row
+    function renderSourceRow(source, isGroupItem = false) {
+        const status = getCurrentStatus(source);
+        const currentState = getStateByKey(status);
+        const statusClass = `status-${status.toLowerCase()}`;
+        const indicatorClass = status.toLowerCase();
+        const atRiskClass = source.atRisk ? 'at-risk' : '';
+        const groupItemClass = isGroupItem ? 'group-item' : '';
+        
+        // Get state color (use first matching milestone color or default)
+        const workflow = getWorkflow();
+        const stateIndex = workflow.findIndex(item => item.type === 'state' && item.key === status);
+        let stateColor = '#c1c7d0'; // default grey
+        // Find the NEXT milestone after this state to get the relevant color
+        let foundNext = false;
+        for (let i = stateIndex + 1; i < workflow.length; i++) {
+            if (workflow[i].type === 'milestone') {
+                stateColor = workflow[i].color;
+                foundNext = true;
+                break;
+            }
+        }
+        // For final state (no next milestone), use a darker shade of the previous milestone's color
+        if (!foundNext && stateIndex > 0) {
+            for (let i = stateIndex - 1; i >= 0; i--) {
+                if (workflow[i].type === 'milestone') {
+                    // Darken the color for final state to distinguish from previous state
+                    stateColor = darkenColor(workflow[i].color, 0.25);
+                    break;
+                }
+            }
+        }
+        
+        // Check if activity has started (START date has passed)
+        const activityStartDate = getMilestoneDate(source, 'START');
+        const hasStarted = activityStartDate && parseDate(activityStartDate) <= today;
+        const stateOpacity = hasStarted ? '0.8' : '0.3';
+        
+        // Generate start marker using START milestone date
+        // Hide label if position < 2% to avoid overlap with status indicator
+        let startMarkerHTML = '';
+        const startDate = getMilestoneDate(source, 'START');
+        if (startDate && isDateInRange(startDate, months)) {
+            const position = calculatePosition(startDate, months);
+            const startMilestone = getMilestoneByKey('START');
+            const hideLabel = position < 2;
+            startMarkerHTML = `
+                <div class="milestone-marker start" style="left: ${position}%; background: ${startMilestone?.color || '#6554c0'}; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
+                    ${hideLabel ? '' : `<span>START</span><div class="milestone-date">${formatDateDisplay(startDate)}</div>`}
+                </div>
+            `;
+        }
+        
+        // Generate milestone markers (dynamic) - skip START as it has its own marker
+        // Hide label if position < 2% to avoid overlap with status indicator
+        const milestonesHTMLArr = milestonesDef.filter(m => m.key !== 'START').map(m => {
+            const date = getMilestoneDate(source, m.key);
+            
+            if (!date || !isDateInRange(date, months)) {
+                return '';
+            }
+            
+            const position = calculatePosition(date, months);
+            const hideLabel = position < 2;
+            
+            return `
+                <div class="milestone-marker" style="left: ${position}%; background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''} ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
+                    ${hideLabel ? '' : `<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(date)}</div>`}
+                </div>
+            `;
+        }).join('');
+        
+        // Generate Gantt bar - shows full timeline with colored segments for each phase
+        // Works dynamically with any milestone configuration
+        // Past portions have full opacity, future portions have reduced opacity
+        // Not Started items show full future bar with reduced opacity
+        let ganttBarsHTML = '';
+        {
+            const segments = [];
+            
+            // Get start date position (using START milestone)
+            const startDate = getMilestoneDate(source, 'START');
+            const startDatePos = startDate ? calculatePosition(startDate, months) : null;
+            
+            // Get all milestone positions dynamically
+            const milestonePositions = {};
+            milestonesDef.forEach(m => {
+                const date = getMilestoneDate(source, m.key);
+                milestonePositions[m.key] = date ? calculatePosition(date, months) : null;
+            });
+            
+            // Helper function to create a segment, splitting at today if needed
+            function createSegment(start, end, color) {
+                if (start === null || end === null || end <= start) return;
+                
+                // If entirely in the past
+                if (end <= todayPosition) {
+                    segments.push(`<div class="gantt-bar" style="left: ${start}%; width: ${end - start}%; background: ${color};"></div>`);
+                }
+                // If entirely in the future
+                else if (start >= todayPosition) {
+                    segments.push(`<div class="gantt-bar gantt-future" style="left: ${start}%; width: ${end - start}%; background: ${color};"></div>`);
+                }
+                // If spans today - split into two parts
+                else {
+                    // Past portion (full opacity)
+                    const pastWidth = todayPosition - start;
+                    if (pastWidth > 0) {
+                        segments.push(`<div class="gantt-bar" style="left: ${start}%; width: ${pastWidth}%; background: ${color};"></div>`);
+                    }
+                    // Future portion (reduced opacity)
+                    const futureWidth = end - todayPosition;
+                    if (futureWidth > 0) {
+                        segments.push(`<div class="gantt-bar gantt-future" style="left: ${todayPosition}%; width: ${futureWidth}%; background: ${color};"></div>`);
+                    }
+                }
+            }
+            
+            // Generate all segments dynamically based on milestone definitions
+            // Each segment from milestone N to milestone N+1 uses milestone N's color
+            // First segment (START to first milestone) uses first milestone's color
+            for (let i = 0; i < milestonesDef.length; i++) {
+                const currentMilestone = milestonesDef[i];
+                const currentPos = milestonePositions[currentMilestone.key];
+                
+                if (i === 0) {
+                    // First segment: START to first milestone - use first milestone's color
+                    if (currentPos !== null) {
+                        const segStart = startDatePos !== null ? startDatePos : Math.max(0, currentPos - 5);
+                        createSegment(segStart, currentPos, currentMilestone.color);
+                    }
+                }
+                
+                // Segment from current milestone to next milestone
+                if (i < milestonesDef.length - 1) {
+                    const nextMilestone = milestonesDef[i + 1];
+                    const nextPos = milestonePositions[nextMilestone.key];
+                    createSegment(currentPos, nextPos, nextMilestone.color);
+                }
+            }
+            
+            ganttBarsHTML = segments.join('');
+        }
+        
+        // Risk indicator
+        const riskIndicatorHTML = source.atRisk ? 
+            `<div class="risk-indicator" title="At Risk">${riskIconSVG}</div>` : '';
+        
+        // Info link (optional - backwards compatible when link is undefined)
+        const infoLinkHTML = (source.link && source.link.trim()) ?
+            `<a class="info-link" href="${escapeHtmlAttr(source.link)}" target="_blank" rel="noopener noreferrer" title="More info">${infoIconSVG}</a>` : '';
+        
+        return `
+            <div class="data-source-row ${atRiskClass} ${groupItemClass}">
+                <div class="source-name ${statusClass}">
+                    ${riskIndicatorHTML}
+                    <span class="source-name-text">${source.name}</span>
+                    ${infoLinkHTML}
+                    <span class="status-indicator" style="background: ${stateColor}; opacity: ${stateOpacity}; ${stateColor === '#ffab00' ? 'color: #172b4d;' : 'color: white;'}" title="${currentState?.title || status}">${currentState?.short || status}</span>
+                </div>
+                <div class="timeline-track">
+                    ${gridLinesHTML}
+                    ${filterState.showGantt ? ganttBarsHTML : ''}
+                    <div class="today-guide-line" style="left: ${todayPosition}%;"></div>
+                    ${startMarkerHTML}
+                    ${milestonesHTMLArr}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Chevron SVG for group headers
+    const chevronSVG = `<svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" />
+    </svg>`;
+    
+    // Generate data source rows with grouping support
+    let dataSourceRowsHTML = '';
+    
+    if (hasGroups) {
+        const { groups, ungrouped } = groupDeliverables(visibleSources);
+        
+        // Render grouped items
+        Object.keys(groups).sort().forEach(groupName => {
+            const groupSources = groups[groupName];
+            const collapsed = groupCollapsedState[groupName] || false;
+            const groupStats = getGroupStats(groupSources);
+            
+            // Group header
+            dataSourceRowsHTML += `
+                <div class="group-header" onclick="toggleGroup('${escapeHtmlAttr(groupName)}')">
+                    <div class="group-header-name">
+                        <svg class="group-chevron ${collapsed ? 'collapsed' : ''}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" />
+                        </svg>
+                        ${groupName}
+                        <span class="group-stats">
+                            ${groupStats.total} items${groupStats.atRisk > 0 ? ` <span class="group-stats-risk">(${groupStats.atRisk} at risk)</span>` : ''}
+                        </span>
+                    </div>
+                    <div class="group-header-track"></div>
+                </div>
+            `;
+            
+            // Group items (if not collapsed)
+            if (!collapsed) {
+                groupSources.forEach(source => {
+                    dataSourceRowsHTML += renderSourceRow(source, true);
+                });
+            }
+        });
+        
+        // Render ungrouped items at the end
+        ungrouped.forEach(source => {
+            dataSourceRowsHTML += renderSourceRow(source, false);
+        });
+    } else {
+        // No groups - render all items normally
+        visibleSources.forEach(source => {
+            dataSourceRowsHTML += renderSourceRow(source, false);
+        });
+    }
+    
+    // Helper function for breakdown text
+    function getBreakdownText(status) {
+        const visible = stats.visibleByStatus[status];
+        const hidden = stats.hiddenByStatus[status];
+        if (hidden > 0) {
+            return `${visible} shown + ${hidden} hidden`;
+        }
+        return '';
+    }
+    
+    // Config-driven labels for generic usage
+    const entityPlural = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.plural) || "Items";
+    const entityScopeLabel = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) || entityPlural.toLowerCase();
+    const columnHeaderLabel = (CONFIG.ENTITY_LABELS && (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular)) || "Item";
+    const dashboardTitle = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.title) || "Roadmap Dashboard";
+    const totalSubtitleSuffix = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.totalSubtitleSuffix) || "in scope";
+    
+    // Get total visible for filter results display
+    const allVisible = getAllVisibleDataSources();
+    const filteredCount = visibleSources.length;
+    const totalVisible = allVisible.length;
+    const hasActiveFilters = filterState.status !== 'ALL' || filterState.riskOnly || filterState.search;
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Build HTML
+    const roadmapHTML = `
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-group">
+                <button class="filter-toggle ${filterState.showGantt ? 'active' : ''}" onclick="toggleGanttBars()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Gantt Bars
+                </button>
+            </div>
+            <div class="filter-group">
+                <input type="text" class="filter-input" placeholder="Search by name..." 
+                       value="${escapeHtmlAttr(filterState.search)}"
+                       oninput="updateFilter('search', this.value)">
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">Sort:</span>
+                <select class="filter-select" onchange="updateFilter('sortBy', this.value)">
+                    <option value="name" ${filterState.sortBy === 'name' ? 'selected' : ''}>Name</option>
+                    <option value="status" ${filterState.sortBy === 'status' ? 'selected' : ''}>Status</option>
+                    <option value="m3date" ${filterState.sortBy === 'm3date' ? 'selected' : ''}>${lastMilestoneKey} Date</option>
+                    <option value="risk" ${filterState.sortBy === 'risk' ? 'selected' : ''}>Risk</option>
+                </select>
+                <select class="filter-select" onchange="updateFilter('sortOrder', this.value)">
+                    <option value="asc" ${filterState.sortOrder === 'asc' ? 'selected' : ''}>Asc</option>
+                    <option value="desc" ${filterState.sortOrder === 'desc' ? 'selected' : ''}>Desc</option>
+                </select>
+            </div>
+            ${hasActiveFilters ? `<button class="filter-clear" onclick="clearFilters()">Clear Filters</button>` : ''}
+            ${hasGroups ? `
+            <div class="group-controls">
+                <button class="group-control-btn" onclick="expandAllGroups()">Expand All</button>
+                <button class="group-control-btn" onclick="collapseAllGroups()">Collapse All</button>
+            </div>
+            ` : ''}
+            <div class="zoom-controls">
+                <span class="filter-label">Zoom:</span>
+                <button class="zoom-btn ${currentZoom === '3mo' ? 'active' : ''}" onclick="setDateRange(3)">3mo</button>
+                <button class="zoom-btn ${currentZoom === '6mo' ? 'active' : ''}" onclick="setDateRange(6)">6mo</button>
+                <button class="zoom-btn ${currentZoom === '12mo' ? 'active' : ''}" onclick="setDateRange(12)">12mo</button>
+                <button class="zoom-btn ${currentZoom === 'all' ? 'active' : ''}" onclick="setDateRange('all')">All</button>
+            </div>
+            <div class="filter-results">
+                Showing <strong>${filteredCount}</strong> of <strong>${totalVisible}</strong> ${entityScopeLabel}
+            </div>
+        </div>
+        
+        <!-- Export Controls -->
+        <div class="export-controls">
+            <button class="export-btn" onclick="exportToPNG('roadmap-export', 'Full-Roadmap')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export Full Roadmap
+            </button>
+            <button class="export-btn secondary" onclick="exportToPNG('summary-section', 'Summary-Dashboard')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Export Summary Only
+            </button>
+            <button class="export-btn secondary" onclick="exportToPNG('timeline-section', 'Timeline-Only')">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Export Timeline Only
+            </button>
+            <button class="export-btn secondary" onclick="exportToCSV()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                CSV
+            </button>
+            <button class="export-btn secondary" onclick="exportToJSON()">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                </svg>
+                JSON
+            </button>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                ${isDarkMode ? 
+                    `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Light Mode` : 
+                    `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    Dark Mode`}
+            </button>
+            <span class="export-note">Export different views for your presentation</span>
+        </div>
+        
+        <!-- Full Roadmap Container -->
+        <div class="roadmap-container" id="roadmap-export">
+            
+            <!-- Summary Dashboard Section -->
+            <div class="summary-dashboard" id="summary-section">
+                <div class="summary-header">
+                    <div class="summary-title">
+                        ${dashboardTitle}
+                        <span class="summary-title-note">(${stats.total} total ${entityScopeLabel}, ${stats.visible} shown in timeline)</span>
+                    </div>
+                    <div class="header-right">
+                        ${stats.atRisk > 0 ? `
+                        <div class="risk-summary clickable ${filterState.riskOnly ? 'active' : ''}" onclick="toggleRiskFilter(event)" title="Click to filter At Risk items">
+                            <span class="risk-summary-icon">${riskIconSVG}</span>
+                            <span class="risk-summary-text">${stats.atRisk} At Risk</span>
+                        </div>
+                        ` : ''}
+                        <div class="today-date-container">
+                            <span class="today-date-label">Today:</span>
+                            <span class="today-date-value">${formatShortDate(getTodayDate())}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- KPI Cards (Dynamic - by STATE) -->
+                <div class="kpi-section" style="grid-template-columns: repeat(${1 + statesDef.length}, 1fr);">
+                    <div class="kpi-card total">
+                        <div class="kpi-value">${stats.total}</div>
+                        <div class="kpi-label">Total ${entityPlural}</div>
+                        <div class="kpi-sublabel">${totalSubtitleSuffix}</div>
+                        ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
+                    </div>
+                    ${statesDef.map((s, index) => {
+                        // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
+                        let stateColor = '#c1c7d0'; // default grey
+                        const stateIndex = workflow.indexOf(s);
+                        let foundNext = false;
+                        for (let i = stateIndex + 1; i < workflow.length; i++) {
+                            if (workflow[i].type === 'milestone') {
+                                stateColor = workflow[i].color;
+                                foundNext = true;
+                                break;
+                            }
+                        }
+                        // For final state (no next milestone), use a darker shade of the previous milestone's color
+                        if (!foundNext && stateIndex > 0) {
+                            for (let i = stateIndex - 1; i >= 0; i--) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = darkenColor(workflow[i].color, 0.25);
+                                    break;
+                                }
+                            }
+                        }
+                        return `
+                    <div class="kpi-card clickable ${filterState.status === s.key ? 'active' : ''}" style="border-left: 4px solid ${stateColor};" onclick="filterByStatus('${s.key}', event)">
+                        <div class="kpi-value" style="color: ${stateColor};">${stats[s.key] || 0}</div>
+                        <div class="kpi-label">${s.short} - ${s.title}</div>
+                        <div class="kpi-sublabel">${s.description || ''}</div>
+                        ${getBreakdownText(s.key) ? `<div class="kpi-breakdown">${getBreakdownText(s.key)}</div>` : ''}
+                    </div>`;
+                    }).join('')}
+                </div>
+                
+                <!-- Progress Bar (Dynamic - by STATE) -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <div class="progress-title">Overall Progress (All ${stats.total} ${entityPlural})</div>
+                        <div class="progress-percentage">${stats.productionReadyPercentage}% ${lastState.title}</div>
+                    </div>
+                    <div class="progress-bar-container">
+                        ${statesDef.map((s, index) => {
+                            const count = stats[s.key] || 0;
+                            // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
+                            let stateColor = '#c1c7d0'; // default grey
+                            const stateIndex = workflow.indexOf(s);
+                            let foundNext = false;
+                            for (let i = stateIndex + 1; i < workflow.length; i++) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = workflow[i].color;
+                                    foundNext = true;
+                                    break;
+                                }
+                            }
+                            // For final state (no next milestone), use a darker shade of the previous milestone's color
+                            if (!foundNext && stateIndex > 0) {
+                                for (let i = stateIndex - 1; i >= 0; i--) {
+                                    if (workflow[i].type === 'milestone') {
+                                        stateColor = darkenColor(workflow[i].color, 0.25);
+                                        break;
+                                    }
+                                }
+                            }
+                            const textColor = stateColor === '#ffab00' || stateColor === '#c1c7d0' ? '#172b4d' : 'white';
+                            // Highlight filtered state, fade others when filtering
+                            const isFiltering = filterState.status && filterState.status !== 'ALL';
+                            const isActiveFilter = filterState.status === s.key;
+                            const segmentOpacity = isFiltering ? (isActiveFilter ? '1' : '0.3') : '1';
+                            return `<div class="progress-segment" style="width: ${(count / stats.total) * 100}%; background: ${stateColor}; color: ${textColor}; opacity: ${segmentOpacity};">${count > 0 ? count : ''}</div>`;
+                        }).join('')}
+                    </div>
+                    <div class="progress-legend">
+                        ${statesDef.map((s, index) => {
+                            let stateColor = '#c1c7d0';
+                            const stateIndex = workflow.indexOf(s);
+                            let foundNext = false;
+                            for (let i = stateIndex + 1; i < workflow.length; i++) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = workflow[i].color;
+                                    foundNext = true;
+                                    break;
+                                }
+                            }
+                            // For final state (no next milestone), use a darker shade of the previous milestone's color
+                            if (!foundNext && stateIndex > 0) {
+                                for (let i = stateIndex - 1; i >= 0; i--) {
+                                    if (workflow[i].type === 'milestone') {
+                                        stateColor = darkenColor(workflow[i].color, 0.25);
+                                        break;
+                                    }
+                                }
+                            }
+                            return `
+                        <div class="progress-legend-item">
+                            <div class="progress-legend-dot" style="background: ${stateColor};"></div>
+                            <span>${s.short} ${s.title}</span>
+                        </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <!-- Upcoming Milestones (Dynamic) -->
+                <div class="key-milestones" style="grid-template-columns: repeat(${milestonesDef.length}, 1fr);">
+                    ${milestonesDef.map(m => {
+                        const upcomingItem = upcoming[m.key];
+                        return `
+                    <div class="milestone-card">
+                        <div class="milestone-card-header">
+                            <div class="milestone-card-icon" style="background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''}">${m.short}</div>
+                            <div>
+                                <div class="milestone-card-title">Next ${m.title}</div>
+                                <div class="milestone-card-subtitle">${m.subtitle || ''}</div>
+                            </div>
+                        </div>
+                        <div class="milestone-card-content">
+                            ${upcomingItem ? `<span class="milestone-card-date">${formatShortDate(upcomingItem.date)}</span> - <span class="milestone-card-source">${upcomingItem.source}</span>${upcomingItem.atRisk ? ' ⚠️' : ''}` : `All ${m.title.toLowerCase()} complete`}
+                        </div>
+                    </div>`;
+                    }).join('')}
+                </div>
+            </div>
+            
+            <!-- Timeline Section -->
+            <div id="timeline-section">
+                <!-- State Legend -->
+                <div class="state-legend">
+                    <div class="state-legend-items">
+                        ${statesDef.map((s, index) => {
+                            // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
+                            let stateColor = '#c1c7d0'; // default grey
+                            let isFirstState = index === 0;
+                            const stateIndex = workflow.indexOf(s);
+                            let foundNext = false;
+                            for (let i = stateIndex + 1; i < workflow.length; i++) {
+                                if (workflow[i].type === 'milestone') {
+                                    stateColor = workflow[i].color;
+                                    foundNext = true;
+                                    break;
+                                }
+                            }
+                            // For final state (no next milestone), use a darker shade of the previous milestone's color
+                            if (!foundNext && stateIndex > 0) {
+                                for (let i = stateIndex - 1; i >= 0; i--) {
+                                    if (workflow[i].type === 'milestone') {
+                                        stateColor = darkenColor(workflow[i].color, 0.25);
+                                        break;
+                                    }
+                                }
+                            }
+                            // For first state (Not Started), use lower opacity like future gantt bars
+                            const opacity = isFirstState ? '0.3' : '0.8';
+                            return `
+                        <div class="state-legend-item">
+                            <div class="state-legend-color" style="background: ${stateColor}; opacity: ${opacity};"></div>
+                            <span class="state-legend-label">${s.title}</span>
+                        </div>`;
+                        }).join('')}
+                    </div>
+                    <div class="state-legend-info">
+                        Timeline: <span class="state-legend-info-count">${months[0].name}</span> - <span class="state-legend-info-count">${months[months.length - 1].name}</span>
+                    </div>
+                </div>
+                
+                <!-- Compact Roadmap -->
+                <div class="roadmap-content">
+                    <div class="roadmap-grid">
+                        
+                        <!-- Timeline Header -->
+                        <div class="timeline-header">
+                            <div class="timeline-label">${columnHeaderLabel}</div>
+                            <div class="timeline-months">
+                                ${monthColumnsHTML}
+                                <div class="today-pointer" style="left: ${todayPosition}%;">
+                                    <div class="today-pointer-arrow"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Data Source Rows -->
+                        ${dataSourceRowsHTML}
+                        
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- Footer -->
+        <footer class="page-footer">
+            © 2026 RoadmapSnap · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a>
+        </footer>
+    `;
+    
+    document.body.innerHTML = roadmapHTML;
+}
+
+// Export to PNG Function
+function exportToPNG(elementId, fileNamePrefix) {
+    const element = document.getElementById(elementId);
+    const buttons = document.querySelectorAll('.export-btn');
+    
+    buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+    });
+    
+    html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true
+    }).then(canvas => {
+        const link = document.createElement('a');
+        const today = getTodayDate().replace(/\//g, '-');
+        link.download = `${fileNamePrefix}-${today}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+        
+    }).catch(err => {
+        console.error('Export failed:', err);
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+    });
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    renderRoadmap();
+    // Add click listener to clear status filter when clicking outside KPI cards
+    document.addEventListener('click', clearStatusFilterOnOutsideClick);
+});
+</script>
+
+</body>
+</html>
