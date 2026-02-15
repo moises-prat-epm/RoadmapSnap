@@ -1343,6 +1343,11 @@ function toggleRiskFilter(event) {
 function toggleGanttBars() {
     filterState.showGantt = !filterState.showGantt;
     renderRoadmap();
+    
+    // Redraw dependency arrows if active (they need to be redrawn after render)
+    if (activeDependencyGraph) {
+        setTimeout(() => drawDependencyArrows(), 50);
+    }
 }
 
 // ============================================
@@ -1813,7 +1818,14 @@ function toggleDependencyGraph(sourceName, event) {
 
 // Clear dependency graph when clicking outside
 function clearDependencyGraphOnClickOutside(event) {
-    if (activeDependencyGraph && !event.target.closest('.dependency-icon') && !event.target.closest('.data-source-row')) {
+    // Don't clear if clicking on: dependency icon, data source row, filter bar, or any button/control
+    if (activeDependencyGraph && 
+        !event.target.closest('.dependency-icon') && 
+        !event.target.closest('.data-source-row') &&
+        !event.target.closest('.filter-bar') &&
+        !event.target.closest('.filter-toggle') &&
+        !event.target.closest('button') &&
+        !event.target.closest('select')) {
         activeDependencyGraph = null;
         clearDependencyArrows();
         renderRoadmap();
