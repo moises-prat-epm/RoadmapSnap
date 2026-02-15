@@ -82,6 +82,7 @@ const CONFIG = {
             link: "https://confluence.com/ecommerce/aws-arch",
             tags: ["infra", "aws", "P0"],
             group: "Infrastructure",
+            // Foundation - no dependencies, blocks: Database Schema, CI/CD, Logging, API Gateway
             milestones: { 
                 START: "01/11/2025",
                 M0: "15/11/2025",
@@ -97,6 +98,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["infra", "devops", "P0"],
             group: "Infrastructure",
+            dependencies: ["AWS Infrastructure Setup"],
             milestones: { 
                 START: "15/11/2025",
                 M0: "01/12/2025",
@@ -112,6 +114,8 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["backend", "database", "P0"],
             group: "Backend Services",
+            dependencies: ["AWS Infrastructure Setup"],
+            // Blocks: Product Service API, User Authentication
             milestones: { 
                 START: "01/11/2025",
                 M0: "10/11/2025",
@@ -127,6 +131,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["infra", "api", "P0"],
             group: "Infrastructure",
+            dependencies: ["AWS Infrastructure Setup"],
             milestones: { 
                 START: "10/11/2025",
                 M0: "20/11/2025",
@@ -142,6 +147,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["infra", "observability", "P0"],
             group: "Infrastructure",
+            dependencies: ["AWS Infrastructure Setup"],
             milestones: { 
                 START: "01/12/2025",
                 M0: "10/12/2025",
@@ -178,6 +184,8 @@ const CONFIG = {
             link: "https://auth0.com/docs",
             tags: ["security", "auth", "P0"],
             group: "Security",
+            dependencies: ["Database Schema v1"],
+            // Blocks: Session Management, Customer Registration Flow
             milestones: { 
                 START: "01/12/2025",
                 M0: "15/12/2025",
@@ -194,6 +202,8 @@ const CONFIG = {
             link: "https://github.com/ecommerce/product-service",
             tags: ["backend", "api", "core", "P0"],
             group: "Backend Services",
+            dependencies: ["Database Schema v1"],
+            // Blocks: Product Catalog UI, Order Management API, Inventory Service
             milestones: { 
                 START: "01/12/2025",
                 M0: "12/12/2025",
@@ -239,6 +249,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["security", "backend", "P0"],
             group: "Security",
+            dependencies: ["User Authentication (OAuth2)"],
             milestones: { 
                 START: "05/12/2025",
                 M0: "18/12/2025",
@@ -260,6 +271,8 @@ const CONFIG = {
             link: "https://figma.com/ecommerce/catalog",
             tags: ["frontend", "core", "P0"],
             group: "Frontend",
+            dependencies: ["Product Service API"],
+            // Blocks: Shopping Cart
             milestones: { 
                 START: "01/12/2025",
                 M0: "15/12/2025",
@@ -276,6 +289,8 @@ const CONFIG = {
             link: "https://figma.com/ecommerce/cart",
             tags: ["frontend", "core", "P0"],
             group: "Frontend",
+            dependencies: ["Product Catalog UI"],
+            // Blocks: Checkout Flow
             milestones: { 
                 START: "10/12/2025",
                 M0: "22/12/2025",
@@ -292,6 +307,8 @@ const CONFIG = {
             link: "https://github.com/ecommerce/order-service",
             tags: ["backend", "api", "core", "P0"],
             group: "Backend Services",
+            dependencies: ["Product Service API"],
+            // Blocks: Checkout Flow
             milestones: { 
                 START: "15/12/2025",
                 M0: "28/12/2025",
@@ -307,6 +324,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["frontend", "auth", "P0"],
             group: "Frontend",
+            dependencies: ["User Authentication (OAuth2)"],
             milestones: { 
                 START: "20/12/2025",
                 M0: "05/01/2026",
@@ -322,6 +340,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["backend", "api", "P1"],
             group: "Backend Services",
+            dependencies: ["Product Service API"],
             milestones: { 
                 START: "05/12/2025",
                 M0: "20/12/2025",
@@ -343,6 +362,7 @@ const CONFIG = {
             link: "https://figma.com/ecommerce/checkout",
             tags: ["frontend", "core", "P0", "critical"],
             group: "Frontend",
+            dependencies: ["Shopping Cart", "Order Management API"],
             milestones: { 
                 START: "01/01/2026",
                 M0: "15/01/2026",
@@ -404,6 +424,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["frontend", "feature", "P1"],
             group: "Frontend",
+            dependencies: ["Order Management API"],
             milestones: { 
                 START: "12/01/2026",
                 M0: "25/01/2026",
@@ -424,6 +445,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["frontend", "P1"],
             group: "Frontend",
+            dependencies: ["Session Management"],
             milestones: { 
                 START: "15/01/2026",
                 M0: "01/02/2026",
@@ -439,6 +461,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["infra", "observability", "P1"],
             group: "Infrastructure",
+            dependencies: ["Logging Infrastructure"],
             milestones: { 
                 START: "20/01/2026",
                 M0: "05/02/2026",

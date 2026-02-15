@@ -16,6 +16,7 @@ Check out the live demo [here](https://roadmapsnap.pages.dev) with a sample proj
 | **Flexible workflow** | Define custom states and milestones in sequence (e.g., Not Started → Design → Dev → QA → UAT → Staging → Production) |
 | **Compact timeline** | One row per deliverable with milestone markers and Gantt bars across months |
 | **State indicators** | Each deliverable shows its current state with color-coded badge |
+| **Dependency management** | Define task dependencies; click to visualize dependency graph with arrows |
 | **Risk visibility** | `atRisk: true` items show a warning indicator; clickable to filter |
 | **PNG export** | Export full roadmap, summary-only, or timeline-only views |
 | **CSV/JSON export** | Export deliverable data for reporting and integration |
@@ -128,6 +129,7 @@ Array of items to track. Each item:
 | `link` | string *(optional)* | URL shown as info icon; opens in new tab when clicked |
 | `tags` | array *(optional)* | Tags for categorization (e.g. `["backend", "critical"]`) |
 | `group` | string *(optional)* | Group name for grouping with expand/collapse |
+| `dependencies` | array *(optional)* | Names of other deliverables this one depends on (see Dependencies below) |
 | `milestones` | object | Date for each milestone defined in WORKFLOW |
 
 **Example deliverable:**
@@ -139,6 +141,7 @@ Array of items to track. Each item:
     tags: ["security", "backend"],
     group: "Core Features",
     link: "https://jira.example.com/browse/PROJ-123",
+    dependencies: ["Database Schema", "API Gateway"],  // Depends on these tasks
     milestones: {
         START: "01/01/2026",
         M0: "15/01/2026",
@@ -154,6 +157,40 @@ The system calculates the current state based on which milestone dates have pass
 - If no milestone has passed → first state (e.g., "Not Started")
 - If START passed but not M0 → second state (e.g., "In Design")
 - If all milestones passed → final state (e.g., "In Production")
+
+### Dependencies
+
+Deliverables can define dependencies on other tasks using the `dependencies` array. This enables visualization of task relationships:
+
+**Dependency types:**
+| Icon | Type | Meaning |
+|------|------|---------|
+| ↓ (blue) | Inbound | This task depends on others (is blocked by) |
+| ↑ (orange) | Outbound | Other tasks depend on this one (blocks others) |
+| ↕ (purple) | Both | Has both inbound and outbound dependencies |
+
+**How it works:**
+1. Tasks with dependencies show a colored icon next to their status indicator
+2. Click the icon to activate the dependency graph view
+3. The clicked task is highlighted with a blue border
+4. Related tasks (dependencies and dependents) are highlighted
+5. Other tasks are dimmed for focus
+6. Arrows are drawn showing the dependency direction:
+   - **Blue arrows**: Point from dependencies TO the selected task (what blocks it)
+   - **Orange arrows**: Point FROM the selected task to dependents (what it blocks)
+7. Click anywhere outside to dismiss the dependency view
+
+**Example:**
+```javascript
+// Task A has no dependencies (foundation)
+{ name: "Database Schema", dependencies: [] }
+
+// Task B depends on Task A
+{ name: "User API", dependencies: ["Database Schema"] }
+
+// Task C depends on Task B (creates a chain)
+{ name: "User Dashboard", dependencies: ["User API"] }
+```
 
 ---
 

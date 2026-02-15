@@ -943,6 +943,69 @@
         .status-indicator.m2 { background: var(--color-m2); color: white; }
         .status-indicator.m3 { background: var(--color-m3); color: white; }
         
+        /* Dependency Icons */
+        .dependency-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        
+        .dependency-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .dependency-icon svg {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .dependency-icon.inbound {
+            background: rgba(52, 152, 219, 0.15);
+            color: #3498db;
+        }
+        
+        .dependency-icon.outbound {
+            background: rgba(230, 126, 34, 0.15);
+            color: #e67e22;
+        }
+        
+        .dependency-icon.both {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.15), rgba(230, 126, 34, 0.15));
+            color: #8e44ad;
+        }
+        
+        .dependency-icon.active {
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        
+        /* Dependency Graph Highlighting */
+        .data-source-row.dependency-dimmed {
+            opacity: 0.3;
+            transition: opacity 0.2s ease;
+        }
+        
+        .data-source-row.dependency-highlight {
+            opacity: 1;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.4);
+            border-radius: 4px;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .data-source-row.dependency-active {
+            opacity: 1;
+            box-shadow: 0 0 0 3px #3498db;
+            border-radius: 4px;
+            z-index: 11;
+            position: relative;
+        }
+        
         /* Timeline Track - Compact */
         .timeline-track {
             position: relative;
@@ -1615,6 +1678,361 @@ function getNextMilestone(source) {
     return null; // All milestones passed
 }
 
+// ============================================
+// DEPENDENCY MANAGEMENT FUNCTIONS
+// ============================================
+
+// Get all data sources (all deliverables, regardless of visibility)
+function getAllDataSources() {
+    return CONFIG.DELIVERABLES;
+}
+
+// Get inbound dependencies (tasks this deliverable depends on / is blocked by)
+function getInboundDependencies(source) {
+    return source.dependencies || [];
+}
+
+// Get outbound dependencies (tasks that depend on this deliverable / are blocked by it)
+function getOutboundDependencies(source) {
+    const allSources = getAllDataSources();
+    const dependents = [];
+    
+    allSources.forEach(s => {
+        if (s.dependencies && s.dependencies.includes(source.name)) {
+            dependents.push(s.name);
+        }
+    });
+    
+    return dependents;
+}
+
+// Check if a deliverable has any dependencies (inbound or outbound)
+function hasDependencies(source) {
+    const inbound = getInboundDependencies(source);
+    const outbound = getOutboundDependencies(source);
+    return inbound.length > 0 || outbound.length > 0;
+}
+
+// Get dependency type for icon display
+// Returns: 'inbound' | 'outbound' | 'both' | 'none'
+function getDependencyType(source) {
+    const inbound = getInboundDependencies(source);
+    const outbound = getOutboundDependencies(source);
+    
+    if (inbound.length > 0 && outbound.length > 0) return 'both';
+    if (inbound.length > 0) return 'inbound';
+    if (outbound.length > 0) return 'outbound';
+    return 'none';
+}
+
+// Get the full dependency graph for a deliverable (all connected nodes)
+function getDependencyGraph(sourceName) {
+    const allSources = getAllDataSources();
+    const sourceMap = new Map(allSources.map(s => [s.name, s]));
+    const graph = new Set([sourceName]);
+    const inboundEdges = []; // [from, to]
+    const outboundEdges = []; // [from, to]
+    
+    const source = sourceMap.get(sourceName);
+    if (!source) return { nodes: [], inboundEdges: [], outboundEdges: [] };
+    
+    // Recursively get all inbound dependencies (tasks this depends on, and their dependencies)
+    const visitedInbound = new Set();
+    function traverseInbound(currentName) {
+        if (visitedInbound.has(currentName)) return;
+        visitedInbound.add(currentName);
+        
+        const current = sourceMap.get(currentName);
+        if (!current) return;
+        
+        const deps = getInboundDependencies(current);
+        deps.forEach(depName => {
+            graph.add(depName);
+            inboundEdges.push([depName, currentName]);
+            traverseInbound(depName); // Recurse up the chain
+        });
+    }
+    traverseInbound(sourceName);
+    
+    // Recursively get all outbound dependencies (tasks that depend on this, and what they block)
+    const visitedOutbound = new Set();
+    function traverseOutbound(currentName) {
+        if (visitedOutbound.has(currentName)) return;
+        visitedOutbound.add(currentName);
+        
+        const current = sourceMap.get(currentName);
+        if (!current) return;
+        
+        const dependents = getOutboundDependencies(current);
+        dependents.forEach(depName => {
+            graph.add(depName);
+            outboundEdges.push([currentName, depName]);
+            traverseOutbound(depName); // Recurse down the chain
+        });
+    }
+    traverseOutbound(sourceName);
+    
+    return {
+        nodes: Array.from(graph),
+        inboundEdges,
+        outboundEdges
+    };
+}
+
+// Active dependency graph state
+let activeDependencyGraph = null;
+
+// Toggle dependency graph view
+function toggleDependencyGraph(sourceName, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    
+    if (activeDependencyGraph === sourceName) {
+        // Clicking same item - deactivate
+        activeDependencyGraph = null;
+    } else {
+        // Activate new graph
+        activeDependencyGraph = sourceName;
+    }
+    
+    renderRoadmap();
+    
+    // Draw arrows after render
+    if (activeDependencyGraph) {
+        setTimeout(() => drawDependencyArrows(), 50);
+    } else {
+        clearDependencyArrows();
+    }
+}
+
+// Clear dependency graph when clicking outside
+function clearDependencyGraphOnClickOutside(event) {
+    if (activeDependencyGraph && !event.target.closest('.dependency-icon') && !event.target.closest('.data-source-row')) {
+        activeDependencyGraph = null;
+        clearDependencyArrows();
+        renderRoadmap();
+    }
+}
+
+// Draw dependency arrows using SVG overlay
+function drawDependencyArrows() {
+    if (!activeDependencyGraph) return;
+    
+    const graph = getDependencyGraph(activeDependencyGraph);
+    const container = document.querySelector('.roadmap-content');
+    if (!container) return;
+    
+    // Remove existing SVG overlay
+    clearDependencyArrows();
+    
+    // Create SVG overlay
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.id = 'dependency-arrows-svg';
+    // Allow pointer events on children (for tooltips) but not on the SVG itself
+    svg.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;';
+    svg.setAttribute('pointer-events', 'none');  // SVG container doesn't capture events
+    
+    // Add arrow marker definitions
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    
+    // Inbound arrow marker (blue)
+    const inboundMarker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    inboundMarker.setAttribute('id', 'arrowhead-inbound');
+    inboundMarker.setAttribute('markerWidth', '10');
+    inboundMarker.setAttribute('markerHeight', '7');
+    inboundMarker.setAttribute('refX', '9');
+    inboundMarker.setAttribute('refY', '3.5');
+    inboundMarker.setAttribute('orient', 'auto');
+    const inboundPath = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    inboundPath.setAttribute('points', '0 0, 10 3.5, 0 7');
+    inboundPath.setAttribute('fill', '#3498db');
+    inboundMarker.appendChild(inboundPath);
+    defs.appendChild(inboundMarker);
+    
+    // Outbound arrow marker (orange)
+    const outboundMarker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    outboundMarker.setAttribute('id', 'arrowhead-outbound');
+    outboundMarker.setAttribute('markerWidth', '10');
+    outboundMarker.setAttribute('markerHeight', '7');
+    outboundMarker.setAttribute('refX', '9');
+    outboundMarker.setAttribute('refY', '3.5');
+    outboundMarker.setAttribute('orient', 'auto');
+    const outboundPath = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    outboundPath.setAttribute('points', '0 0, 10 3.5, 0 7');
+    outboundPath.setAttribute('fill', '#e67e22');
+    outboundMarker.appendChild(outboundPath);
+    defs.appendChild(outboundMarker);
+    
+    svg.appendChild(defs);
+    
+    // Get container bounds for positioning
+    const containerRect = container.getBoundingClientRect();
+    
+    // Helper to get row element by name
+    function getRowElement(name) {
+        const rows = container.querySelectorAll('.data-source-row');
+        for (const row of rows) {
+            const nameEl = row.querySelector('.source-name-text');
+            if (nameEl && nameEl.textContent.trim() === name) {
+                return row;
+            }
+        }
+        return null;
+    }
+    
+    // Get months for position calculation
+    const months = generateMonths();
+    const lastMilestoneKey = getLastMilestoneKey();
+    
+    // Helper to get source data by name
+    function getSourceByName(name) {
+        return getAllDataSources().find(s => s.name === name);
+    }
+    
+    // Helper to draw a finish-to-start arrow between two rows
+    // Arrow goes from LAST MILESTONE of blocking task to START milestone of blocked task
+    function drawArrow(fromName, toName, fromRow, toRow, color, markerId) {
+        const fromRect = fromRow.getBoundingClientRect();
+        const toRect = toRow.getBoundingClientRect();
+        
+        // Get timeline track elements for positioning
+        const fromTrack = fromRow.querySelector('.timeline-track');
+        const toTrack = toRow.querySelector('.timeline-track');
+        const fromTrackRect = fromTrack ? fromTrack.getBoundingClientRect() : fromRect;
+        const toTrackRect = toTrack ? toTrack.getBoundingClientRect() : toRect;
+        
+        // Get source data to find milestone positions
+        const fromSource = getSourceByName(fromName);
+        const toSource = getSourceByName(toName);
+        
+        // Calculate X positions based on milestone dates
+        let fromXPercent = 100; // Default to end
+        let toXPercent = 0; // Default to start
+        let fromEndDate = 'N/A';
+        let toStartDate = 'N/A';
+        
+        if (fromSource) {
+            // Get last milestone date of blocking task (FINISH)
+            const lastMilestoneDate = getMilestoneDate(fromSource, lastMilestoneKey);
+            if (lastMilestoneDate) {
+                fromXPercent = calculatePosition(lastMilestoneDate, months) || 100;
+                fromEndDate = formatDateDisplay(lastMilestoneDate);
+            }
+        }
+        
+        if (toSource) {
+            // Get START milestone date of blocked task (START)
+            const startDate = getMilestoneDate(toSource, 'START');
+            if (startDate) {
+                toXPercent = calculatePosition(startDate, months) || 0;
+                toStartDate = formatDateDisplay(startDate);
+            }
+        }
+        
+        // Convert percentage to pixel position within timeline track
+        const fromTrackWidth = fromTrackRect.width;
+        const toTrackWidth = toTrackRect.width;
+        
+        const fromX = fromTrackRect.left - containerRect.left + (fromTrackWidth * fromXPercent / 100);
+        const fromY = fromRect.top - containerRect.top + fromRect.height / 2;
+        
+        const toX = toTrackRect.left - containerRect.left + (toTrackWidth * toXPercent / 100);
+        const toY = toRect.top - containerRect.top + toRect.height / 2;
+        
+        // Calculate vertical distance
+        const vertDist = Math.abs(toY - fromY);
+        
+        // Use a simple quadratic curve with small control offset
+        const curveOffset = Math.min(20, vertDist * 0.15 + 8);
+        
+        let d;
+        if (vertDist < 5) {
+            // Nearly same row - straight line
+            d = `M ${fromX} ${fromY} L ${toX} ${toY}`;
+        } else {
+            // Slight curve - use quadratic bezier for simplicity
+            const midY = (fromY + toY) / 2;
+            const controlX = Math.max(fromX, toX) + curveOffset;
+            d = `M ${fromX} ${fromY} Q ${controlX} ${midY}, ${toX} ${toY}`;
+        }
+        
+        // Create a group for the arrow with tooltip
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.style.cursor = 'pointer';
+        group.setAttribute('pointer-events', 'auto');
+        
+        // Create invisible wider path for easier hover
+        const hoverPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        hoverPath.setAttribute('d', d);
+        hoverPath.setAttribute('stroke', 'transparent');
+        hoverPath.setAttribute('stroke-width', '14');
+        hoverPath.setAttribute('fill', 'none');
+        hoverPath.setAttribute('pointer-events', 'stroke');
+        group.appendChild(hoverPath);
+        
+        // Create visible path
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('marker-end', `url(#${markerId})`);
+        path.setAttribute('opacity', '0.8');
+        path.setAttribute('pointer-events', 'none');
+        group.appendChild(path);
+        
+        // Add hover effect - thicken line on hover
+        group.addEventListener('mouseenter', () => {
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('opacity', '1');
+        });
+        group.addEventListener('mouseleave', () => {
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('opacity', '0.8');
+        });
+        
+        // Create tooltip
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = `${fromName} (ends ${fromEndDate}) → ${toName} (starts ${toStartDate})`;
+        group.appendChild(title);
+        
+        svg.appendChild(group);
+    }
+    
+    // Draw inbound arrows (blue - tasks this depends on)
+    graph.inboundEdges.forEach(([from, to]) => {
+        const fromRow = getRowElement(from);
+        const toRow = getRowElement(to);
+        
+        if (fromRow && toRow) {
+            drawArrow(from, to, fromRow, toRow, '#3498db', 'arrowhead-inbound');
+        }
+    });
+    
+    // Draw outbound arrows (orange - tasks that depend on this)
+    graph.outboundEdges.forEach(([from, to]) => {
+        const fromRow = getRowElement(from);
+        const toRow = getRowElement(to);
+        
+        if (fromRow && toRow) {
+            drawArrow(from, to, fromRow, toRow, '#e67e22', 'arrowhead-outbound');
+        }
+    });
+    
+    // Add SVG to container
+    container.style.position = 'relative';
+    container.appendChild(svg);
+}
+
+// Clear dependency arrows
+function clearDependencyArrows() {
+    const svg = document.getElementById('dependency-arrows-svg');
+    if (svg) {
+        svg.remove();
+    }
+}
+
 // Get milestone date from source (handles both new format and legacy startDate)
 function getMilestoneDate(source, milestoneKey) {
     // Check in milestones object first
@@ -2033,12 +2451,55 @@ function renderRoadmap() {
         const infoLinkHTML = (source.link && source.link.trim()) ?
             `<a class="info-link" href="${escapeHtmlAttr(source.link)}" target="_blank" rel="noopener noreferrer" title="More info">${infoIconSVG}</a>` : '';
         
+        // Dependency indicator
+        const depType = getDependencyType(source);
+        const inboundDeps = getInboundDependencies(source);
+        const outboundDeps = getOutboundDependencies(source);
+        let dependencyIconHTML = '';
+        
+        if (depType !== 'none') {
+            const isActive = activeDependencyGraph === source.name;
+            const activeClass = isActive ? 'active' : '';
+            let iconSVG = '';
+            let tooltip = '';
+            
+            if (depType === 'inbound') {
+                // Arrow pointing into (blocked by)
+                iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z"/></svg>`;
+                tooltip = `Blocked by: ${inboundDeps.join(', ')}`;
+            } else if (depType === 'outbound') {
+                // Arrow pointing out (blocks)
+                iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z"/></svg>`;
+                tooltip = `Blocks: ${outboundDeps.join(', ')}`;
+            } else if (depType === 'both') {
+                // Bidirectional arrow
+                iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z"/></svg>`;
+                tooltip = `Blocked by: ${inboundDeps.join(', ')}\nBlocks: ${outboundDeps.join(', ')}`;
+            }
+            
+            dependencyIconHTML = `<div class="dependency-icon ${depType} ${activeClass}" title="${tooltip}" onclick="toggleDependencyGraph('${escapeHtmlAttr(source.name)}', event)">${iconSVG}</div>`;
+        }
+        
+        // Dependency highlighting classes
+        let dependencyClass = '';
+        if (activeDependencyGraph) {
+            const graph = getDependencyGraph(activeDependencyGraph);
+            if (activeDependencyGraph === source.name) {
+                dependencyClass = 'dependency-active';
+            } else if (graph.nodes.includes(source.name)) {
+                dependencyClass = 'dependency-highlight';
+            } else {
+                dependencyClass = 'dependency-dimmed';
+            }
+        }
+        
         return `
-            <div class="data-source-row ${atRiskClass} ${groupItemClass}">
+            <div class="data-source-row ${atRiskClass} ${groupItemClass} ${dependencyClass}">
                 <div class="source-name ${statusClass}">
                     ${riskIndicatorHTML}
                     <span class="source-name-text">${source.name}</span>
                     ${infoLinkHTML}
+                    ${dependencyIconHTML}
                     <span class="status-indicator" style="background: ${stateColor}; ${stateColor === '#ffab00' ? 'color: #172b4d;' : 'color: white;'}" title="${currentState?.title || status}">${currentState?.short || status}</span>
                 </div>
                 <div class="timeline-track">
@@ -2489,6 +2950,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRoadmap();
     // Add click listener to clear status filter when clicking outside KPI cards
     document.addEventListener('click', clearStatusFilterOnOutsideClick);
+    // Add click listener to clear dependency graph when clicking outside
+    document.addEventListener('click', clearDependencyGraphOnClickOutside);
 });
 </script>
 

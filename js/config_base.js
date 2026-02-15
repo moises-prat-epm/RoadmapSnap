@@ -79,6 +79,11 @@ const CONFIG = {
     // Milestone dates should include START and all other milestones defined in WORKFLOW.
     // The state is automatically determined from today's date vs milestone dates.
     //
+    // DEPENDENCIES:
+    // - Optional array of deliverable names this task depends on (inbound dependencies)
+    // - The system automatically computes outbound dependencies (tasks blocked by this one)
+    // - Click the dependency icon to visualize the dependency graph with arrows
+    //
     DELIVERABLES: [
         {
             name: "Deliverable 1",
@@ -87,6 +92,7 @@ const CONFIG = {
             link: "https://example.com/docs/deliverable-1",
             tags: ["core"],
             group: "Group 1",
+            dependencies: [],  // No dependencies - foundation task
             milestones: { 
                 START: "01/10/2025",
                 A0: "15/11/2025",
@@ -103,6 +109,7 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["backend"],
             group: "Group 1",
+            dependencies: ["Deliverable 1"],  // Depends on Deliverable 1
             milestones: { 
                 START: "15/08/2025",
                 A0: "05/09/2025", 
@@ -118,6 +125,7 @@ const CONFIG = {
             atRisk: true,
             showInTimeline: true,
             group: "Group 2",
+            dependencies: ["Deliverable 1"],  // Depends on Deliverable 1
             milestones: { 
                 START: "01/07/2025",
                 A0: "01/08/2025", 
@@ -133,6 +141,7 @@ const CONFIG = {
             atRisk: true,
             showInTimeline: true,
             group: "Group 2",
+            dependencies: ["Deliverable 2", "Deliverable 3"],  // Depends on D2 and D3
             milestones: { 
                 START: "15/06/2025",
                 A0: "15/07/2025", 
