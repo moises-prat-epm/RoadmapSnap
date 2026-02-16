@@ -6,6 +6,8 @@ visibility, delivery governance, and dependency management.
 **No backend. No database. No build step.**\
 Edit a config file → refresh the page → done.
 
+![RoadmapSnap Preview](docs/preview.png)
+
 ------------------------------------------------------------------------
 
 ## 🌟 What Makes RoadmapSnap Different?
