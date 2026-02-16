@@ -80,7 +80,14 @@ const CONFIG = {
     // The state is automatically determined from today's date vs milestone dates.
     //
     // DEPENDENCIES:
-    // - Optional array of deliverable names this task depends on (inbound dependencies)
+    // - Optional array of dependencies this task has (inbound dependencies)
+    // - Each dependency can be:
+    //   1. Simple string: "Task Name" - defaults to last milestone → first milestone
+    //   2. Object with milestone specification:
+    //      { task: "Task Name", from: "M1", to: "M0" }
+    //        - task: The name of the blocking task
+    //        - from: Milestone in the blocking task (null = last milestone of blocking task)
+    //        - to: Milestone in this task where dependency applies (null = first milestone of this task)
     // - The system automatically computes outbound dependencies (tasks blocked by this one)
     // - Click the dependency icon to visualize the dependency graph with arrows
     //
@@ -109,7 +116,8 @@ const CONFIG = {
             showInTimeline: true,
             tags: ["backend"],
             group: "Group 1",
-            dependencies: ["Deliverable 1"],  // Depends on Deliverable 1
+            // Milestone-specific: start after Deliverable 1's A1 milestone
+            dependencies: [{ task: "Deliverable 1", from: "A1", to: "START" }],
             milestones: { 
                 START: "15/08/2025",
                 A0: "05/09/2025", 
@@ -125,7 +133,8 @@ const CONFIG = {
             atRisk: true,
             showInTimeline: true,
             group: "Group 2",
-            dependencies: ["Deliverable 1"],  // Depends on Deliverable 1
+            // Simple string format: defaults to last milestone → first milestone
+            dependencies: ["Deliverable 1"],
             milestones: { 
                 START: "01/07/2025",
                 A0: "01/08/2025", 
@@ -141,7 +150,11 @@ const CONFIG = {
             atRisk: true,
             showInTimeline: true,
             group: "Group 2",
-            dependencies: ["Deliverable 2", "Deliverable 3"],  // Depends on D2 and D3
+            // Mixed format: milestone-specific and simple string
+            dependencies: [
+                { task: "Deliverable 2", from: "A2", to: "A0" },  // D4's A0 depends on D2's A2
+                "Deliverable 3"  // Simple format: last milestone → first milestone
+            ],
             milestones: { 
                 START: "15/06/2025",
                 A0: "15/07/2025", 

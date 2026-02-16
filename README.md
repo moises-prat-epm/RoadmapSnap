@@ -160,7 +160,7 @@ The system calculates the current state based on which milestone dates have pass
 
 ### Dependencies
 
-Deliverables can define dependencies on other tasks using the `dependencies` array. This enables visualization of task relationships:
+Deliverables can define dependencies on other tasks using the `dependencies` array. This enables visualization of task relationships with **milestone-specific** precision.
 
 **Dependency types:**
 | Icon | Type | Meaning |
@@ -169,27 +169,52 @@ Deliverables can define dependencies on other tasks using the `dependencies` arr
 | ↑ (orange) | Outbound | Other tasks depend on this one (blocks others) |
 | ↕ (purple) | Both | Has both inbound and outbound dependencies |
 
+**Dependency formats:**
+Dependencies can be specified in two formats:
+
+1. **Simple string** - Uses defaults (last milestone of blocking task → first milestone of this task):
+   ```javascript
+   dependencies: ["Database Schema"]
+   ```
+
+2. **Object with milestone specification** - Precise control:
+   ```javascript
+   dependencies: [{ task: "Database Schema", from: "M2", to: "M0" }]
+   ```
+   - `task`: Name of the blocking task
+   - `from`: Milestone in the blocking task (null = last milestone of blocking task)
+   - `to`: Milestone in this task where dependency applies (null = first milestone of this task)
+
 **How it works:**
 1. Tasks with dependencies show a colored icon next to their status indicator
 2. Click the icon to activate the dependency graph view
 3. The clicked task is highlighted with a blue border
-4. Related tasks (dependencies and dependents) are highlighted
+4. Related tasks (dependencies and dependents) are highlighted recursively
 5. Other tasks are dimmed for focus
-6. Arrows are drawn showing the dependency direction:
+6. Arrows are drawn from the specified milestone of the source task to the specified milestone of the target task:
    - **Blue arrows**: Point from dependencies TO the selected task (what blocks it)
    - **Orange arrows**: Point FROM the selected task to dependents (what it blocks)
-7. Click anywhere outside to dismiss the dependency view
+7. Hover over arrows to see dependency details (task names, milestones, dates)
+8. Click anywhere outside to dismiss the dependency view
 
-**Example:**
+**Examples:**
 ```javascript
 // Task A has no dependencies (foundation)
 { name: "Database Schema", dependencies: [] }
 
-// Task B depends on Task A
+// Simple format: User API's first milestone depends on Database Schema's last milestone
 { name: "User API", dependencies: ["Database Schema"] }
 
-// Task C depends on Task B (creates a chain)
-{ name: "User Dashboard", dependencies: ["User API"] }
+// Milestone-specific: Dashboard dev (M0) starts after API passes QA (M2)
+{ name: "User Dashboard", dependencies: [
+    { task: "User API", from: "M2", to: "M0" }
+]}
+
+// Mixed format with multiple dependencies
+{ name: "Checkout Flow", dependencies: [
+    { task: "Shopping Cart", from: "M1", to: "M0" },  // Cart dev complete → Checkout design
+    "Payment Integration"                              // Simple format
+]}
 ```
 
 ---

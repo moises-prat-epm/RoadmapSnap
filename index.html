@@ -1662,6 +1662,12 @@ function getLastState() {
     return states[states.length - 1] || { key: 'DONE', short: 'DONE', title: 'Done', description: '' };
 }
 
+// Get the first milestone key (typically START)
+function getFirstMilestoneKey() {
+    const milestones = getMilestones();
+    return milestones[0]?.key || 'START';
+}
+
 // Get the last milestone key
 function getLastMilestoneKey() {
     const milestones = getMilestones();
@@ -1693,22 +1699,66 @@ function getAllDataSources() {
 }
 
 // Get inbound dependencies (tasks this deliverable depends on / is blocked by)
+// Normalize a dependency entry to object format
+// Supports: string "TaskA" or object { task: "TaskA", from: "M3", to: "M2" }
+function normalizeDependency(dep) {
+    if (typeof dep === 'string') {
+        return { task: dep, from: null, to: null }; // null means use defaults
+    }
+    return {
+        task: dep.task,
+        from: dep.from || null,  // Source milestone (defaults to last milestone of blocking task)
+        to: dep.to || null       // Target milestone (defaults to first milestone of blocked task)
+    };
+}
+
+// Get the task name from a dependency (handles both string and object formats)
+function getDependencyTaskName(dep) {
+    return typeof dep === 'string' ? dep : dep.task;
+}
+
+// Get inbound dependencies (tasks this deliverable depends on / is blocked by)
+// Returns array of normalized dependency objects
 function getInboundDependencies(source) {
-    return source.dependencies || [];
+    const deps = source.dependencies || [];
+    return deps.map(normalizeDependency);
+}
+
+// Get inbound dependency task names only (for simple lookups)
+function getInboundDependencyNames(source) {
+    const deps = source.dependencies || [];
+    return deps.map(getDependencyTaskName);
 }
 
 // Get outbound dependencies (tasks that depend on this deliverable / are blocked by it)
+// Returns array of { task, from, to } where task is the dependent task name
 function getOutboundDependencies(source) {
     const allSources = getAllDataSources();
     const dependents = [];
     
     allSources.forEach(s => {
-        if (s.dependencies && s.dependencies.includes(source.name)) {
-            dependents.push(s.name);
+        if (s.dependencies) {
+            s.dependencies.forEach(dep => {
+                const taskName = getDependencyTaskName(dep);
+                if (taskName === source.name) {
+                    const normalized = normalizeDependency(dep);
+                    // For outbound, we return info about the dependent task
+                    dependents.push({
+                        task: s.name,           // The task that depends on source
+                        from: normalized.from,  // Which milestone of source
+                        to: normalized.to       // Which milestone of dependent
+                    });
+                }
+            });
         }
     });
     
     return dependents;
+}
+
+// Get outbound dependency task names only (for simple lookups)
+function getOutboundDependencyNames(source) {
+    return getOutboundDependencies(source).map(d => d.task);
 }
 
 // Check if a deliverable has any dependencies (inbound or outbound)
@@ -1735,8 +1785,9 @@ function getDependencyGraph(sourceName) {
     const allSources = getAllDataSources();
     const sourceMap = new Map(allSources.map(s => [s.name, s]));
     const graph = new Set([sourceName]);
-    const inboundEdges = []; // [from, to]
-    const outboundEdges = []; // [from, to]
+    // Edges now contain milestone info: { from, to, fromMilestone, toMilestone }
+    const inboundEdges = [];
+    const outboundEdges = [];
     
     const source = sourceMap.get(sourceName);
     if (!source) return { nodes: [], inboundEdges: [], outboundEdges: [] };
@@ -1751,10 +1802,15 @@ function getDependencyGraph(sourceName) {
         if (!current) return;
         
         const deps = getInboundDependencies(current);
-        deps.forEach(depName => {
-            graph.add(depName);
-            inboundEdges.push([depName, currentName]);
-            traverseInbound(depName); // Recurse up the chain
+        deps.forEach(dep => {
+            graph.add(dep.task);
+            inboundEdges.push({
+                from: dep.task,
+                to: currentName,
+                fromMilestone: dep.from,  // null = use last milestone
+                toMilestone: dep.to       // null = use START
+            });
+            traverseInbound(dep.task); // Recurse up the chain
         });
     }
     traverseInbound(sourceName);
@@ -1769,10 +1825,15 @@ function getDependencyGraph(sourceName) {
         if (!current) return;
         
         const dependents = getOutboundDependencies(current);
-        dependents.forEach(depName => {
-            graph.add(depName);
-            outboundEdges.push([currentName, depName]);
-            traverseOutbound(depName); // Recurse down the chain
+        dependents.forEach(dep => {
+            graph.add(dep.task);
+            outboundEdges.push({
+                from: currentName,
+                to: dep.task,
+                fromMilestone: dep.from,  // null = use last milestone
+                toMilestone: dep.to       // null = use START
+            });
+            traverseOutbound(dep.task); // Recurse down the chain
         });
     }
     traverseOutbound(sourceName);
@@ -1909,7 +1970,10 @@ function drawDependencyArrows() {
     
     // Helper to draw a finish-to-start arrow between two rows
     // Arrow goes from LAST MILESTONE of blocking task to START milestone of blocked task
-    function drawArrow(fromName, toName, fromRow, toRow, color, markerId) {
+    // drawArrow now accepts optional specific milestones
+    // fromMilestone: specific milestone in source task (null = use last milestone)
+    // toMilestone: specific milestone in target task (null = use START)
+    function drawArrow(fromName, toName, fromRow, toRow, color, markerId, fromMilestone = null, toMilestone = null) {
         const fromRect = fromRow.getBoundingClientRect();
         const toRect = toRow.getBoundingClientRect();
         
@@ -1923,28 +1987,56 @@ function drawDependencyArrows() {
         const fromSource = getSourceByName(fromName);
         const toSource = getSourceByName(toName);
         
+        // Determine which milestones to use
+        // Default: from last milestone of source, to first milestone of target
+        const firstMilestoneKey = getFirstMilestoneKey();
+        const actualFromMilestone = fromMilestone || lastMilestoneKey;
+        const actualToMilestone = toMilestone || firstMilestoneKey;
+        
+        // Get milestone definitions for labels
+        const fromMilestoneDef = getMilestoneByKey(actualFromMilestone);
+        const toMilestoneDef = getMilestoneByKey(actualToMilestone);
+        
         // Calculate X positions based on milestone dates
         let fromXPercent = 100; // Default to end
         let toXPercent = 0; // Default to start
-        let fromEndDate = 'N/A';
-        let toStartDate = 'N/A';
+        let fromDateStr = 'N/A';
+        let toDateStr = 'N/A';
+        let fromVisible = false;
+        let toVisible = false;
+        const fromMilestoneShort = fromMilestoneDef?.short || actualFromMilestone;
+        const toMilestoneShort = toMilestoneDef?.short || actualToMilestone;
+        const fromMilestoneTitle = fromMilestoneDef?.title || actualFromMilestone;
+        const toMilestoneTitle = toMilestoneDef?.title || actualToMilestone;
         
         if (fromSource) {
-            // Get last milestone date of blocking task (FINISH)
-            const lastMilestoneDate = getMilestoneDate(fromSource, lastMilestoneKey);
-            if (lastMilestoneDate) {
-                fromXPercent = calculatePosition(lastMilestoneDate, months) || 100;
-                fromEndDate = formatDateDisplay(lastMilestoneDate);
+            // Get specified milestone date of blocking task
+            const milestoneDate = getMilestoneDate(fromSource, actualFromMilestone);
+            if (milestoneDate) {
+                fromDateStr = formatDateDisplay(milestoneDate);
+                // Check if milestone is visible in the timeline
+                fromVisible = isDateInRange(milestoneDate, months);
+                const pos = calculatePosition(milestoneDate, months);
+                fromXPercent = pos !== null ? pos : 100;
             }
         }
         
         if (toSource) {
-            // Get START milestone date of blocked task (START)
-            const startDate = getMilestoneDate(toSource, 'START');
-            if (startDate) {
-                toXPercent = calculatePosition(startDate, months) || 0;
-                toStartDate = formatDateDisplay(startDate);
+            // Get specified milestone date of blocked task
+            const milestoneDate = getMilestoneDate(toSource, actualToMilestone);
+            if (milestoneDate) {
+                toDateStr = formatDateDisplay(milestoneDate);
+                // Check if milestone is visible in the timeline
+                toVisible = isDateInRange(milestoneDate, months);
+                const pos = calculatePosition(milestoneDate, months);
+                toXPercent = pos !== null ? pos : 0;
             }
+        }
+        
+        // Skip drawing arrow if either milestone is outside the visible timeline
+        // (dependency info is still shown in the icon tooltip)
+        if (!fromVisible || !toVisible) {
+            return;
         }
         
         // Convert percentage to pixel position within timeline track
@@ -2009,31 +2101,31 @@ function drawDependencyArrows() {
             path.setAttribute('opacity', '0.8');
         });
         
-        // Create tooltip
+        // Create tooltip with extended milestone info
         const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = `${fromName} (ends ${fromEndDate}) → ${toName} (starts ${toStartDate})`;
+        title.textContent = `${fromName}\n[${fromMilestoneShort}] ${fromMilestoneTitle}: ${fromDateStr}\n  ↓\n${toName}\n[${toMilestoneShort}] ${toMilestoneTitle}: ${toDateStr}`;
         group.appendChild(title);
         
         svg.appendChild(group);
     }
     
     // Draw inbound arrows (blue - tasks this depends on)
-    graph.inboundEdges.forEach(([from, to]) => {
-        const fromRow = getRowElement(from);
-        const toRow = getRowElement(to);
+    graph.inboundEdges.forEach(edge => {
+        const fromRow = getRowElement(edge.from);
+        const toRow = getRowElement(edge.to);
         
         if (fromRow && toRow) {
-            drawArrow(from, to, fromRow, toRow, '#3498db', 'arrowhead-inbound');
+            drawArrow(edge.from, edge.to, fromRow, toRow, '#3498db', 'arrowhead-inbound', edge.fromMilestone, edge.toMilestone);
         }
     });
     
     // Draw outbound arrows (orange - tasks that depend on this)
-    graph.outboundEdges.forEach(([from, to]) => {
-        const fromRow = getRowElement(from);
-        const toRow = getRowElement(to);
+    graph.outboundEdges.forEach(edge => {
+        const fromRow = getRowElement(edge.from);
+        const toRow = getRowElement(edge.to);
         
         if (fromRow && toRow) {
-            drawArrow(from, to, fromRow, toRow, '#e67e22', 'arrowhead-outbound');
+            drawArrow(edge.from, edge.to, fromRow, toRow, '#e67e22', 'arrowhead-outbound', edge.fromMilestone, edge.toMilestone);
         }
     });
     
@@ -2480,18 +2572,41 @@ function renderRoadmap() {
             let iconSVG = '';
             let tooltip = '';
             
+            // Format dependency info with extended milestone details
+            // Format dependency info with extended milestone details
+            // Default: from last milestone of source, to first milestone of target
+            const firstMsKey = getFirstMilestoneKey();
+            const formatInboundDep = (dep) => {
+                const fromMsKey = dep.from || lastMilestoneKey;
+                const toMsKey = dep.to || firstMsKey;
+                const fromMsDef = getMilestoneByKey(fromMsKey);
+                const toMsDef = getMilestoneByKey(toMsKey);
+                const fromShort = fromMsDef?.short || fromMsKey;
+                const toShort = toMsDef?.short || toMsKey;
+                return `${dep.task} (${fromShort} → ${toShort})`;
+            };
+            const formatOutboundDep = (dep) => {
+                const fromMsKey = dep.from || lastMilestoneKey;
+                const toMsKey = dep.to || firstMsKey;
+                const fromMsDef = getMilestoneByKey(fromMsKey);
+                const toMsDef = getMilestoneByKey(toMsKey);
+                const fromShort = fromMsDef?.short || fromMsKey;
+                const toShort = toMsDef?.short || toMsKey;
+                return `${dep.task} (${fromShort} → ${toShort})`;
+            };
+            
             if (depType === 'inbound') {
                 // Arrow pointing into (blocked by)
                 iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z"/></svg>`;
-                tooltip = `Blocked by: ${inboundDeps.join(', ')}`;
+                tooltip = `Blocked by:\n${inboundDeps.map(formatInboundDep).join('\n')}`;
             } else if (depType === 'outbound') {
                 // Arrow pointing out (blocks)
                 iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z"/></svg>`;
-                tooltip = `Blocks: ${outboundDeps.join(', ')}`;
+                tooltip = `Blocks:\n${outboundDeps.map(formatOutboundDep).join('\n')}`;
             } else if (depType === 'both') {
                 // Bidirectional arrow
                 iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z"/></svg>`;
-                tooltip = `Blocked by: ${inboundDeps.join(', ')}\nBlocks: ${outboundDeps.join(', ')}`;
+                tooltip = `Blocked by:\n${inboundDeps.map(formatInboundDep).join('\n')}\n\nBlocks:\n${outboundDeps.map(formatOutboundDep).join('\n')}`;
             }
             
             dependencyIconHTML = `<div class="dependency-icon ${depType} ${activeClass}" title="${tooltip}" onclick="toggleDependencyGraph('${escapeHtmlAttr(source.name)}', event)">${iconSVG}</div>`;
