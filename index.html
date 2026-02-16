@@ -722,6 +722,19 @@
             text-decoration: line-through;
             opacity: 0.6;
         }
+
+        /* Descope: keep name readable but gray the timeline */
+        .data-source-row.descoped .timeline-track,
+        .data-source-row.descoped .gantt-bar,
+        .data-source-row.descoped .milestone-marker,
+        .data-source-row.descoped .milestone-date,
+        .data-source-row.descoped .month-grid-line,
+        .data-source-row.descoped .today-guide-line {
+            opacity: 0.25;
+        }
+        .data-source-row.descoped .status-indicator {
+            display: none;
+        }
         
         .source-name {
             padding: 6px 10px;
