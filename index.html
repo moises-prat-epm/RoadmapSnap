@@ -1235,9 +1235,15 @@ let filterState = {
 // ============================================
 function filterDeliverables(sources) {
     return sources.filter(source => {
-        // Non-filterable groups are always shown (skip all filters)
-        if (isDeliverableNonFilterable(source)) {
-            return true;
+        const isNonFilterable = isDeliverableNonFilterable(source);
+        // 1️⃣ If status KPI filter is active → hide non-filterable groups
+        if (filterState.status !== 'ALL' && isNonFilterable) {
+            return false;
+        }
+        
+        // 2️⃣ Apply risk filter globally (to everyone)
+        if (filterState.riskOnly && !source.atRisk) {
+            return false;
         }
         
         // Status filter
@@ -1700,6 +1706,7 @@ function isGroupNonFilterable(groupName) {
 function isDeliverableNonFilterable(source) {
     return source.group && isGroupNonFilterable(source.group);
 }
+
 
 // Get only filterable deliverables (for KPI stats)
 function getFilterableDeliverables() {
