@@ -717,6 +717,11 @@
         .data-source-row.at-risk {
             box-shadow: 0 0 0 2px rgba(222, 53, 11, 0.3);
         }
+ 
+        .data-source-row.descoped .source-name-text {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
         
         .source-name {
             padding: 6px 10px;
@@ -2393,7 +2398,7 @@ function getUpcomingMilestones() {
             if (isGroupNonFilterable(group)) {
                 return;
             }
-            
+
             if (date && date >= today) {
                 if (!nearestDate || date < nearestDate) {
                     nearestDate = date;
@@ -2451,6 +2456,7 @@ function renderRoadmap() {
         const statusClass = `status-${status.toLowerCase()}`;
         const indicatorClass = status.toLowerCase();
         const atRiskClass = source.atRisk ? 'at-risk' : '';
+        const descopedClass = source.descoped ? 'descoped' : '';
         const groupItemClass = isGroupItem ? 'group-item' : '';
         
         // Get state color (use first matching milestone color or default)
@@ -2658,7 +2664,7 @@ function renderRoadmap() {
         }
         
         return `
-            <div class="data-source-row ${atRiskClass} ${groupItemClass} ${dependencyClass}">
+            <div class="data-source-row ${atRiskClass} ${groupItemClass} ${dependencyClass} ${descopedClass}">
                 <div class="source-name ${statusClass}">
                     ${riskIndicatorHTML}
                     <span class="source-name-text">${source.name}</span>
