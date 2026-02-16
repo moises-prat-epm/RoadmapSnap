@@ -2385,10 +2385,15 @@ function getUpcomingMilestones() {
     milestones.forEach(m => {
         let nearest = null;
         let nearestDate = null;
-        
+
         visibleSources.forEach(source => {
             const milestoneDate = getMilestoneDate(source, m.key);
             const date = parseDate(milestoneDate);
+            const group = source.group;
+            if (isGroupNonFilterable(group)) {
+                return;
+            }
+            
             if (date && date >= today) {
                 if (!nearestDate || date < nearestDate) {
                     nearestDate = date;
