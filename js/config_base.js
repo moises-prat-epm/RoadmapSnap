@@ -20,6 +20,10 @@ const CONFIG = {
         totalSubtitleSuffix: "in roadmap scope" // Subtitle under the Total card
     },
     
+    // Groups that are excluded from filters and KPI totals (optional)
+    // These groups are displayed in the timeline but don't affect statistics
+    // NON_FILTERABLE_GROUPS: ["Prerequisites", "Platform Tasks"],
+    
     // ============================================
     // WORKFLOW CONFIGURATION
     // ============================================

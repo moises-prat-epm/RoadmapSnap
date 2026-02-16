@@ -1217,6 +1217,11 @@ let filterState = {
 // ============================================
 function filterDeliverables(sources) {
     return sources.filter(source => {
+        // Non-filterable groups are always shown (skip all filters)
+        if (isDeliverableNonFilterable(source)) {
+            return true;
+        }
+        
         // Status filter
         if (filterState.status !== 'ALL') {
             const status = getCurrentStatus(source);
@@ -1660,6 +1665,27 @@ function getFirstState() {
 function getLastState() {
     const states = getStates();
     return states[states.length - 1] || { key: 'DONE', short: 'DONE', title: 'Done', description: '' };
+}
+
+// Get non-filterable groups (groups excluded from filters and KPI totals)
+function getNonFilterableGroups() {
+    return CONFIG.NON_FILTERABLE_GROUPS || [];
+}
+
+// Check if a group is non-filterable
+function isGroupNonFilterable(groupName) {
+    const nonFilterableGroups = getNonFilterableGroups();
+    return nonFilterableGroups.includes(groupName);
+}
+
+// Check if a deliverable is in a non-filterable group
+function isDeliverableNonFilterable(source) {
+    return source.group && isGroupNonFilterable(source.group);
+}
+
+// Get only filterable deliverables (for KPI stats)
+function getFilterableDeliverables() {
+    return CONFIG.DELIVERABLES.filter(source => !isDeliverableNonFilterable(source));
 }
 
 // Get the first milestone key (typically START)
@@ -2291,8 +2317,9 @@ function getAllVisibleDataSources() {
 // Calculate Statistics (uses all deliverables, not filtered)
 // Now counts by STATES instead of milestones
 function calculateStats() {
-    const allSources = CONFIG.DELIVERABLES;
-    const visibleSources = getAllVisibleDataSources();
+    // Only count filterable deliverables (exclude non-filterable groups)
+    const allSources = getFilterableDeliverables();
+    const visibleSources = allSources.filter(source => source.showInTimeline);
     const states = getStates();
     const lastState = getLastState();
     
@@ -2714,10 +2741,12 @@ function renderRoadmap() {
     const dashboardTitle = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.title) || "Roadmap Dashboard";
     const totalSubtitleSuffix = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.totalSubtitleSuffix) || "in scope";
     
-    // Get total visible for filter results display
+    // Get total visible for filter results display (only count filterable deliverables)
     const allVisible = getAllVisibleDataSources();
-    const filteredCount = visibleSources.length;
-    const totalVisible = allVisible.length;
+    const filterableSources = visibleSources.filter(s => !isDeliverableNonFilterable(s));
+    const allFilterableVisible = allVisible.filter(s => !isDeliverableNonFilterable(s));
+    const filteredCount = filterableSources.length;
+    const totalVisible = allFilterableVisible.length;
     const hasActiveFilters = filterState.status !== 'ALL' || filterState.riskOnly || filterState.search;
     const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     
