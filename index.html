@@ -1440,6 +1440,16 @@ function getGroupStats(sources) {
     };
 }
 
+function expandGroupsForDependencyGraph(graphNodes) {
+    const sources = CONFIG.DELIVERABLES;
+    
+    sources.forEach(source => {
+        if (graphNodes.includes(source.name) && source.group) {
+            groupCollapsedState[source.group] = false;
+        }
+    });
+}
+
 // ============================================
 // DARK MODE FUNCTIONS
 // ============================================
@@ -1911,7 +1921,11 @@ function toggleDependencyGraph(sourceName, event) {
     } else {
         // Activate new graph - clear all filters so all dependencies are visible
         activeDependencyGraph = sourceName;
-        
+
+        // Expand all groups that contain nodes in this graph
+        const graphNodes = getDependencyGraph(sourceName).nodes;
+        expandGroupsForDependencyGraph(graphNodes);
+
         // Clear filters but preserve view options
         filterState.status = 'ALL';
         filterState.riskOnly = false;
