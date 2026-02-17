@@ -13,6 +13,7 @@
 <body>
 
 <script src="./js/config.js"></script>
+<script src="js/roadmap.utils.js"></script>
 
 <script>
 // ============================================
@@ -394,24 +395,7 @@ function downloadFile(content, filename, mimeType) {
 // The WORKFLOW defines the sequence: state -> milestone -> state -> milestone -> ... -> final state
 // States represent the current phase; Milestones are transition points with dates.
 
-// Helper function to darken a hex color by a percentage (0-1)
-function darkenColor(hex, percent) {
-    // Remove # if present
-    hex = hex.replace('#', '');
-    
-    // Parse RGB values
-    let r = parseInt(hex.substring(0, 2), 16);
-    let g = parseInt(hex.substring(2, 4), 16);
-    let b = parseInt(hex.substring(4, 6), 16);
-    
-    // Darken by reducing each component
-    r = Math.max(0, Math.floor(r * (1 - percent)));
-    g = Math.max(0, Math.floor(g * (1 - percent)));
-    b = Math.max(0, Math.floor(b * (1 - percent)));
-    
-    // Convert back to hex
-    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-}
+// darkenColor from roadmap.utils.js
 
 function getWorkflow() {
     // Return CONFIG.WORKFLOW if defined, otherwise fall back to legacy format
@@ -1017,20 +1001,7 @@ function getMilestoneDate(source, milestoneKey) {
     return null;
 }
 
-// ============================================
-// AUTO-POPULATE TODAY'S DATE
-// ============================================
-function getTodayDate() {
-    // Use CONFIG.TIMELINE.TODAY if set, otherwise use actual current date
-    if (CONFIG.TIMELINE.TODAY) {
-        return CONFIG.TIMELINE.TODAY;
-    }
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    return `${day}/${month}/${year}`;
-}
+// getTodayDate from roadmap.utils.js
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -1044,28 +1015,14 @@ function escapeHtmlAttr(str) {
         .replace(/>/g, '&gt;');
 }
 
-function parseDate(dateStr) {
-    if (!dateStr) return null;
-    const [day, month, year] = dateStr.split('/').map(Number);
-    return new Date(year, month - 1, day);
-}
+// parseDate from roadmap.utils.js
 
 function parseMonthYear(monthYearStr) {
     const [month, year] = monthYearStr.split('/').map(Number);
     return new Date(year, month - 1, 1);
 }
 
-function formatDateDisplay(dateStr) {
-    const [day, month] = dateStr.split('/');
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${parseInt(day)} ${months[parseInt(month) - 1]}`;
-}
-
-function formatShortDate(dateStr) {
-    const [day, month, year] = dateStr.split('/');
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${parseInt(day)} ${months[parseInt(month) - 1]} ${year}`;
-}
+// formatDateDisplay, formatShortDate from roadmap.utils.js
 
 function getMonthName(date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
