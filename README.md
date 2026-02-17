@@ -1,286 +1,223 @@
 # 🚀 RoadmapSnap
 
-A powerful, fully client-side roadmap dashboard for executive
-visibility, delivery governance, and dependency management.
+A powerful, client-side roadmap dashboard for project and program management.
 
-**No backend. No database. No build step.**\
-Edit a config file → refresh the page → done.
+**No backend. No database. No build step.**  
+Edit `js/config.js` → refresh → done.
 
-------------------------------------------------------------------------
+Try it with a [sample project](https://roadmapsnap.pages.dev)
 
-## 🌟 What Makes RoadmapSnap Different?
+![RoadmapSnap Preview](docs/preview.png)
 
-RoadmapSnap is more than a static Gantt chart. It includes:
+-----
 
--   Executive KPI dashboard
--   Workflow-driven state engine
--   Milestone-based timeline
--   Recursive dependency graph
--   Risk filtering
--   Grouping with expand/collapse
--   Non-filterable foundation groups
--   Dark mode
--   Timeline zoom controls
--   CSV / JSON / PNG export
--   Descope support (visual + logical)
+## 📖 Description
 
-Everything is defined in `js/config.js`.
+RoadmapSnap is a single-page roadmap visualization tool that runs entirely in your browser. Built for teams who need powerful tracking without infrastructure complexity.
 
-------------------------------------------------------------------------
+**Key capabilities:**
 
-# 🧠 Core Architecture
+- Executive KPI dashboard with automatic status tracking
+- Workflow-driven state management
+- Interactive dependency visualization
+- Risk tracking and filtering
+- Timeline zoom (3/6/12 months)
+- Export to PNG, CSV, JSON
+- Dark mode
 
-RoadmapSnap is driven by a single global configuration object:
+-----
 
-``` js
-CONFIG = {
-  TIMELINE: {...},
-  ENTITY_LABELS: {...},
-  DASHBOARD_TEXT: {...},
-  WORKFLOW: [...],
-  DELIVERABLES: [...]
-}
+## 🎯 Use Cases
+
+- **Executive Reporting** - Auto-calculated KPIs and progress metrics
+- **Dependency Management** - Visual graph showing blocking relationships
+- **Sprint/Release Tracking** - Track multiple workstreams with timeline zoom
+- **Stakeholder Communication** - Export presentation-ready roadmap snapshots
+
+-----
+
+## ✨ Features
+
+- Dynamic KPI cards (click to filter by status)
+- Gantt timeline with milestone markers
+- Recursive dependency graphs with arrows
+- Group/ungroup deliverables
+- Search, filter, and sort
+- Risk indicators
+- Descope support
+- Multi-format export (PNG/CSV/JSON)
+
+-----
+
+## 🔧 Installation
+
+**Clone repo:**
+
+```bash
+git clone https://github.com/moises-prat-epm/RoadmapSnap.git
+cd RoadmapSnap
 ```
 
-The UI dynamically renders everything from this structure.
+**Open in browser:**
 
-------------------------------------------------------------------------
-
-# 📊 Executive Dashboard
-
-The summary section includes:
-
--   Total in-scope count
--   KPI cards per state (click to filter)
--   Risk summary (click to filter at-risk only)
--   Overall progress bar segmented by state
--   Upcoming milestone highlights
--   Today reference indicator
-
-State counts dynamically respect:
-
--   Filters
--   Non-filterable groups
--   Descope logic
--   Risk toggling
-
-------------------------------------------------------------------------
-
-# 🗺 Timeline View
-
-Each deliverable renders as:
-
-Left column: - Name - Status badge - Dependency icon - Risk indicator
-
-Right column: - Timeline track - Month grid - Today vertical guide -
-Milestone markers - Gantt progress segments (past solid, future faded) -
-Dependency arrows (when active)
-
-Zoom options: - 3 months - 6 months - 12 months - Full range
-
-------------------------------------------------------------------------
-
-# 🔄 Workflow Engine (State Machine)
-
-Workflow alternates:
-
-state → milestone → state → milestone → final state
-
-Example:
-
-``` js
-WORKFLOW: [
-  { type: 'state', key: 'NS', short: 'NS', title: 'Not Started' },
-
-  { type: 'milestone', key: 'DES', short: 'DES', title: 'Design Complete', color: '#6c5ce7' },
-  { type: 'state', key: 'DEV', short: 'DEV', title: 'Development' },
-
-  { type: 'milestone', key: 'TEST', short: 'TST', title: 'Testing Complete', color: '#fdcb6e' },
-  { type: 'state', key: 'UAT', short: 'UAT', title: 'User Acceptance' },
-
-  { type: 'milestone', key: 'LIVE', short: 'LIVE', title: 'Go Live', color: '#00b894' },
-  { type: 'state', key: 'DONE', short: 'DONE', title: 'Completed' }
-]
+```bash
+open index.html    # macOS
+start index.html   # Windows
+xdg-open index.html # Linux
 ```
 
-The system:
+**Or serve locally:**
 
--   Reads milestone dates
--   Compares to TODAY
--   Determines current state
--   Updates KPIs automatically
-
-------------------------------------------------------------------------
-
-# 📦 Deliverables Structure
-
-Example:
-
-``` js
-{
-  name: "Mobile App Revamp",
-  group: "Digital Products",
-  atRisk: true,
-  descoped: false,
-  showInTimeline: true,
-  tags: ["frontend", "critical"],
-  link: "https://example.com/task-123",
-  dependencies: [
-    { task: "API Refactoring", from: "TEST", to: "DES" }
-  ],
-  milestones: {
-    DES: "15/01/2026",
-    TEST: "20/02/2026",
-    LIVE: "15/03/2026"
-  }
-}
+```bash
+python -m http.server 8000
 ```
 
-Supported properties:
+-----
 
-  Field            Description
-  ---------------- -----------------------------------
-  name             Display name
-  group            Optional grouping
-  atRisk           Highlights risk
-  descoped         Strikethrough + greyed timeline
-  showInTimeline   Hide from grid but keep in totals
-  link             External link
-  tags             Searchable tags
-  dependencies     Advanced dependency config
-  milestones       Dates per workflow milestone
+## ⚙️ Customization
 
-------------------------------------------------------------------------
+The `js/` directory contains two config files:
 
-# ⚠ Descope Support
+- **`config.js`** — fully populated sample project (e-commerce platform) to explore and learn from
+- **`config_base.js`** — minimal blank template to start your own project plan
 
-If:
+To build your own roadmap, edit `config_base.js` and update the `<script>` tag in `index.html`:
 
-``` js
-descoped: true
-```
-
-Then:
-
--   Deliverable name is struck through
--   Timeline is greyed
--   Status badge hidden
--   Still participates in dependency graph
-
-------------------------------------------------------------------------
-
-# 🔎 Filtering System
-
-Includes:
-
--   Search (name + tags)
--   Status filter via KPI cards
--   Risk-only toggle
--   Sorting (name, status, final date, risk)
--   Gantt toggle
--   Clear filters
-
-Non-filterable groups:
-
--   Visible in timeline
--   Excluded from KPI totals
--   Hidden during status filtering
--   Included during risk filtering
-
-------------------------------------------------------------------------
-
-# 🔗 Dependency Graph
-
-Supports:
-
-Simple format:
-
-``` js
-dependencies: ["Authentication Service"]
-```
-
-Milestone-specific format:
-
-``` js
-dependencies: [
-  { task: "Authentication Service", from: "TEST", to: "DES" }
-]
-```
-
-When activated:
-
--   Full recursive graph computed
--   Groups auto-expanded
--   Related nodes highlighted
--   Non-related nodes dimmed
--   Milestone-to-milestone arrows drawn
--   Tooltip shows relationship details
-
-------------------------------------------------------------------------
-
-# 📤 Export Capabilities
-
--   PNG export
--   CSV export (flattened milestone data)
--   JSON export (full enriched dataset)
-
-CSV includes:
-
--   Name
--   Group
--   Current state
--   Risk
--   Tags
--   Link
--   Milestone dates
-
-------------------------------------------------------------------------
-
-# 🌙 Dark Mode
-
--   Toggle in header
--   Persisted in localStorage
-
-------------------------------------------------------------------------
-
-# 🧱 Project Structure
-
-    index.html
-    js/config.js       ← sample project (e-commerce platform example)
-    js/config_base.js  ← blank template to start your own project
-
-To get started, open `js/config_base.js`, fill in your own workflow and
-deliverables, and update the `<script>` tag in `index.html` to point to it:
-
-``` html
+```html
 <script src="./js/config_base.js"></script>
 ```
 
-No frameworks. No build tools.
+All configuration is in `js/config.js`.
 
-------------------------------------------------------------------------
+### Quick Reference
 
-# 🚀 Deployment
+**Timeline dates:**
 
-Deploy to any static host:
+```javascript
+TIMELINE: {
+    TODAY: "16/02/2026",        // DD/MM/YYYY or "" for auto
+    START_MONTH: "01/2026",     // MM/YYYY
+    END_MONTH: "12/2026"        // MM/YYYY
+}
+```
 
--   GitHub Pages
--   Cloudflare Pages
--   Netlify
--   Azure Static Web Apps
--   Amazon S3
--   Internal intranet
+**Custom labels:**
 
-------------------------------------------------------------------------
+```javascript
+ENTITY_LABELS: {
+    singular: "Feature",        // e.g., "Project", "Epic"
+    plural: "Features",
+    scopeLabel: "features"      // lowercase for text
+}
 
-# 🔐 Security
+DASHBOARD_TEXT: {
+    title: "Q2 Product Roadmap",
+    totalSubtitleSuffix: "in scope"
+}
+```
 
--   No API calls
--   No server communication
--   Fully client-side rendering
+**Workflow (states & milestones):**
 
-------------------------------------------------------------------------
+```javascript
+WORKFLOW: [
+    { type: 'state', key: 'NS', short: 'NS', title: 'Not Started' },
+    { type: 'milestone', key: 'START', short: 'GO', title: 'Start', color: '#6554c0' },
+    { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development' },
+    { type: 'milestone', key: 'M1', short: 'M1', title: 'Complete', color: '#00b894' },
+    { type: 'state', key: 'DONE', short: 'DONE', title: 'Done' }
+]
+```
 
-# 📜 License
+States and milestones alternate. Status is auto-calculated based on which milestone dates have passed.
 
-MIT License
+**Non-filterable groups** (e.g., infrastructure):
+
+```javascript
+NON_FILTERABLE_GROUPS: ["Infrastructure", "Planning"]
+```
+
+**Deliverables:**
+
+```javascript
+DELIVERABLES: [
+    {
+        name: "User Authentication",           // required, must be unique
+        group: "Backend",                      // optional
+        atRisk: false,                         // optional, shows risk icon
+        descoped: false,                       // optional, strikes through
+        showInTimeline: true,                  // optional, default true
+        tags: ["security", "P0"],              // optional, for search
+        link: "https://jira.com/PROJ-123",     // optional, adds info icon
+        dependencies: [                        // optional
+            "Database Setup",                  // simple: last milestone → START
+            { task: "API Gateway", from: "M2", to: "M1" }  // advanced: specific milestones
+        ],
+        milestones: {                          // required
+            START: "01/03/2026",
+            M1: "30/03/2026"
+        }
+    }
+]
+```
+
+### Config Parameters
+
+|Parameter       |Type   |Required|Description                                 |
+|----------------|-------|--------|--------------------------------------------|
+|`name`          |string |✅       |Unique deliverable name                     |
+|`group`         |string |⬜       |Group name for organization                 |
+|`atRisk`        |boolean|⬜       |Show risk indicator (default: false)        |
+|`descoped`      |boolean|⬜       |Strike through and grey out (default: false)|
+|`showInTimeline`|boolean|⬜       |Show in timeline (default: true)            |
+|`tags`          |array  |⬜       |Search tags                                 |
+|`link`          |string |⬜       |External link URL                           |
+|`dependencies`  |array  |⬜       |Simple strings or `{task, from, to}` objects|
+|`milestones`    |object |✅       |`{KEY: "DD/MM/YYYY"}` dates                 |
+
+-----
+
+## 🌐 Publication
+
+Deploy to any static host. No build process needed.
+
+### Quick Deploy Options
+
+**GitHub Pages (Free):**
+
+1. Push to GitHub
+1. Settings → Pages → Select branch
+1. Live at `https://username.github.io/RoadmapSnap/`
+
+**Netlify (Free):**
+
+1. Drag & drop folder to netlify.com
+1. Instantly live with auto-generated URL
+
+**Cloudflare Pages (Free):**
+
+- Connect repo, deploy as static site
+- Global CDN included
+
+**Internal Network:**
+
+- Copy files to shared drive
+- Open `index.html` from network location
+
+### For Sensitive Data
+
+- Use private GitHub repo (paid) + Pages
+- Enable password protection (Netlify/Vercel)
+- Deploy to internal intranet
+- Create separate `config.public.js` for external version
+
+-----
+
+## 📄 License
+
+**MIT License** - Use freely for personal or commercial projects.
+
+You can use, modify, and distribute this software without restriction. See full license text for details.
+
+-----
+
+**Questions?** Open an issue on [GitHub](https://github.com/moises-prat-epm/RoadmapSnap)
