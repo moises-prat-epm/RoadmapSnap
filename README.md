@@ -7,6 +7,8 @@ Edit `js/config.js` → refresh → done.
 
 ![RoadmapSnap Preview](docs/preview.png)
 
+Git it a try with a [sample project](index.html) 
+
 -----
 
 ## 📖 Description
