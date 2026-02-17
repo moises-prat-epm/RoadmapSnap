@@ -81,13 +81,7 @@ The `js/` directory contains two config files:
 - **`config.js`** — fully populated sample project (e-commerce platform) to explore and learn from
 - **`config_base.js`** — minimal blank template to start your own project plan
 
-To build your own roadmap, edit `config_base.js` and update the `<script>` tag in `index.html`:
-
-```html
-<script src="./js/config_base.js"></script>
-```
-
-All configuration is in `js/config.js`.
+To build your own roadmap, edit `config_base.js` and save it as `config.js` 
 
 ### Quick Reference
 
