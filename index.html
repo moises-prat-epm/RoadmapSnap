@@ -1864,6 +1864,9 @@ function renderRoadmap() {
         <footer class="page-footer">
             © 2026 RoadmapSnap · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a>
         </footer>
+        <footer class="build-version" aria-label="Build version">
+            v${typeof CONFIG !== 'undefined' ? (CONFIG.VERSION || '?') : '?'} · Build ${typeof CONFIG !== 'undefined' ? (CONFIG.BUILD_DATE || '') : ''}
+        </footer>
     `;
     
     document.body.innerHTML = roadmapHTML;

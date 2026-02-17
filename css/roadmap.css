@@ -1185,6 +1185,14 @@ body {
     text-decoration: underline;
 }
 
+.build-version {
+    text-align: center;
+    font-size: 11px;
+    color: var(--color-text-light);
+    padding: 8px 16px;
+    margin-top: 16px;
+}
+
 /* ============================================
    PRINT/EXPORT STYLES
    ============================================ */
