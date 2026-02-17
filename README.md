@@ -5,9 +5,9 @@ A powerful, client-side roadmap dashboard for project and program management.
 **No backend. No database. No build step.**  
 Edit `js/config.js` → refresh → done.
 
-![RoadmapSnap Preview](docs/preview.png)
+Try it with a [sample project](https://moises-prat-epm.github.io/RoadmapSnap/) 
 
-Git it a try with a [sample project](index.html) 
+![RoadmapSnap Preview](docs/preview.png)
 
 -----
 
