@@ -14,19 +14,21 @@
 
 <script src="./js/config.js"></script>
 <script src="js/roadmap.utils.js"></script>
+<script src="js/core/timeline.js"></script>
+<script src="js/core/workflow.js"></script>
+<script src="js/core/dependencies.js"></script>
+<script src="js/core/stats.js"></script>
+<script src="js/ui/filterBar.js"></script>
+<script src="js/ui/grouping.js"></script>
+<script src="js/export/csv.js"></script>
+<script src="js/export/json.js"></script>
+<script src="js/export/png.js"></script>
+<script src="js/ui/dependencyArrows.js"></script>
 
 <script>
 // ============================================
-// FILTER & SORT STATE
+// FILTER & SORT STATE (filterState from filterBar.js)
 // ============================================
-let filterState = {
-    status: 'ALL',
-    riskOnly: false,
-    search: '',
-    sortBy: 'm3date',
-    sortOrder: 'asc',
-    showGantt: true
-};
 
 // ============================================
 // FILTER & SORT FUNCTIONS
@@ -178,9 +180,8 @@ function toggleGanttBars() {
 }
 
 // ============================================
-// GROUPING FUNCTIONS
+// GROUPING FUNCTIONS (groupCollapsedState from grouping.js)
 // ============================================
-let groupCollapsedState = {};
 
 function groupDeliverables(sources) {
     const groups = {};
@@ -687,8 +688,7 @@ function getDependencyGraph(sourceName) {
     };
 }
 
-// Active dependency graph state
-let activeDependencyGraph = null;
+// activeDependencyGraph from dependencyArrows.js
 
 // Toggle dependency graph view
 function toggleDependencyGraph(sourceName, event) {
