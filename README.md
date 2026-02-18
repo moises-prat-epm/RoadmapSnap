@@ -133,7 +133,7 @@ NON_FILTERABLE_GROUPS: ["Infrastructure", "Planning"]
 **Group order** (optional). Control the order in which groups appear in the timeline. List group names in your preferred order; groups not listed appear after, sorted alphabetically. Leave empty for alphabetical order:
 
 ```javascript
-GROUP_ORDER: ["OneSource 2.0", "CDS Commercial", "CDS SF", "CDS D2D", "CDS Transversal"]
+GROUP_ORDER: ["FrontEnd", "Backend", "Database", "Infrastructure"]
 // GROUP_ORDER: []   // default: all groups alphabetical
 ```
 
