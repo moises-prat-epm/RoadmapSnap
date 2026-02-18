@@ -644,7 +644,7 @@ body {
 /* Timeline Header */
 .timeline-header {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 280px 1fr;
     margin-bottom: 4px;
 }
 
@@ -697,7 +697,7 @@ body {
 /* Data Source Rows - Compact */
 .data-source-row {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 280px 1fr;
     margin-bottom: 2px;
     border-radius: 4px;
     overflow: hidden;
@@ -781,7 +781,7 @@ body {
 /* Group Header Styles */
 .group-header {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 280px 1fr;
     margin-bottom: 2px;
     margin-top: 8px;
     cursor: pointer;
@@ -803,6 +803,9 @@ body {
     gap: 8px;
     border-radius: 4px 0 0 4px;
     transition: background 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .group-header-name:hover {
@@ -928,8 +931,9 @@ body {
     font-weight: 600;
     font-size: 11px;
     color: var(--color-text-dark);
-    word-wrap: break-word;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     flex: 1;
     min-width: 0;
     line-height: 1.3;

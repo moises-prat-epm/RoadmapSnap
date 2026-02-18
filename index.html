@@ -1481,9 +1481,19 @@ function renderRoadmap() {
     
     if (hasGroups) {
         const { groups, ungrouped } = groupDeliverables(visibleSources);
-        
+        const groupOrder = (typeof CONFIG !== 'undefined' && Array.isArray(CONFIG.GROUP_ORDER) && CONFIG.GROUP_ORDER.length) ? CONFIG.GROUP_ORDER : null;
+        const sortedGroupNames = groupOrder
+            ? Object.keys(groups).sort((a, b) => {
+                const i = groupOrder.indexOf(a);
+                const j = groupOrder.indexOf(b);
+                if (i === -1 && j === -1) return a.localeCompare(b);
+                if (i === -1) return 1;
+                if (j === -1) return -1;
+                return i - j;
+            })
+            : Object.keys(groups).sort();
         // Render grouped items
-        Object.keys(groups).sort().forEach(groupName => {
+        sortedGroupNames.forEach(groupName => {
             const groupSources = groups[groupName];
             const collapsed = groupCollapsedState[groupName] || false;
             const groupStats = getGroupStats(groupSources);
