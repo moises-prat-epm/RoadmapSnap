@@ -23,6 +23,11 @@ const CONFIG = {
     // Groups that are excluded from filters and KPI totals (optional)
     // These groups are displayed in the timeline but don't affect statistics
     // NON_FILTERABLE_GROUPS: ["Prerequisites", "Platform Tasks"],
+
+    // Order of groups in the timeline (optional).
+    // List group names in the order you want. Groups not listed appear after, sorted alphabetically.
+    // Leave [] for alphabetical order. Example for custom order:
+    // GROUP_ORDER: ["FrontEnd", "Backend", "Database", "Infrastructure"],
     
     // ============================================
     // WORKFLOW CONFIGURATION
