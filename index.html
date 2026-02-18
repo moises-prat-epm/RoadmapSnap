@@ -13,6 +13,7 @@
 <body>
 
 <script src="./js/config.js"></script>
+<script src="js/core/configValidator.js"></script>
 <script src="js/roadmap.utils.js"></script>
 <script src="js/core/timeline.js"></script>
 <script src="js/core/workflow.js"></script>
@@ -801,6 +802,18 @@ function renderRoadmap() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    const validation = validateConfig(CONFIG);
+    if (validation.errors.length > 0) {
+        const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        document.body.innerHTML = '<div style="color:red; padding:20px; font-family:monospace;">' +
+            '<h2>Config Errors</h2><ul>' +
+            validation.errors.map(e => '<li>' + esc(e) + '</li>').join('') +
+            '</ul></div>';
+        return;
+    }
+    if (validation.warnings.length > 0) {
+        console.warn('RoadmapSnap config warnings:', validation.warnings);
+    }
     renderRoadmap();
     // Add click listener to clear status filter when clicking outside KPI cards
     document.addEventListener('click', clearStatusFilterOnOutsideClick);
