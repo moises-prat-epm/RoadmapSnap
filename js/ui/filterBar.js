@@ -1,6 +1,6 @@
 /**
  * RoadmapSnap — filter bar logic
- * Uses AppState for filter/sort/showGantt. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate, renderRoadmap, drawDependencyArrows (window).
+ * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate, drawDependencyArrows (window).
  */
 
 function filterDeliverables(sources) {
@@ -65,6 +65,18 @@ function sortDeliverables(sources) {
 
 function updateFilter(key, value) {
     const state = AppState.get();
+    if (key === 'search') {
+        clearTimeout(window.searchDebounceTimer);
+        window.searchDebounceTimer = setTimeout(() => {
+            AppState.set({ filter: { ...AppState.get().filter, search: value } });
+            const searchInput = document.querySelector('.filter-input');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            }
+        }, 150);
+        return;
+    }
     if (key === 'sortBy') {
         AppState.set({ sort: { ...state.sort, by: value } });
     } else if (key === 'sortOrder') {
@@ -74,25 +86,10 @@ function updateFilter(key, value) {
     } else {
         AppState.set({ filter: { ...state.filter, [key]: value } });
     }
-
-    if (key === 'search') {
-        clearTimeout(window.searchDebounceTimer);
-        window.searchDebounceTimer = setTimeout(() => {
-            renderRoadmap();
-            const searchInput = document.querySelector('.filter-input');
-            if (searchInput) {
-                searchInput.focus();
-                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
-            }
-        }, 150);
-    } else {
-        renderRoadmap();
-    }
 }
 
 function clearFilters() {
     AppState.reset();
-    renderRoadmap();
 }
 
 function filterByStatus(status, event) {
@@ -103,7 +100,6 @@ function filterByStatus(status, event) {
     } else {
         AppState.set({ filter: { ...filter, status, riskOnly: false } });
     }
-    renderRoadmap();
 }
 
 function clearStatusFilterOnOutsideClick(event) {
@@ -112,7 +108,6 @@ function clearStatusFilterOnOutsideClick(event) {
     const filter = AppState.get().filter;
     if (!clickedKpi && !clickedRiskSummary && (filter.status !== 'ALL' || filter.riskOnly)) {
         AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false } });
-        renderRoadmap();
     }
 }
 
@@ -120,13 +115,11 @@ function toggleRiskFilter(event) {
     if (event) event.stopPropagation();
     const filter = AppState.get().filter;
     AppState.set({ filter: { ...filter, riskOnly: !filter.riskOnly } });
-    renderRoadmap();
 }
 
 function toggleGanttBars() {
     const showGantt = AppState.get().showGantt;
     AppState.set({ showGantt: !showGantt });
-    renderRoadmap();
     if (AppState.get().activeDependencyGraph) {
         setTimeout(() => drawDependencyArrows(), 50);
     }

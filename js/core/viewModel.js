@@ -36,7 +36,7 @@ function resolveStateTextColor(hexColor) {
 }
 
 function buildMilestoneMarkers(source, months, milestonesDef) {
-    var MILESTONE_OVERLAP_THRESHOLD_PCT = 4;
+    var MILESTONE_OVERLAP_THRESHOLD_PCT = 1.5;
     var allMarkers = [];
     var startDate = getMilestoneDate(source, 'START');
     var startMilestone = getMilestoneByKey('START');

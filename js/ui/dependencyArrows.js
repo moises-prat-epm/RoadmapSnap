@@ -20,8 +20,6 @@ function toggleDependencyGraph(sourceName, event) {
         });
     }
 
-    renderRoadmap();
-
     if (AppState.get().activeDependencyGraph) {
         setTimeout(() => drawDependencyArrows(), 50);
     } else {
@@ -40,7 +38,6 @@ function clearDependencyGraphOnClickOutside(event) {
         !event.target.closest('select')) {
         AppState.set({ activeDependencyGraph: null });
         clearDependencyArrows();
-        renderRoadmap();
     }
 }
 

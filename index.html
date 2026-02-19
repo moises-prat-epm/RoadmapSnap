@@ -74,8 +74,6 @@ function setDateRange(months) {
         CONFIG.TIMELINE.END_MONTH = formatMonthYear(endDate);
         AppState.set({ zoom: months + 'mo' });
     }
-
-    renderRoadmap();
 }
 
 // (Workflow, dependencies, dependency arrows from workflow.js, dependencies.js, dependencyArrows.js)
@@ -356,7 +354,7 @@ function renderRoadmap() {
             </div>
             <div class="filter-group">
                 <span class="filter-label">Theme:</span>
-                <select class="filter-select theme-select" onchange="AppState.set({ theme: this.value }); document.documentElement.setAttribute('data-theme', this.value); localStorage.setItem('roadmapsnap-theme', this.value); renderRoadmap();" title="Choose theme">
+                <select class="filter-select theme-select" onchange="AppState.set({ theme: this.value })" title="Choose theme">
                     <option value="light" ${currentTheme === 'light' ? 'selected' : ''}>Light</option>
                     <option value="dark" ${currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
                     <option value="professional" ${currentTheme === 'professional' ? 'selected' : ''}>Professional</option>
@@ -569,7 +567,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (validation.warnings.length > 0) {
         console.warn('RoadmapSnap config warnings:', validation.warnings);
     }
-    renderRoadmap();
+    AppState.subscribe((state, prevState) => {
+        if (state.theme !== prevState?.theme) {
+            document.documentElement.setAttribute('data-theme', state.theme);
+            localStorage.setItem('roadmapsnap-theme', state.theme);
+        }
+        renderRoadmap();
+    });
+    AppState.set({}); // trigger initial render
     // Add click listener to clear status filter when clicking outside KPI cards
     document.addEventListener('click', clearStatusFilterOnOutsideClick);
     // Add click listener to clear dependency graph when clicking outside

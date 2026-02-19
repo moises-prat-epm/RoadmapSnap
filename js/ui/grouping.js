@@ -30,7 +30,6 @@ function toggleGroup(groupName) {
     const groupCollapsed = { ...AppState.get().groupCollapsed };
     groupCollapsed[groupName] = !groupCollapsed[groupName];
     AppState.set({ groupCollapsed });
-    renderRoadmap();
 }
 
 function expandAllGroups() {
@@ -42,7 +41,6 @@ function expandAllGroups() {
         }
     });
     AppState.set({ groupCollapsed });
-    renderRoadmap();
 }
 
 function collapseAllGroups() {
@@ -54,7 +52,6 @@ function collapseAllGroups() {
         }
     });
     AppState.set({ groupCollapsed });
-    renderRoadmap();
 }
 
 function getGroupStats(sources) {
