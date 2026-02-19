@@ -9,18 +9,18 @@ function getWorkflow() {
         return CONFIG.WORKFLOW;
     }
     const legacyMilestones = CONFIG.MILESTONES || [
-        { key: 'M0', short: 'M0', title: 'Dev Complete', subtitle: '', color: '#8993a4' },
-        { key: 'M1', short: 'M1', title: 'Deployed', subtitle: '', color: '#ffab00' },
-        { key: 'M2', short: 'M2', title: 'Ready', subtitle: '', color: '#36b37e' },
-        { key: 'M3', short: 'M3', title: 'Complete', subtitle: '', color: '#0065ff' }
+        { key: 'M0', short: 'M0', title: 'Dev Complete', subtitle: '' },
+        { key: 'M1', short: 'M1', title: 'Deployed', subtitle: '' },
+        { key: 'M2', short: 'M2', title: 'Ready', subtitle: '' },
+        { key: 'M3', short: 'M3', title: 'Complete', subtitle: '' }
     ];
     const workflow = [
         { type: 'state', key: 'NS', short: 'NS', title: 'Not Started', description: 'Pending kickoff' },
-        { type: 'milestone', key: 'START', short: 'START', title: 'Start', subtitle: 'Kickoff', color: '#6554c0' },
+        { type: 'milestone', key: 'START', short: 'START', title: 'Start', subtitle: 'Kickoff' },
         { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development', description: 'Active development' }
     ];
     legacyMilestones.forEach((m, index) => {
-        workflow.push({ type: 'milestone', key: m.key, short: m.short, title: m.title, subtitle: m.subtitle, color: m.color });
+        workflow.push({ type: 'milestone', key: m.key, short: m.short, title: m.title, subtitle: m.subtitle });
         if (index < legacyMilestones.length - 1) {
             workflow.push({ type: 'state', key: `S${index + 1}`, short: `S${index + 1}`, title: `Phase ${index + 2}`, description: '' });
         } else {

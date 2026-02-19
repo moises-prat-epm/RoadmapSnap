@@ -72,7 +72,6 @@ function drawDependencyArrows() {
     inboundMarker.setAttribute('orient', 'auto');
     const inboundPath = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     inboundPath.setAttribute('points', '0 0, 10 3.5, 0 7');
-    inboundPath.setAttribute('fill', '#3498db');
     inboundMarker.appendChild(inboundPath);
     defs.appendChild(inboundMarker);
 
@@ -85,7 +84,6 @@ function drawDependencyArrows() {
     outboundMarker.setAttribute('orient', 'auto');
     const outboundPath = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     outboundPath.setAttribute('points', '0 0, 10 3.5, 0 7');
-    outboundPath.setAttribute('fill', '#e67e22');
     outboundMarker.appendChild(outboundPath);
     defs.appendChild(outboundMarker);
 
@@ -111,7 +109,8 @@ function drawDependencyArrows() {
         return getAllDataSources().find(s => s.name === name);
     }
 
-    function drawArrow(fromName, toName, fromRow, toRow, color, markerId, fromMilestone = null, toMilestone = null) {
+    function drawArrow(fromName, toName, fromRow, toRow, arrowType, fromMilestone = null, toMilestone = null) {
+        const markerId = 'arrowhead-' + arrowType;
         const fromRect = fromRow.getBoundingClientRect();
         const toRect = toRow.getBoundingClientRect();
 
@@ -200,7 +199,7 @@ function drawDependencyArrows() {
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', d);
-        path.setAttribute('stroke', color);
+        path.setAttribute('class', 'dependency-arrow-' + arrowType);
         path.setAttribute('stroke-width', '2');
         path.setAttribute('fill', 'none');
         path.setAttribute('marker-end', `url(#${markerId})`);
@@ -228,7 +227,7 @@ function drawDependencyArrows() {
         const fromRow = getRowElement(edge.from);
         const toRow = getRowElement(edge.to);
         if (fromRow && toRow) {
-            drawArrow(edge.from, edge.to, fromRow, toRow, '#3498db', 'arrowhead-inbound', edge.fromMilestone, edge.toMilestone);
+            drawArrow(edge.from, edge.to, fromRow, toRow, 'inbound', edge.fromMilestone, edge.toMilestone);
         }
     });
 
@@ -236,7 +235,7 @@ function drawDependencyArrows() {
         const fromRow = getRowElement(edge.from);
         const toRow = getRowElement(edge.to);
         if (fromRow && toRow) {
-            drawArrow(edge.from, edge.to, fromRow, toRow, '#e67e22', 'arrowhead-outbound', edge.fromMilestone, edge.toMilestone);
+            drawArrow(edge.from, edge.to, fromRow, toRow, 'outbound', edge.fromMilestone, edge.toMilestone);
         }
     });
 

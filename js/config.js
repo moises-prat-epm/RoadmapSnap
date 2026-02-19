@@ -1,6 +1,4 @@
 const CONFIG = {
-    VERSION: "1.0.0",
-    BUILD_DATE: "2026-02-17",
     
     // Timeline Configuration
     TIMELINE: {
@@ -42,27 +40,27 @@ const CONFIG = {
         { type: 'state', key: 'NS', short: 'NS', title: 'Not Started', description: 'Pending kickoff' },
         
         // START milestone transitions to UX state
-        { type: 'milestone', key: 'START', short: 'GO', title: 'Start', subtitle: 'Project Kickoff', color: '#6554c0' },
+        { type: 'milestone', key: 'START', short: 'GO', title: 'Start', subtitle: 'Project Kickoff'},
         { type: 'state', key: 'UX', short: 'UX', title: 'In Design', description: 'UX/UI design phase' },
         
         // M0 milestone transitions to DEV state
-        { type: 'milestone', key: 'M0', short: 'M0', title: 'Design Approved', subtitle: 'UX/UI Sign-off', color: '#9b59b6' },
+        { type: 'milestone', key: 'M0', short: 'M0', title: 'Design Approved', subtitle: 'UX/UI Sign-off'},
         { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development', description: 'Active development' },
         
         // M1 milestone transitions to QA state
-        { type: 'milestone', key: 'M1', short: 'M1', title: 'Dev Complete', subtitle: 'Code Ready', color: '#3498db' },
+        { type: 'milestone', key: 'M1', short: 'M1', title: 'Dev Complete', subtitle: 'Code Ready'},
         { type: 'state', key: 'QA', short: 'QA', title: 'Under QA', description: 'Quality assurance testing' },
         
         // M2 milestone transitions to UAT state
-        { type: 'milestone', key: 'M2', short: 'M2', title: 'QA Passed', subtitle: 'Testing Done', color: '#f39c12' },
+        { type: 'milestone', key: 'M2', short: 'M2', title: 'QA Passed', subtitle: 'Testing Done'},
         { type: 'state', key: 'UAT', short: 'UAT', title: 'Under UAT', description: 'User acceptance testing' },
         
         // M3 milestone transitions to STG state
-        { type: 'milestone', key: 'M3', short: 'M3', title: 'UAT Approved', subtitle: 'Business Sign-off', color: '#1abc9c' },
+        { type: 'milestone', key: 'M3', short: 'M3', title: 'UAT Approved', subtitle: 'Business Sign-off'},
         { type: 'state', key: 'STG', short: 'STG', title: 'In Staging', description: 'Staging environment' },
         
         // M4 milestone transitions to PRD state (final)
-        { type: 'milestone', key: 'M4', short:'M4', title: 'Production', subtitle: 'Live in Prod', color: '#229954' },
+        { type: 'milestone', key: 'M4', short:'M4', title: 'Production', subtitle: 'Live in Prod'},
         { type: 'state', key: 'PRD', short: 'PRD', title: 'In Production', description: 'Live in production' },
     ],
     
