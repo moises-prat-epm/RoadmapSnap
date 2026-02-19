@@ -153,35 +153,52 @@ function renderRoadmap() {
         const descopedClass = source.descoped ? 'descoped' : '';
         const groupItemClass = isGroupItem ? 'group-item' : '';
         
-        // Generate start marker using START milestone date
-        // Hide label if position < 2% to avoid overlap with status indicator
-        let startMarkerHTML = '';
+        // Collect all milestone markers with positions; then hide overlapping ones (keep the more recent / rightmost in each cluster)
+        const MILESTONE_OVERLAP_THRESHOLD_PCT = 4;
+        const allMarkers = [];
         const startDate = getMilestoneDate(source, 'START');
         if (startDate && isDateInRange(startDate, months)) {
             const position = calculatePosition(startDate, months);
             const startMilestone = getMilestoneByKey('START');
-            const hideLabel = position < 2;
-            startMarkerHTML = `
-                <div class="milestone-marker start" style="left: ${position}%; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
-                    ${hideLabel ? '' : `<span>${startMilestone?.short || 'GO'}</span><div class="milestone-date">${formatDateDisplay(startDate)}</div>`}
-                </div>
-            `;
+            allMarkers.push({ position, slotClass: 'start', short: startMilestone?.short || 'GO', date: startDate });
         }
-        
-        // Generate milestone markers by position: slot 0 = m0, 1 = m1, ... 5 = m5 (START has its own marker above)
         const nonStartMilestones = milestonesDef.filter(m => m.key !== 'START');
-        const milestonesHTMLArr = nonStartMilestones.map((m, i) => {
+        nonStartMilestones.forEach((m, i) => {
             const date = getMilestoneDate(source, m.key);
-            if (!date || !isDateInRange(date, months)) return '';
+            if (!date || !isDateInRange(date, months)) return;
             const position = calculatePosition(date, months);
-            const hideLabel = position < 2;
             const milestoneSlot = 'm' + Math.min(i, 5);
+            allMarkers.push({ position, slotClass: milestoneSlot, short: m.short, date });
+        });
+        // Sort by position; cluster within threshold; keep only the rightmost (most recent) in each cluster
+        allMarkers.sort((a, b) => a.position - b.position);
+        const keepIndex = new Set();
+        let i = 0;
+        while (i < allMarkers.length) {
+            let j = i;
+            while (j + 1 < allMarkers.length && (allMarkers[j + 1].position - allMarkers[j].position) < MILESTONE_OVERLAP_THRESHOLD_PCT) j++;
+            keepIndex.add(j);
+            i = j + 1;
+        }
+        const visibleMarkers = allMarkers.filter((_, idx) => keepIndex.has(idx));
+        const milestonesHTMLArr = visibleMarkers.map(m => {
+            const hideLabel = m.position < 2;
             return `
-                <div class="milestone-marker ${milestoneSlot}" style="left: ${position}%; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
-                    ${hideLabel ? '' : `<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(date)}</div>`}
+                <div class="milestone-marker ${m.slotClass}" style="left: ${m.position}%; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
+                    ${hideLabel ? '' : `<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(m.date)}</div>`}
                 </div>
             `;
         }).join('');
+        
+        // Tooltip listing all milestone dates (used on Gantt bar and on overlay when bar is hidden)
+        const ganttTooltipLines = milestonesDef
+            .map(m => {
+                const date = getMilestoneDate(source, m.key);
+                return date ? `${m.short || m.key}: ${formatDateDisplay(date)}` : null;
+            })
+            .filter(Boolean);
+        const ganttTooltip = ganttTooltipLines.length ? ganttTooltipLines.join('\n') : '';
+        const ganttTitleAttr = ganttTooltip ? ` title="${escapeHtmlAttr(ganttTooltip)}"` : '';
         
         // Generate Gantt bar - shows full timeline with colored segments for each phase
         // Works dynamically with any milestone configuration
@@ -210,10 +227,10 @@ function renderRoadmap() {
                 const pastWidth = Math.min(w, Math.max(0, todayPosition - start));
                 const futureWidth = w - pastWidth;
                 if (pastWidth > 0) {
-                    segments.push(`<div class="${segClass}" style="left: ${start}%; width: ${pastWidth}%;"></div>`);
+                    segments.push(`<div class="${segClass}" style="left: ${start}%; width: ${pastWidth}%;"${ganttTitleAttr}></div>`);
                 }
                 if (futureWidth > 0) {
-                    segments.push(`<div class="${segClass} gantt-future" style="left: ${start + pastWidth}%; width: ${futureWidth}%;"></div>`);
+                    segments.push(`<div class="${segClass} gantt-future" style="left: ${start + pastWidth}%; width: ${futureWidth}%;"${ganttTitleAttr}></div>`);
                 }
             }
             
@@ -322,9 +339,8 @@ function renderRoadmap() {
                 </div>
                 <div class="timeline-track">
                     ${gridLinesHTML}
-                    ${filterState.showGantt ? ganttBarsHTML : ''}
+                    ${filterState.showGantt ? ganttBarsHTML : (ganttTitleAttr ? `<div class="gantt-tooltip-overlay"${ganttTitleAttr}></div>` : '')}
                     <div class="today-guide-line" style="left: ${todayPosition}%;"></div>
-                    ${startMarkerHTML}
                     ${milestonesHTMLArr}
                 </div>
             </div>

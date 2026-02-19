@@ -18,7 +18,7 @@ body {
 /* Color Variables - Light Mode (Default) */
 :root {
     --color-start: #6554c0;   /* START milestone (same as dev) */
-    --color-m0: #8993a4;
+    --color-m0: var(--color-state-2);
     --color-m1: #ffab00;
     --color-m2: #36b37e;
     --color-m3: #0065ff;
@@ -56,7 +56,7 @@ body {
     --color-text-light: #8b949e;
     /* State and milestone colors for dark backgrounds */
     --color-start: #a78bfa;
-    --color-m0: #94a3b8;
+    --color-m0: var(--color-state-2);
     --color-m1: #fbbf24;
     --color-m2: #34d399;
     --color-m3: #60a5fa;
@@ -85,7 +85,7 @@ body {
     --color-text-dark: #1e293b;
     --color-text-light: #64748b;
     --color-start: #475569;
-    --color-m0: #64748b;
+    --color-m0: var(--color-state-2);
     --color-m1: #b45309;
     --color-m2: #0d9488;
     --color-m3: #0369a1;
@@ -114,7 +114,7 @@ body {
     --color-text-dark: #1f2937;
     --color-text-light: #6b7280;
     --color-start: #7c3aed;
-    --color-m0: #6b7280;
+    --color-m0: var(--color-state-2);
     --color-m1: #d97706;
     --color-m2: #059669;
     --color-m3: #2563eb;
@@ -143,7 +143,7 @@ body {
     --color-text-dark: #404040;
     --color-text-light: #737373;
     --color-start: #a5b4fc;
-    --color-m0: #d4d4d4;
+    --color-m0: var(--color-state-2);
     --color-m1: #fde68a;
     --color-m2: #86efac;
     --color-m3: #93c5fd;
@@ -1179,6 +1179,16 @@ body {
     border-radius: 0 4px 4px 0;
     display: flex;
     align-items: center;
+}
+
+/* Invisible overlay for milestone tooltip when Gantt bars are hidden */
+.gantt-tooltip-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: auto;
 }
 
 /* Gantt Bar Segments */
