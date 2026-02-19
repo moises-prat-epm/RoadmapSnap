@@ -39,19 +39,9 @@ function setTheme(theme) {
     localStorage.setItem('roadmapsnap-theme', theme);
 }
 
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    renderRoadmap();
-}
-
 // Apply stored theme on load
 (function initTheme() {
-    const storedTheme = getStoredTheme();
-    if (storedTheme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-    }
+    document.documentElement.setAttribute('data-theme', getStoredTheme());
 })();
 
 // ============================================
@@ -427,7 +417,7 @@ function renderRoadmap() {
     const filteredCount = filterableSources.length;
     const totalVisible = allFilterableVisible.length;
     const hasActiveFilters = filterState.status !== 'ALL' || filterState.riskOnly || filterState.search;
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const currentTheme = getStoredTheme();
     
     // Build HTML
     const roadmapHTML = `
@@ -475,6 +465,16 @@ function renderRoadmap() {
                 <button class="zoom-btn ${currentZoom === '12mo' ? 'active' : ''}" onclick="setDateRange(12)">12mo</button>
                 <button class="zoom-btn ${currentZoom === 'all' ? 'active' : ''}" onclick="setDateRange('all')">All</button>
             </div>
+            <div class="filter-group">
+                <span class="filter-label">Theme:</span>
+                <select class="filter-select theme-select" onchange="setTheme(this.value); renderRoadmap();" title="Choose theme">
+                    <option value="light" ${currentTheme === 'light' ? 'selected' : ''}>Light</option>
+                    <option value="dark" ${currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
+                    <option value="professional" ${currentTheme === 'professional' ? 'selected' : ''}>Professional</option>
+                    <option value="colorful" ${currentTheme === 'colorful' ? 'selected' : ''}>Colorful</option>
+                    <option value="blank" ${currentTheme === 'blank' ? 'selected' : ''}>Blank</option>
+                </select>
+            </div>
             <div class="filter-results">
                 Showing <strong>${filteredCount}</strong> of <strong>${totalVisible}</strong> ${entityScopeLabel}
             </div>
@@ -511,17 +511,6 @@ function renderRoadmap() {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                 </svg>
                 JSON
-            </button>
-            <button class="theme-toggle" onclick="toggleTheme()">
-                ${isDarkMode ? 
-                    `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    Light Mode` : 
-                    `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                    Dark Mode`}
             </button>
             <span class="export-note">Export different views for your presentation</span>
         </div>

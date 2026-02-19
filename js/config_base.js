@@ -1,5 +1,6 @@
 const CONFIG = {
-
+    VERSION: "1.0.1",
+    BUILD_DATE: "2026-02-19",
     TIMELINE: {
         TODAY: "18/02/2026",
         START_MONTH: "05/2025",
