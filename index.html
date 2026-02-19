@@ -136,7 +136,6 @@ function renderRoadmap() {
     const stats = calculateStats();
     const upcoming = getUpcomingMilestones();
     const visibleSources = getVisibleDataSources();
-    const workflow = getWorkflow();
     const statesDef = getStates();
     const milestonesDef = getMilestones();
     const lastMilestoneKey = getLastMilestoneKey();
@@ -153,40 +152,16 @@ function renderRoadmap() {
         `<div class="month-grid-line" style="left: ${(i + 1) * monthWidth}%;"></div>`
     ).join('');
     
-    // Helper function to render a single source row
+    // Helper function to render a single source row (state/milestone classes by position index, not config key)
     function renderSourceRow(source, isGroupItem = false) {
         const status = getCurrentStatus(source);
         const currentState = getStateByKey(status);
-        const statusClass = `status-${status.toLowerCase()}`;
-        const indicatorClass = status.toLowerCase();
+        const stateIndex = Math.min(7, Math.max(0, statesDef.findIndex(s => s.key === status)));
+        const statusClass = 'state-' + stateIndex;
+        const indicatorClass = 'state-' + stateIndex;
         const atRiskClass = source.atRisk ? 'at-risk' : '';
         const descopedClass = source.descoped ? 'descoped' : '';
         const groupItemClass = isGroupItem ? 'group-item' : '';
-        
-        // Get state color (use first matching milestone color or default)
-        const workflow = getWorkflow();
-        const stateIndex = workflow.findIndex(item => item.type === 'state' && item.key === status);
-        let stateColor = '#c1c7d0'; // default grey
-        // Find the NEXT milestone after this state to get the relevant color
-        let foundNext = false;
-        for (let i = stateIndex + 1; i < workflow.length; i++) {
-            if (workflow[i].type === 'milestone') {
-                stateColor = workflow[i].color;
-                foundNext = true;
-                break;
-            }
-        }
-        // For final state (no next milestone), use a darker shade of the previous milestone's color
-        if (!foundNext && stateIndex > 0) {
-            for (let i = stateIndex - 1; i >= 0; i--) {
-                if (workflow[i].type === 'milestone') {
-                    // Darken the color for final state to distinguish from previous state
-                    stateColor = darkenColor(workflow[i].color, 0.25);
-                    break;
-                }
-            }
-        }
-        
         
         // Generate start marker using START milestone date
         // Hide label if position < 2% to avoid overlap with status indicator
@@ -197,26 +172,22 @@ function renderRoadmap() {
             const startMilestone = getMilestoneByKey('START');
             const hideLabel = position < 2;
             startMarkerHTML = `
-                <div class="milestone-marker start" style="left: ${position}%; background: ${startMilestone?.color || '#6554c0'}; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
+                <div class="milestone-marker start" style="left: ${position}%; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
                     ${hideLabel ? '' : `<span>${startMilestone?.short || 'GO'}</span><div class="milestone-date">${formatDateDisplay(startDate)}</div>`}
                 </div>
             `;
         }
         
-        // Generate milestone markers (dynamic) - skip START as it has its own marker
-        // Hide label if position < 2% to avoid overlap with status indicator
-        const milestonesHTMLArr = milestonesDef.filter(m => m.key !== 'START').map(m => {
+        // Generate milestone markers by position: slot 0 = m0, 1 = m1, ... 5 = m5 (START has its own marker above)
+        const nonStartMilestones = milestonesDef.filter(m => m.key !== 'START');
+        const milestonesHTMLArr = nonStartMilestones.map((m, i) => {
             const date = getMilestoneDate(source, m.key);
-            
-            if (!date || !isDateInRange(date, months)) {
-                return '';
-            }
-            
+            if (!date || !isDateInRange(date, months)) return '';
             const position = calculatePosition(date, months);
             const hideLabel = position < 2;
-            
+            const milestoneSlot = 'm' + Math.min(i, 5);
             return `
-                <div class="milestone-marker" style="left: ${position}%; background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''} ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
+                <div class="milestone-marker ${milestoneSlot}" style="left: ${position}%; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
                     ${hideLabel ? '' : `<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(date)}</div>`}
                 </div>
             `;
@@ -241,53 +212,36 @@ function renderRoadmap() {
                 milestonePositions[m.key] = date ? calculatePosition(date, months) : null;
             });
             
-            // Helper function to create a segment, splitting at today if needed
-            function createSegment(start, end, color) {
+            // Helper function to create a segment (milestoneSlot = 0 for start, 1..6 for m0..m5)
+            function createSegment(start, end, milestoneSlot) {
                 if (start === null || end === null || end <= start) return;
-                
-                // If entirely in the past
-                if (end <= todayPosition) {
-                    segments.push(`<div class="gantt-bar" style="left: ${start}%; width: ${end - start}%; background: ${color};"></div>`);
+                const segClass = milestoneSlot === 0 ? 'gantt-bar segment-start' : 'gantt-bar segment-m' + (milestoneSlot - 1);
+                const w = end - start;
+                const pastWidth = Math.min(w, Math.max(0, todayPosition - start));
+                const futureWidth = w - pastWidth;
+                if (pastWidth > 0) {
+                    segments.push(`<div class="${segClass}" style="left: ${start}%; width: ${pastWidth}%;"></div>`);
                 }
-                // If entirely in the future
-                else if (start >= todayPosition) {
-                    segments.push(`<div class="gantt-bar gantt-future" style="left: ${start}%; width: ${end - start}%; background: ${color};"></div>`);
-                }
-                // If spans today - split into two parts
-                else {
-                    // Past portion (full opacity)
-                    const pastWidth = todayPosition - start;
-                    if (pastWidth > 0) {
-                        segments.push(`<div class="gantt-bar" style="left: ${start}%; width: ${pastWidth}%; background: ${color};"></div>`);
-                    }
-                    // Future portion (reduced opacity)
-                    const futureWidth = end - todayPosition;
-                    if (futureWidth > 0) {
-                        segments.push(`<div class="gantt-bar gantt-future" style="left: ${todayPosition}%; width: ${futureWidth}%; background: ${color};"></div>`);
-                    }
+                if (futureWidth > 0) {
+                    segments.push(`<div class="${segClass} gantt-future" style="left: ${start + pastWidth}%; width: ${futureWidth}%;"></div>`);
                 }
             }
             
-            // Generate all segments dynamically based on milestone definitions
-            // Each segment from milestone N to milestone N+1 uses milestone N's color
-            // First segment (START to first milestone) uses first milestone's color
+            // Generate all segments by milestone position (slot 0 = start, 1 = m0, ... 6 = m5)
             for (let i = 0; i < milestonesDef.length; i++) {
                 const currentMilestone = milestonesDef[i];
                 const currentPos = milestonePositions[currentMilestone.key];
-                
+                const milestoneSlot = i;
                 if (i === 0) {
-                    // First segment: START to first milestone - use first milestone's color
                     if (currentPos !== null) {
                         const segStart = startDatePos !== null ? startDatePos : Math.max(0, currentPos - 5);
-                        createSegment(segStart, currentPos, currentMilestone.color);
+                        createSegment(segStart, currentPos, milestoneSlot);
                     }
                 }
-                
-                // Segment from current milestone to next milestone
                 if (i < milestonesDef.length - 1) {
                     const nextMilestone = milestonesDef[i + 1];
                     const nextPos = milestonePositions[nextMilestone.key];
-                    createSegment(currentPos, nextPos, nextMilestone.color);
+                    createSegment(currentPos, nextPos, milestoneSlot);
                 }
             }
             
@@ -374,7 +328,7 @@ function renderRoadmap() {
                     <span class="source-name-text">${source.name}</span>
                     ${infoLinkHTML}
                     ${dependencyIconHTML}
-                    <span class="status-indicator" style="background: ${stateColor}; ${stateColor === '#ffab00' ? 'color: #172b4d;' : 'color: white;'}" title="${currentState?.title || status}">${currentState?.short || status}</span>
+                    <span class="status-indicator ${indicatorClass}" title="${currentState?.title || status}">${currentState?.short || status}</span>
                 </div>
                 <div class="timeline-track">
                     ${gridLinesHTML}
@@ -604,30 +558,11 @@ function renderRoadmap() {
                         <div class="kpi-sublabel">${totalSubtitleSuffix}</div>
                         ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
                     </div>
-                    ${statesDef.map((s, index) => {
-                        // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
-                        let stateColor = '#c1c7d0'; // default grey
-                        const stateIndex = workflow.indexOf(s);
-                        let foundNext = false;
-                        for (let i = stateIndex + 1; i < workflow.length; i++) {
-                            if (workflow[i].type === 'milestone') {
-                                stateColor = workflow[i].color;
-                                foundNext = true;
-                                break;
-                            }
-                        }
-                        // For final state (no next milestone), use a darker shade of the previous milestone's color
-                        if (!foundNext && stateIndex > 0) {
-                            for (let i = stateIndex - 1; i >= 0; i--) {
-                                if (workflow[i].type === 'milestone') {
-                                    stateColor = darkenColor(workflow[i].color, 0.25);
-                                    break;
-                                }
-                            }
-                        }
+                    ${statesDef.map((s, i) => {
+                        const stateClass = 'state-' + Math.min(i, 7);
                         return `
-                    <div class="kpi-card clickable ${filterState.status === s.key ? 'active' : ''}" style="border-left: 4px solid ${stateColor};" onclick="filterByStatus('${s.key}', event)">
-                        <div class="kpi-value" style="color: ${stateColor};">${stats[s.key] || 0}</div>
+                    <div class="kpi-card clickable ${stateClass} ${filterState.status === s.key ? 'active' : ''}" onclick="filterByStatus('${s.key}', event)">
+                        <div class="kpi-value">${stats[s.key] || 0}</div>
                         <div class="kpi-label">${s.title}</div>
                         <div class="kpi-sublabel">${s.description || ''}</div>
                         ${getBreakdownText(s.key) ? `<div class="kpi-breakdown">${getBreakdownText(s.key)}</div>` : ''}
@@ -642,60 +577,21 @@ function renderRoadmap() {
                         <div class="progress-percentage">${stats.productionReadyPercentage}% ${lastState.title}</div>
                     </div>
                     <div class="progress-bar-container">
-                        ${statesDef.map((s, index) => {
+                        ${statesDef.map((s, i) => {
                             const count = stats[s.key] || 0;
-                            // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
-                            let stateColor = '#c1c7d0'; // default grey
-                            const stateIndex = workflow.indexOf(s);
-                            let foundNext = false;
-                            for (let i = stateIndex + 1; i < workflow.length; i++) {
-                                if (workflow[i].type === 'milestone') {
-                                    stateColor = workflow[i].color;
-                                    foundNext = true;
-                                    break;
-                                }
-                            }
-                            // For final state (no next milestone), use a darker shade of the previous milestone's color
-                            if (!foundNext && stateIndex > 0) {
-                                for (let i = stateIndex - 1; i >= 0; i--) {
-                                    if (workflow[i].type === 'milestone') {
-                                        stateColor = darkenColor(workflow[i].color, 0.25);
-                                        break;
-                                    }
-                                }
-                            }
-                            const textColor = stateColor === '#ffab00' || stateColor === '#c1c7d0' ? '#172b4d' : 'white';
-                            // Highlight filtered state, fade others when filtering
+                            const stateClass = 'state-' + Math.min(i, 7);
                             const isFiltering = filterState.status && filterState.status !== 'ALL';
                             const isActiveFilter = filterState.status === s.key;
                             const segmentOpacity = isFiltering ? (isActiveFilter ? '1' : '0.3') : '1';
-                            return `<div class="progress-segment" style="width: ${(count / stats.total) * 100}%; background: ${stateColor}; color: ${textColor}; opacity: ${segmentOpacity};">${count > 0 ? count : ''}</div>`;
+                            return `<div class="progress-segment ${stateClass}" style="width: ${(count / stats.total) * 100}%; opacity: ${segmentOpacity};">${count > 0 ? count : ''}</div>`;
                         }).join('')}
                     </div>
                     <div class="progress-legend">
-                        ${statesDef.map((s, index) => {
-                            let stateColor = '#c1c7d0';
-                            const stateIndex = workflow.indexOf(s);
-                            let foundNext = false;
-                            for (let i = stateIndex + 1; i < workflow.length; i++) {
-                                if (workflow[i].type === 'milestone') {
-                                    stateColor = workflow[i].color;
-                                    foundNext = true;
-                                    break;
-                                }
-                            }
-                            // For final state (no next milestone), use a darker shade of the previous milestone's color
-                            if (!foundNext && stateIndex > 0) {
-                                for (let i = stateIndex - 1; i >= 0; i--) {
-                                    if (workflow[i].type === 'milestone') {
-                                        stateColor = darkenColor(workflow[i].color, 0.25);
-                                        break;
-                                    }
-                                }
-                            }
+                        ${statesDef.map((s, i) => {
+                            const stateClass = 'state-' + Math.min(i, 7);
                             return `
                         <div class="progress-legend-item">
-                            <div class="progress-legend-dot" style="background: ${stateColor};"></div>
+                            <div class="progress-legend-dot ${stateClass}"></div>
                             <span>${s.short} ${s.title}</span>
                         </div>`;
                         }).join('')}
@@ -704,12 +600,13 @@ function renderRoadmap() {
                 
                 <!-- Upcoming Milestones (Dynamic) -->
                 <div class="key-milestones" style="grid-template-columns: repeat(${milestonesDef.length}, 1fr);">
-                    ${milestonesDef.map(m => {
+                    ${milestonesDef.map((m, idx) => {
                         const upcomingItem = upcoming[m.key];
+                        const milestoneSlot = idx === 0 ? 'start' : 'm' + Math.min(idx - 1, 5);
                         return `
                     <div class="milestone-card">
                         <div class="milestone-card-header">
-                            <div class="milestone-card-icon" style="background: ${m.color}; ${m.color === '#ffab00' ? 'color: #172b4d;' : ''}">${m.short}</div>
+                            <div class="milestone-card-icon ${milestoneSlot}">${m.short}</div>
                             <div>
                                 <div class="milestone-card-title">Next ${m.title}</div>
                                 <div class="milestone-card-subtitle">${m.subtitle || ''}</div>
@@ -728,31 +625,11 @@ function renderRoadmap() {
                 <!-- State Legend -->
                 <div class="state-legend">
                     <div class="state-legend-items">
-                        ${statesDef.map((s, index) => {
-                            // Get color for this state (from the NEXT milestone in workflow, or darkened previous for final state)
-                            let stateColor = '#c1c7d0'; // default grey
-                            const stateIndex = workflow.indexOf(s);
-                            let foundNext = false;
-                            for (let i = stateIndex + 1; i < workflow.length; i++) {
-                                if (workflow[i].type === 'milestone') {
-                                    stateColor = workflow[i].color;
-                                    foundNext = true;
-                                    break;
-                                }
-                            }
-                            // For final state (no next milestone), use a darker shade of the previous milestone's color
-                            if (!foundNext && stateIndex > 0) {
-                                for (let i = stateIndex - 1; i >= 0; i--) {
-                                    if (workflow[i].type === 'milestone') {
-                                        stateColor = darkenColor(workflow[i].color, 0.25);
-                                        break;
-                                    }
-                                }
-                            }
-                            const textColor = stateColor === '#ffab00' || stateColor === '#c1c7d0' ? '#172b4d' : 'white';
+                        ${statesDef.map((s, i) => {
+                            const stateClass = 'state-' + Math.min(i, 7);
                             return `
                         <div class="state-legend-item">
-                            <span class="state-legend-badge" style="background: ${stateColor}; color: ${textColor};">${s.short}</span>
+                            <span class="state-legend-badge ${stateClass}">${s.short}</span>
                             <span class="state-legend-label">${s.title}</span>
                         </div>`;
                         }).join('')}
