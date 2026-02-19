@@ -22,6 +22,7 @@
 <script src="js/core/viewModel.js"></script>
 <script src="js/core/stats.js"></script>
 <script src="js/ui/renderer.js"></script>
+<script src="js/ui/dashboard.js"></script>
 <script src="js/ui/filterBar.js"></script>
 <script src="js/ui/grouping.js"></script>
 <script src="js/export/csv.js"></script>
@@ -279,16 +280,6 @@ function renderRoadmap() {
         });
     }
     
-    // Helper function for breakdown text
-    function getBreakdownText(status) {
-        const visible = stats.visibleByStatus[status];
-        const hidden = stats.hiddenByStatus[status];
-        if (hidden > 0) {
-            return `${visible} shown + ${hidden} hidden`;
-        }
-        return '';
-    }
-    
     // Config-driven labels for generic usage
     const entityPlural = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.plural) || "Items";
     const entityScopeLabel = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) || entityPlural.toLowerCase();
@@ -406,95 +397,7 @@ function renderRoadmap() {
         <div class="roadmap-container" id="roadmap-export">
             
             <!-- Summary Dashboard Section -->
-            <div class="summary-dashboard" id="summary-section">
-                <div class="summary-header">
-                    <div class="summary-title">
-                        ${dashboardTitle}
-                        <span class="summary-title-note">(${stats.total} total ${entityScopeLabel}, ${stats.visible} shown in timeline)</span>
-                    </div>
-                    <div class="header-right">
-                        ${stats.atRisk > 0 ? `
-                        <div class="risk-summary clickable ${state.filter.riskOnly ? 'active' : ''}" onclick="toggleRiskFilter(event)" title="Click to filter At Risk items">
-                            <span class="risk-summary-icon">${riskIconSVG}</span>
-                            <span class="risk-summary-text">${stats.atRisk} At Risk</span>
-                        </div>
-                        ` : ''}
-                        <div class="today-date-container">
-                            <span class="today-date-label">Today:</span>
-                            <span class="today-date-value">${formatShortDate(getTodayDate())}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- KPI Cards (Dynamic - by STATE) -->
-                <div class="kpi-section" style="grid-template-columns: repeat(${1 + statesDef.length}, 1fr);">
-                    <div class="kpi-card total">
-                        <div class="kpi-value">${stats.total}</div>
-                        <div class="kpi-label">Total ${entityPlural}</div>
-                        <div class="kpi-sublabel">${totalSubtitleSuffix}</div>
-                        ${stats.hidden > 0 ? `<div class="kpi-breakdown">${stats.visible} shown + ${stats.hidden} hidden</div>` : ''}
-                    </div>
-                    ${statesDef.map((s, i) => {
-                        const stateClass = 'state-' + Math.min(i, 7);
-                        return `
-                    <div class="kpi-card clickable ${stateClass} ${state.filter.status === s.key ? 'active' : ''}" onclick="filterByStatus('${s.key}', event)">
-                        <div class="kpi-value">${stats[s.key] || 0}</div>
-                        <div class="kpi-label">${s.title}</div>
-                        <div class="kpi-sublabel">${s.description || ''}</div>
-                        ${getBreakdownText(s.key) ? `<div class="kpi-breakdown">${getBreakdownText(s.key)}</div>` : ''}
-                    </div>`;
-                    }).join('')}
-                </div>
-                
-                <!-- Progress Bar (Dynamic - by STATE) -->
-                <div class="progress-section">
-                    <div class="progress-header">
-                        <div class="progress-title">Overall Progress (All ${stats.total} ${entityPlural})</div>
-                        <div class="progress-percentage">${stats.completionPercentage}% ${lastState.title}</div>
-                    </div>
-                    <div class="progress-bar-container">
-                        ${statesDef.map((s, i) => {
-                            const count = stats[s.key] || 0;
-                            const stateClass = 'state-' + Math.min(i, 7);
-                            const isFiltering = state.filter.status && state.filter.status !== 'ALL';
-                            const isActiveFilter = state.filter.status === s.key;
-                            const segmentOpacity = isFiltering ? (isActiveFilter ? '1' : '0.3') : '1';
-                            return `<div class="progress-segment ${stateClass}" style="width: ${(count / stats.total) * 100}%; opacity: ${segmentOpacity};">${count > 0 ? count : ''}</div>`;
-                        }).join('')}
-                    </div>
-                    <div class="progress-legend">
-                        ${statesDef.map((s, i) => {
-                            const stateClass = 'state-' + Math.min(i, 7);
-                            return `
-                        <div class="progress-legend-item">
-                            <div class="progress-legend-dot ${stateClass}"></div>
-                            <span>${s.short} ${s.title}</span>
-                        </div>`;
-                        }).join('')}
-                    </div>
-                </div>
-                
-                <!-- Upcoming Milestones (Dynamic) -->
-                <div class="key-milestones" style="grid-template-columns: repeat(${milestonesDef.length}, 1fr);">
-                    ${milestonesDef.map((m, idx) => {
-                        const upcomingItem = upcoming[m.key];
-                        const milestoneSlot = idx === 0 ? 'start' : 'm' + Math.min(idx - 1, 5);
-                        return `
-                    <div class="milestone-card">
-                        <div class="milestone-card-header">
-                            <div class="milestone-card-icon ${milestoneSlot}">${m.short}</div>
-                            <div>
-                                <div class="milestone-card-title">Next ${m.title}</div>
-                                <div class="milestone-card-subtitle">${m.subtitle || ''}</div>
-                            </div>
-                        </div>
-                        <div class="milestone-card-content">
-                            ${upcomingItem ? `<span class="milestone-card-date">${formatShortDate(upcomingItem.date)}</span> - <span class="milestone-card-source">${upcomingItem.source}</span>${upcomingItem.atRisk ? ' ⚠️' : ''}` : `All ${m.title.toLowerCase()} complete`}
-                        </div>
-                    </div>`;
-                    }).join('')}
-                </div>
-            </div>
+            ${renderDashboard(state, stats, upcoming, months)}
             
             <!-- Timeline Section -->
             <div id="timeline-section">
