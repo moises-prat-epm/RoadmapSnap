@@ -30,6 +30,7 @@
 <script src="js/export/json.js"></script>
 <script src="js/export/png.js"></script>
 <script src="js/ui/dependencyArrows.js"></script>
+<script src="js/ui/exportControls.js"></script>
 
 <script>
 // ============================================
@@ -81,7 +82,7 @@ function setDateRange(months) {
 // (Workflow, dependencies, dependency arrows from workflow.js, dependencies.js, dependencyArrows.js)
 
 // ============================================
-// UTILITY FUNCTIONS (escapeHtmlAttr used by renderRoadmap)
+// UTILITY FUNCTIONS (escapeHtmlAttr used by filter bar and timeline grid)
 // ============================================
 function escapeHtmlAttr(str) {
     if (!str) return '';
@@ -103,257 +104,31 @@ const riskIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 </svg>`;
 
 // Render Functions
+function renderFooter() {
+    const v = typeof CONFIG !== 'undefined' ? (CONFIG.VERSION || '?') : '?';
+    const b = typeof CONFIG !== 'undefined' ? (CONFIG.BUILD_DATE || '') : '';
+    return '<footer class="page-footer">© 2026 RoadmapSnap · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a></footer>' +
+        '<footer class="build-version" aria-label="Build version">v' + v + ' · Build ' + b + '</footer>';
+}
+
 function renderRoadmap() {
+    const state = AppState.get();
     const months = generateMonths();
-    const monthWidth = 100 / months.length;
-    const today = parseDate(getTodayDate());
     const todayPosition = calculatePosition(getTodayDate(), months);
     const stats = calculateStats();
     const upcoming = getUpcomingMilestones();
     const visibleSources = getVisibleDataSources();
-    const statesDef = getStates();
-    const milestonesDef = getMilestones();
-    const lastMilestoneKey = getLastMilestoneKey();
-    const lastState = getLastState();
-    const hasGroups = hasAnyGroups(visibleSources);
-    
-    // Generate month columns
-    const monthColumnsHTML = months.map(m => 
-        `<div class="month-column">${m.name}</div>`
-    ).join('');
-    
-    // Generate grid lines
-    const gridLinesHTML = months.slice(1).map((m, i) => 
-        `<div class="month-grid-line" style="left: ${(i + 1) * monthWidth}%;"></div>`
-    ).join('');
-    
-    // Helper function to render a single source row (state/milestone classes by position index, not config key)
-    function renderSourceRow(source, isGroupItem = false, months, todayPosition) {
-        const vm = buildDeliverableViewModel(source, months, todayPosition, AppState.get().activeDependencyGraph);
-        const stateIndex = Math.min(7, Math.max(0, statesDef.findIndex(s => s.key === vm.status)));
-        const statusClass = 'state-' + stateIndex;
-        const indicatorClass = 'state-' + stateIndex;
-        const atRiskClass = vm.atRisk ? 'at-risk' : '';
-        const descopedClass = vm.descoped ? 'descoped' : '';
-        const groupItemClass = isGroupItem ? 'group-item' : '';
 
-        // Tooltip listing all milestone dates (used on Gantt bar and overlay)
-        const ganttTooltipLines = milestonesDef
-            .map(m => {
-                const date = getMilestoneDate(source, m.key);
-                return date ? (m.short || m.key) + ': ' + formatDateDisplay(date) : null;
-            })
-            .filter(Boolean);
-        const ganttTooltip = ganttTooltipLines.length ? ganttTooltipLines.join('\n') : '';
+    const pageHTML =
+        renderFilterBar(state, visibleSources) +
+        renderExportControls(state) +
+        '<div class="roadmap-container" id="roadmap-export">' +
+        renderDashboard(state, stats, upcoming, months) +
+        renderTimelineGrid(state, visibleSources, months, todayPosition) +
+        '</div>' +
+        renderFooter();
 
-        // Gantt segments from view model
-        const ganttSegmentsHTML = vm.ganttSegments.map(seg =>
-            html`<div class="gantt-bar ${seg.segmentClass}${seg.isFuture ? ' gantt-future' : ''}" style="left: ${seg.left}%; width: ${seg.width}%;" title="${ganttTooltip}"></div>`
-        );
-
-        // Milestone markers from view model
-        const milestonesHTMLArr = vm.milestoneMarkers.map(m =>
-            html`<div class="milestone-marker ${m.slotClass}" style="left: ${m.position}%;${m.hideLabel ? ' min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">${m.hideLabel ? [] : [html`<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(m.date)}</div>`]}</div>`
-        );
-
-        // Dependency icon (optional)
-        let dependencyIconHTML = '';
-        if (vm.dependencyType !== 'none') {
-            const firstMsKey = getFirstMilestoneKey();
-            const formatInboundDep = (dep) => {
-                const fromMsKey = dep.from || lastMilestoneKey;
-                const toMsKey = dep.to || firstMsKey;
-                const fromMsDef = getMilestoneByKey(fromMsKey);
-                const toMsDef = getMilestoneByKey(toMsKey);
-                const fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
-                const toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
-                return dep.task + ' (' + fromShort + ' → ' + toShort + ')';
-            };
-            const formatOutboundDep = (dep) => {
-                const fromMsKey = dep.from || lastMilestoneKey;
-                const toMsKey = dep.to || firstMsKey;
-                const fromMsDef = getMilestoneByKey(fromMsKey);
-                const toMsDef = getMilestoneByKey(toMsKey);
-                const fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
-                const toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
-                return dep.task + ' (' + fromShort + ' → ' + toShort + ')';
-            };
-            let depTooltip = '';
-            let depIconSVG = '';
-            if (vm.dependencyType === 'inbound') {
-                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z"/></svg>';
-                depTooltip = 'Blocked by:\n' + vm.inboundDeps.map(formatInboundDep).join('\n');
-            } else if (vm.dependencyType === 'outbound') {
-                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z"/></svg>';
-                depTooltip = 'Blocks:\n' + vm.outboundDeps.map(formatOutboundDep).join('\n');
-            } else {
-                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z"/></svg>';
-                depTooltip = 'Blocked by:\n' + vm.inboundDeps.map(formatInboundDep).join('\n') + '\n\nBlocks:\n' + vm.outboundDeps.map(formatOutboundDep).join('\n');
-            }
-            const isActive = AppState.get().activeDependencyGraph === vm.name;
-            dependencyIconHTML = html`<div class="dependency-icon ${vm.dependencyType} ${isActive ? 'active' : ''}" title="${depTooltip}" onclick="toggleDependencyGraph('${vm.name}', event)">${raw(depIconSVG)}</div>`;
-        }
-
-        const riskIndicatorHTML = renderIf(vm.atRisk, raw('<div class="risk-indicator" title="At Risk">' + riskIconSVG + '</div>'));
-        const infoLinkHTML = renderIf(vm.link && vm.link.trim(), raw(html`<a class="info-link" href="${vm.link}" target="_blank" rel="noopener noreferrer" title="More info">${raw(infoIconSVG)}</a>`));
-        const dependencyIconFragment = renderIf(vm.dependencyType !== 'none', raw(dependencyIconHTML));
-
-        const ganttOrOverlay = AppState.get().showGantt
-            ? ganttSegmentsHTML
-            : (ganttTooltip ? [html`<div class="gantt-tooltip-overlay" title="${ganttTooltip}"></div>`] : []);
-
-        return html`<div class="data-source-row ${atRiskClass} ${groupItemClass} ${vm.dependencyClass} ${descopedClass}">
-                <div class="source-name ${statusClass}">
-                    ${riskIndicatorHTML}
-                    <span class="source-name-text">${vm.name}</span>
-                    ${infoLinkHTML}
-                    ${dependencyIconFragment}
-                    <span class="status-indicator ${indicatorClass}" title="${(vm.state && vm.state.title) || vm.status}">${(vm.state && vm.state.short) || vm.status}</span>
-                </div>
-                <div class="timeline-track">
-                    ${raw(gridLinesHTML)}
-                    ${ganttOrOverlay}
-                    <div class="today-guide-line" style="left: ${todayPosition}%;"></div>
-                    ${milestonesHTMLArr}
-                </div>
-            </div>`;
-    }
-    window.renderSourceRow = renderSourceRow;
-    
-    // Config-driven labels for generic usage
-    const entityPlural = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.plural) || "Items";
-    const entityScopeLabel = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) || entityPlural.toLowerCase();
-    const columnHeaderLabel = (CONFIG.ENTITY_LABELS && (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular)) || "Item";
-    const dashboardTitle = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.title) || "Roadmap Dashboard";
-    const totalSubtitleSuffix = (CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.totalSubtitleSuffix) || "in scope";
-    
-    // Get total visible for filter results display (only count filterable deliverables)
-    const allVisible = getAllVisibleDataSources();
-    const filterableSources = visibleSources.filter(s => !isDeliverableNonFilterable(s));
-    const allFilterableVisible = allVisible.filter(s => !isDeliverableNonFilterable(s));
-    const filteredCount = filterableSources.length;
-    const totalVisible = allFilterableVisible.length;
-    const state = AppState.get();
-    const hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.search;
-    const currentTheme = state.theme;
-    
-    // Build HTML
-    const roadmapHTML = `
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <div class="filter-group">
-                <button class="filter-toggle ${state.showGantt ? 'active' : ''}" onclick="toggleGanttBars()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10"></line>
-                        <line x1="12" y1="20" x2="12" y2="4"></line>
-                        <line x1="6" y1="20" x2="6" y2="14"></line>
-                    </svg>
-                    Gantt Bars
-                </button>
-            </div>
-            <div class="filter-group">
-                <input type="text" class="filter-input" placeholder="Search by name..." 
-                       value="${escapeHtmlAttr(state.filter.search)}"
-                       oninput="updateFilter('search', this.value)">
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">Sort:</span>
-                <select class="filter-select" onchange="updateFilter('sortBy', this.value)">
-                    <option value="name" ${state.sort.by === 'name' ? 'selected' : ''}>Name</option>
-                    <option value="status" ${state.sort.by === 'status' ? 'selected' : ''}>Status</option>
-                    <option value="m3date" ${state.sort.by === 'm3date' ? 'selected' : ''}>${lastMilestoneKey} Date</option>
-                    <option value="risk" ${state.sort.by === 'risk' ? 'selected' : ''}>Risk</option>
-                </select>
-                <select class="filter-select" onchange="updateFilter('sortOrder', this.value)">
-                    <option value="asc" ${state.sort.order === 'asc' ? 'selected' : ''}>Asc</option>
-                    <option value="desc" ${state.sort.order === 'desc' ? 'selected' : ''}>Desc</option>
-                </select>
-            </div>
-            ${hasActiveFilters ? `<button class="filter-clear" onclick="clearFilters()">Clear Filters</button>` : ''}
-            ${hasGroups ? `
-            <div class="group-controls">
-                <button class="group-control-btn" onclick="expandAllGroups()">Expand All</button>
-                <button class="group-control-btn" onclick="collapseAllGroups()">Collapse All</button>
-            </div>
-            ` : ''}
-            <div class="zoom-controls">
-                <span class="filter-label">Zoom:</span>
-                <button class="zoom-btn ${state.zoom === '3mo' ? 'active' : ''}" onclick="setDateRange(3)">3mo</button>
-                <button class="zoom-btn ${state.zoom === '6mo' ? 'active' : ''}" onclick="setDateRange(6)">6mo</button>
-                <button class="zoom-btn ${state.zoom === '12mo' ? 'active' : ''}" onclick="setDateRange(12)">12mo</button>
-                <button class="zoom-btn ${state.zoom === 'all' ? 'active' : ''}" onclick="setDateRange('all')">All</button>
-            </div>
-            <div class="filter-group">
-                <span class="filter-label">Theme:</span>
-                <select class="filter-select theme-select" onchange="AppState.set({ theme: this.value })" title="Choose theme">
-                    <option value="light" ${currentTheme === 'light' ? 'selected' : ''}>Light</option>
-                    <option value="dark" ${currentTheme === 'dark' ? 'selected' : ''}>Dark</option>
-                    <option value="professional" ${currentTheme === 'professional' ? 'selected' : ''}>Professional</option>
-                    <option value="colorful" ${currentTheme === 'colorful' ? 'selected' : ''}>Colorful</option>
-                    <option value="blank" ${currentTheme === 'blank' ? 'selected' : ''}>Blank</option>
-                </select>
-            </div>
-            <div class="filter-results">
-                Showing <strong>${filteredCount}</strong> of <strong>${totalVisible}</strong> ${entityScopeLabel}
-            </div>
-        </div>
-        
-        <!-- Export Controls -->
-        <div class="export-controls">
-            <button class="export-btn" onclick="exportToPNG('roadmap-export', 'Full-Roadmap')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Export Full Roadmap
-            </button>
-            <button class="export-btn secondary" onclick="exportToPNG('summary-section', 'Summary-Dashboard')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Export Summary Only
-            </button>
-            <button class="export-btn secondary" onclick="exportToPNG('timeline-section', 'Timeline-Only')">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Export Timeline Only
-            </button>
-            <button class="export-btn secondary" onclick="exportToCSV()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                CSV
-            </button>
-            <button class="export-btn secondary" onclick="exportToJSON()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                </svg>
-                JSON
-            </button>
-            <span class="export-note">Export different views for your presentation</span>
-        </div>
-        
-        <!-- Full Roadmap Container -->
-        <div class="roadmap-container" id="roadmap-export">
-            
-            <!-- Summary Dashboard Section -->
-            ${renderDashboard(state, stats, upcoming, months)}
-            
-            <!-- Timeline Section -->
-            ${renderTimelineGrid(state, visibleSources, months, todayPosition)}
-            
-        </div>
-        
-        <!-- Footer -->
-        <footer class="page-footer">
-            © 2026 RoadmapSnap · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a>
-        </footer>
-        <footer class="build-version" aria-label="Build version">
-            v${typeof CONFIG !== 'undefined' ? (CONFIG.VERSION || '?') : '?'} · Build ${typeof CONFIG !== 'undefined' ? (CONFIG.BUILD_DATE || '') : ''}
-        </footer>
-    `;
-    
-    document.body.innerHTML = roadmapHTML;
+    document.body.innerHTML = pageHTML;
 }
 
 // (exportToPNG from js/export/png.js)

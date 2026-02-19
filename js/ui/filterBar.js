@@ -125,6 +125,64 @@ function toggleGanttBars() {
     }
 }
 
+function renderFilterBar(state, sources) {
+    var filterableSources = sources.filter(function (s) { return !isDeliverableNonFilterable(s); });
+    var filteredCount = filterableSources.length;
+    var allVisible = typeof getAllVisibleDataSources === 'function' ? getAllVisibleDataSources() : [];
+    var totalVisible = allVisible.filter(function (s) { return !isDeliverableNonFilterable(s); }).length;
+    var entityScopeLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) ? CONFIG.ENTITY_LABELS.scopeLabel : 'items';
+    var hasGroups = typeof hasAnyGroups === 'function' && hasAnyGroups(sources);
+    var lastMilestoneKey = typeof getLastMilestoneKey === 'function' ? getLastMilestoneKey() : 'm3date';
+    var hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.search;
+    var ganttSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
+    return html`<div class="filter-bar">
+        <div class="filter-group">
+            <button class="filter-toggle ${state.showGantt ? 'active' : ''}" onclick="toggleGanttBars()">${raw(ganttSvg)} Gantt Bars</button>
+        </div>
+        <div class="filter-group">
+            <input type="text" class="filter-input" placeholder="Search by name..." value="${(typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(state.filter.search) : state.filter.search)}" oninput="updateFilter('search', this.value)">
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Sort:</span>
+            <select class="filter-select" onchange="updateFilter('sortBy', this.value)">
+                <option value="name" ${state.sort.by === 'name' ? 'selected' : ''}>Name</option>
+                <option value="status" ${state.sort.by === 'status' ? 'selected' : ''}>Status</option>
+                <option value="m3date" ${state.sort.by === 'm3date' ? 'selected' : ''}>${lastMilestoneKey} Date</option>
+                <option value="risk" ${state.sort.by === 'risk' ? 'selected' : ''}>Risk</option>
+            </select>
+            <select class="filter-select" onchange="updateFilter('sortOrder', this.value)">
+                <option value="asc" ${state.sort.order === 'asc' ? 'selected' : ''}>Asc</option>
+                <option value="desc" ${state.sort.order === 'desc' ? 'selected' : ''}>Desc</option>
+            </select>
+        </div>
+        ${hasActiveFilters ? [html`<button class="filter-clear" onclick="clearFilters()">Clear Filters</button>`] : []}
+        ${hasGroups ? [html`<div class="group-controls">
+            <button class="group-control-btn" onclick="expandAllGroups()">Expand All</button>
+            <button class="group-control-btn" onclick="collapseAllGroups()">Collapse All</button>
+        </div>`] : []}
+        <div class="zoom-controls">
+            <span class="filter-label">Zoom:</span>
+            <button class="zoom-btn ${state.zoom === '3mo' ? 'active' : ''}" onclick="setDateRange(3)">3mo</button>
+            <button class="zoom-btn ${state.zoom === '6mo' ? 'active' : ''}" onclick="setDateRange(6)">6mo</button>
+            <button class="zoom-btn ${state.zoom === '12mo' ? 'active' : ''}" onclick="setDateRange(12)">12mo</button>
+            <button class="zoom-btn ${state.zoom === 'all' ? 'active' : ''}" onclick="setDateRange('all')">All</button>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Theme:</span>
+            <select class="filter-select theme-select" onchange="AppState.set({ theme: this.value })" title="Choose theme">
+                <option value="light" ${state.theme === 'light' ? 'selected' : ''}>Light</option>
+                <option value="dark" ${state.theme === 'dark' ? 'selected' : ''}>Dark</option>
+                <option value="professional" ${state.theme === 'professional' ? 'selected' : ''}>Professional</option>
+                <option value="colorful" ${state.theme === 'colorful' ? 'selected' : ''}>Colorful</option>
+                <option value="blank" ${state.theme === 'blank' ? 'selected' : ''}>Blank</option>
+            </select>
+        </div>
+        <div class="filter-results">
+            Showing <strong>${filteredCount}</strong> of <strong>${totalVisible}</strong> ${entityScopeLabel}
+        </div>
+    </div>`;
+}
+
 // Export on window for global access
 window.filterDeliverables = filterDeliverables;
 window.sortDeliverables = sortDeliverables;
@@ -134,3 +192,4 @@ window.filterByStatus = filterByStatus;
 window.clearStatusFilterOnOutsideClick = clearStatusFilterOnOutsideClick;
 window.toggleRiskFilter = toggleRiskFilter;
 window.toggleGanttBars = toggleGanttBars;
+window.renderFilterBar = renderFilterBar;
