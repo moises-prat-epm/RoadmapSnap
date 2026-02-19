@@ -118,12 +118,14 @@ function renderRoadmap() {
     const stats = calculateStats();
     const upcoming = getUpcomingMilestones();
     const visibleSources = getVisibleDataSources();
+    const atRiskInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.atRisk).length;
+    const statsForDashboard = Object.assign({}, stats, { atRiskInView });
 
     const pageHTML =
         renderFilterBar(state, visibleSources) +
         renderExportControls(state) +
         '<div class="roadmap-container" id="roadmap-export">' +
-        renderDashboard(state, stats, upcoming, months) +
+        renderDashboard(state, statsForDashboard, upcoming, months) +
         renderTimelineGrid(state, visibleSources, months, todayPosition) +
         '</div>' +
         renderFooter();

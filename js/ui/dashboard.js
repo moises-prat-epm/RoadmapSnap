@@ -22,12 +22,18 @@ function renderDashboard(state, stats, upcoming, months) {
     var dashboardTitle = (typeof CONFIG !== 'undefined' && CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.title) ? CONFIG.DASHBOARD_TEXT.title : 'Roadmap Dashboard';
     var totalSubtitleSuffix = (typeof CONFIG !== 'undefined' && CONFIG.DASHBOARD_TEXT && CONFIG.DASHBOARD_TEXT.totalSubtitleSuffix) ? CONFIG.DASHBOARD_TEXT.totalSubtitleSuffix : 'in scope';
 
-    var riskSummaryBlock = stats.atRisk > 0
+    var atRiskInView = stats.atRiskInView != null ? stats.atRiskInView : stats.atRisk;
+    var riskSummaryBlock = atRiskInView > 0
         ? raw(html`<div class="risk-summary clickable ${state.filter.riskOnly ? 'active' : ''}" onclick="toggleRiskFilter(event)" title="Click to filter At Risk items">
             <span class="risk-summary-icon">${raw(riskIconSVG)}</span>
-            <span class="risk-summary-text">${stats.atRisk} At Risk</span>
+            <span class="risk-summary-text">${atRiskInView} At Risk</span>
           </div>`)
-        : [];
+        : (stats.atRisk > 0
+            ? raw(html`<div class="risk-summary disabled" title="No at-risk items in current filter">
+                <span class="risk-summary-icon">${raw(riskIconSVG)}</span>
+                <span class="risk-summary-text">0 At Risk</span>
+              </div>`)
+            : []);
 
     var kpiCards = statesDef.map(function (s, i) {
         var stateClass = 'state-' + Math.min(i, 7);
