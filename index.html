@@ -25,6 +25,7 @@
 <script src="js/ui/dashboard.js"></script>
 <script src="js/ui/filterBar.js"></script>
 <script src="js/ui/grouping.js"></script>
+<script src="js/ui/timelineGrid.js"></script>
 <script src="js/export/csv.js"></script>
 <script src="js/export/json.js"></script>
 <script src="js/export/png.js"></script>
@@ -217,68 +218,7 @@ function renderRoadmap() {
                 </div>
             </div>`;
     }
-    
-    // Chevron SVG for group headers
-    const chevronSVG = `<svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" />
-    </svg>`;
-    
-    // Generate data source rows with grouping support
-    let dataSourceRowsHTML = '';
-    
-    if (hasGroups) {
-        const { groups, ungrouped } = groupDeliverables(visibleSources);
-        const groupOrder = (typeof CONFIG !== 'undefined' && Array.isArray(CONFIG.GROUP_ORDER) && CONFIG.GROUP_ORDER.length) ? CONFIG.GROUP_ORDER : null;
-        const sortedGroupNames = groupOrder
-            ? Object.keys(groups).sort((a, b) => {
-                const i = groupOrder.indexOf(a);
-                const j = groupOrder.indexOf(b);
-                if (i === -1 && j === -1) return a.localeCompare(b);
-                if (i === -1) return 1;
-                if (j === -1) return -1;
-                return i - j;
-            })
-            : Object.keys(groups).sort();
-        // Render grouped items
-        sortedGroupNames.forEach(groupName => {
-            const groupSources = groups[groupName];
-            const collapsed = AppState.get().groupCollapsed[groupName] || false;
-            const groupStats = getGroupStats(groupSources);
-            
-            // Group header
-            dataSourceRowsHTML += `
-                <div class="group-header" onclick="toggleGroup('${escapeHtmlAttr(groupName)}')">
-                    <div class="group-header-name">
-                        <svg class="group-chevron ${collapsed ? 'collapsed' : ''}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" />
-                        </svg>
-                        ${groupName}
-                        <span class="group-stats">
-                            ${groupStats.total} items${groupStats.atRisk > 0 ? ` <span class="group-stats-risk">(${groupStats.atRisk} at risk)</span>` : ''}
-                        </span>
-                    </div>
-                    <div class="group-header-track"></div>
-                </div>
-            `;
-            
-            // Group items (if not collapsed)
-            if (!collapsed) {
-                groupSources.forEach(source => {
-                    dataSourceRowsHTML += renderSourceRow(source, true, months, todayPosition);
-                });
-            }
-        });
-        
-        // Render ungrouped items at the end
-        ungrouped.forEach(source => {
-            dataSourceRowsHTML += renderSourceRow(source, false, months, todayPosition);
-        });
-    } else {
-        // No groups - render all items normally
-        visibleSources.forEach(source => {
-            dataSourceRowsHTML += renderSourceRow(source, false, months, todayPosition);
-        });
-    }
+    window.renderSourceRow = renderSourceRow;
     
     // Config-driven labels for generic usage
     const entityPlural = (CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.plural) || "Items";
@@ -400,45 +340,7 @@ function renderRoadmap() {
             ${renderDashboard(state, stats, upcoming, months)}
             
             <!-- Timeline Section -->
-            <div id="timeline-section">
-                <!-- State Legend -->
-                <div class="state-legend">
-                    <div class="state-legend-items">
-                        ${statesDef.map((s, i) => {
-                            const stateClass = 'state-' + Math.min(i, 7);
-                            return `
-                        <div class="state-legend-item">
-                            <span class="state-legend-badge ${stateClass}">${s.short}</span>
-                            <span class="state-legend-label">${s.title}</span>
-                        </div>`;
-                        }).join('')}
-                    </div>
-                    <div class="state-legend-info">
-                        Timeline: <span class="state-legend-info-count">${months[0].name}</span> - <span class="state-legend-info-count">${months[months.length - 1].name}</span>
-                    </div>
-                </div>
-                
-                <!-- Compact Roadmap -->
-                <div class="roadmap-content">
-                    <div class="roadmap-grid">
-                        
-                        <!-- Timeline Header -->
-                        <div class="timeline-header">
-                            <div class="timeline-label">${columnHeaderLabel}</div>
-                            <div class="timeline-months">
-                                ${monthColumnsHTML}
-                                <div class="today-pointer" style="left: ${todayPosition}%;">
-                                    <div class="today-pointer-arrow"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Data Source Rows -->
-                        ${dataSourceRowsHTML}
-                        
-                    </div>
-                </div>
-            </div>
+            ${renderTimelineGrid(state, visibleSources, months, todayPosition)}
             
         </div>
         
