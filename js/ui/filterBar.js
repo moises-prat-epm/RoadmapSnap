@@ -1,34 +1,25 @@
 /**
  * RoadmapSnap — filter bar logic
- * Extracted from index.html: filterState, filter/sort, updateFilter, clearFilters, filterByStatus, etc.
- * Depends on isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate, renderRoadmap, activeDependencyGraph, drawDependencyArrows (window).
+ * Uses AppState for filter/sort/showGantt. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate, renderRoadmap, drawDependencyArrows (window).
  */
 
-let filterState = {
-    status: 'ALL',
-    riskOnly: false,
-    search: '',
-    sortBy: 'm3date',
-    sortOrder: 'asc',
-    showGantt: true
-};
-
 function filterDeliverables(sources) {
+    const filter = AppState.get().filter;
     return sources.filter(source => {
         const isNonFilterable = isDeliverableNonFilterable(source);
-        if (filterState.status !== 'ALL' && isNonFilterable) {
+        if (filter.status !== 'ALL' && isNonFilterable) {
             return false;
         }
-        if (filterState.riskOnly && !source.atRisk) {
+        if (filter.riskOnly && !source.atRisk) {
             return false;
         }
-        if (filterState.status !== 'ALL') {
+        if (filter.status !== 'ALL') {
             const status = getCurrentStatus(source);
-            if (status !== filterState.status) return false;
+            if (status !== filter.status) return false;
         }
-        if (filterState.riskOnly && !source.atRisk) return false;
-        if (filterState.search) {
-            const searchLower = filterState.search.toLowerCase();
+        if (filter.riskOnly && !source.atRisk) return false;
+        if (filter.search) {
+            const searchLower = filter.search.toLowerCase();
             const nameMatch = source.name.toLowerCase().includes(searchLower);
             const tagsMatch = source.tags && source.tags.some(tag =>
                 tag.toLowerCase().includes(searchLower)
@@ -43,10 +34,11 @@ function sortDeliverables(sources) {
     const sorted = [...sources];
     const states = getStates();
     const lastMilestoneKey = getLastMilestoneKey();
+    const sort = AppState.get().sort;
 
     sorted.sort((a, b) => {
         let comparison = 0;
-        switch (filterState.sortBy) {
+        switch (sort.by) {
             case 'name':
                 comparison = a.name.localeCompare(b.name);
                 break;
@@ -65,14 +57,23 @@ function sortDeliverables(sources) {
                 comparison = (b.atRisk ? 1 : 0) - (a.atRisk ? 1 : 0);
                 break;
         }
-        return filterState.sortOrder === 'desc' ? -comparison : comparison;
+        return sort.order === 'desc' ? -comparison : comparison;
     });
 
     return sorted;
 }
 
 function updateFilter(key, value) {
-    filterState[key] = value;
+    const state = AppState.get();
+    if (key === 'sortBy') {
+        AppState.set({ sort: { ...state.sort, by: value } });
+    } else if (key === 'sortOrder') {
+        AppState.set({ sort: { ...state.sort, order: value } });
+    } else if (key === 'showGantt') {
+        AppState.set({ showGantt: value });
+    } else {
+        AppState.set({ filter: { ...state.filter, [key]: value } });
+    }
 
     if (key === 'search') {
         clearTimeout(window.searchDebounceTimer);
@@ -90,54 +91,48 @@ function updateFilter(key, value) {
 }
 
 function clearFilters() {
-    Object.assign(filterState, {
-        status: 'ALL',
-        riskOnly: false,
-        search: '',
-        sortBy: 'm3date',
-        sortOrder: 'asc',
-        showGantt: true
-    });
+    AppState.reset();
     renderRoadmap();
 }
 
 function filterByStatus(status, event) {
     if (event) event.stopPropagation();
-    if (filterState.status === status) {
-        filterState.status = 'ALL';
+    const filter = AppState.get().filter;
+    if (filter.status === status) {
+        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false } });
     } else {
-        filterState.status = status;
+        AppState.set({ filter: { ...filter, status, riskOnly: false } });
     }
-    filterState.riskOnly = false;
     renderRoadmap();
 }
 
 function clearStatusFilterOnOutsideClick(event) {
     const clickedKpi = event.target.closest('.kpi-card.clickable');
     const clickedRiskSummary = event.target.closest('.risk-summary.clickable');
-    if (!clickedKpi && !clickedRiskSummary && (filterState.status !== 'ALL' || filterState.riskOnly)) {
-        filterState.status = 'ALL';
-        filterState.riskOnly = false;
+    const filter = AppState.get().filter;
+    if (!clickedKpi && !clickedRiskSummary && (filter.status !== 'ALL' || filter.riskOnly)) {
+        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false } });
         renderRoadmap();
     }
 }
 
 function toggleRiskFilter(event) {
     if (event) event.stopPropagation();
-    filterState.riskOnly = !filterState.riskOnly;
+    const filter = AppState.get().filter;
+    AppState.set({ filter: { ...filter, riskOnly: !filter.riskOnly } });
     renderRoadmap();
 }
 
 function toggleGanttBars() {
-    filterState.showGantt = !filterState.showGantt;
+    const showGantt = AppState.get().showGantt;
+    AppState.set({ showGantt: !showGantt });
     renderRoadmap();
-    if (activeDependencyGraph) {
+    if (AppState.get().activeDependencyGraph) {
         setTimeout(() => drawDependencyArrows(), 50);
     }
 }
 
 // Export on window for global access
-window.filterState = filterState;
 window.filterDeliverables = filterDeliverables;
 window.sortDeliverables = sortDeliverables;
 window.updateFilter = updateFilter;

@@ -1,31 +1,28 @@
 /**
  * RoadmapSnap — dependency arrows overlay and toggle
- * Extracted from index.html: activeDependencyGraph, toggleDependencyGraph, clearDependencyGraphOnClickOutside, drawDependencyArrows, clearDependencyArrows.
- * Depends on getDependencyGraph, expandGroupsForDependencyGraph, filterState, renderRoadmap, generateMonths, getLastMilestoneKey, getFirstMilestoneKey, getAllDataSources, getMilestoneByKey, getMilestoneDate, formatDateDisplay, isDateInRange, calculatePosition (window).
+ * Uses AppState for activeDependencyGraph. Depends on AppState, getDependencyGraph, expandGroupsForDependencyGraph, renderRoadmap, generateMonths, getLastMilestoneKey, getFirstMilestoneKey, getAllDataSources, getMilestoneByKey, getMilestoneDate, formatDateDisplay, isDateInRange, calculatePosition (window).
  */
-
-let activeDependencyGraph = null;
 
 function toggleDependencyGraph(sourceName, event) {
     if (event) {
         event.stopPropagation();
     }
 
-    if (activeDependencyGraph === sourceName) {
-        activeDependencyGraph = null;
+    const current = AppState.get().activeDependencyGraph;
+    if (current === sourceName) {
+        AppState.set({ activeDependencyGraph: null });
     } else {
-        activeDependencyGraph = sourceName;
+        AppState.set({ activeDependencyGraph: sourceName });
         const graphNodes = getDependencyGraph(sourceName).nodes;
         expandGroupsForDependencyGraph(graphNodes);
-        filterState.status = 'ALL';
-        filterState.riskOnly = false;
-        filterState.search = '';
+        AppState.set({
+            filter: { status: 'ALL', riskOnly: false, search: '' }
+        });
     }
-    window.activeDependencyGraph = activeDependencyGraph;
 
     renderRoadmap();
 
-    if (activeDependencyGraph) {
+    if (AppState.get().activeDependencyGraph) {
         setTimeout(() => drawDependencyArrows(), 50);
     } else {
         clearDependencyArrows();
@@ -33,21 +30,22 @@ function toggleDependencyGraph(sourceName, event) {
 }
 
 function clearDependencyGraphOnClickOutside(event) {
-    if (activeDependencyGraph &&
+    const active = AppState.get().activeDependencyGraph;
+    if (active &&
         !event.target.closest('.dependency-icon') &&
         !event.target.closest('.data-source-row') &&
         !event.target.closest('.filter-bar') &&
         !event.target.closest('.filter-toggle') &&
         !event.target.closest('button') &&
         !event.target.closest('select')) {
-        activeDependencyGraph = null;
-        window.activeDependencyGraph = null;
+        AppState.set({ activeDependencyGraph: null });
         clearDependencyArrows();
         renderRoadmap();
     }
 }
 
 function drawDependencyArrows() {
+    const activeDependencyGraph = AppState.get().activeDependencyGraph;
     if (!activeDependencyGraph) return;
 
     const graph = getDependencyGraph(activeDependencyGraph);
@@ -251,7 +249,6 @@ function clearDependencyArrows() {
 }
 
 // Export on window for global access
-window.activeDependencyGraph = activeDependencyGraph;
 window.toggleDependencyGraph = toggleDependencyGraph;
 window.clearDependencyGraphOnClickOutside = clearDependencyGraphOnClickOutside;
 window.drawDependencyArrows = drawDependencyArrows;

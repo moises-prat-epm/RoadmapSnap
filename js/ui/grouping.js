@@ -1,10 +1,7 @@
 /**
  * RoadmapSnap — grouping logic
- * Extracted from index.html: groupCollapsedState, groupDeliverables, toggle/expand/collapse, getGroupStats, expandGroupsForDependencyGraph.
- * Depends on global CONFIG and renderRoadmap (window).
+ * Uses AppState for groupCollapsed. Depends on AppState, CONFIG, renderRoadmap (window).
  */
-
-let groupCollapsedState = {};
 
 function groupDeliverables(sources) {
     const groups = {};
@@ -30,27 +27,33 @@ function hasAnyGroups(sources) {
 }
 
 function toggleGroup(groupName) {
-    groupCollapsedState[groupName] = !groupCollapsedState[groupName];
+    const groupCollapsed = { ...AppState.get().groupCollapsed };
+    groupCollapsed[groupName] = !groupCollapsed[groupName];
+    AppState.set({ groupCollapsed });
     renderRoadmap();
 }
 
 function expandAllGroups() {
     const sources = CONFIG.DELIVERABLES;
+    const groupCollapsed = { ...AppState.get().groupCollapsed };
     sources.forEach(source => {
         if (source.group) {
-            groupCollapsedState[source.group] = false;
+            groupCollapsed[source.group] = false;
         }
     });
+    AppState.set({ groupCollapsed });
     renderRoadmap();
 }
 
 function collapseAllGroups() {
     const sources = CONFIG.DELIVERABLES;
+    const groupCollapsed = { ...AppState.get().groupCollapsed };
     sources.forEach(source => {
         if (source.group) {
-            groupCollapsedState[source.group] = true;
+            groupCollapsed[source.group] = true;
         }
     });
+    AppState.set({ groupCollapsed });
     renderRoadmap();
 }
 
@@ -64,16 +67,16 @@ function getGroupStats(sources) {
 
 function expandGroupsForDependencyGraph(graphNodes) {
     const sources = CONFIG.DELIVERABLES;
-
+    const groupCollapsed = { ...AppState.get().groupCollapsed };
     sources.forEach(source => {
         if (graphNodes.includes(source.name) && source.group) {
-            groupCollapsedState[source.group] = false;
+            groupCollapsed[source.group] = false;
         }
     });
+    AppState.set({ groupCollapsed });
 }
 
 // Export on window for global access
-window.groupCollapsedState = groupCollapsedState;
 window.groupDeliverables = groupDeliverables;
 window.hasAnyGroups = hasAnyGroups;
 window.toggleGroup = toggleGroup;
