@@ -105,8 +105,11 @@ function filterByStatus(status, event) {
 function clearStatusFilterOnOutsideClick(event) {
     const clickedKpi = event.target.closest('.kpi-card.clickable');
     const clickedRiskSummary = event.target.closest('.risk-summary.clickable');
+    const clickedFilterBar = event.target.closest('.filter-bar');
+    const clickedExportControls = event.target.closest('.export-controls');
     const filter = AppState.get().filter;
-    if (!clickedKpi && !clickedRiskSummary && (filter.status !== 'ALL' || filter.riskOnly)) {
+    if (clickedKpi || clickedRiskSummary || clickedFilterBar || clickedExportControls) return;
+    if (filter.status !== 'ALL' || filter.riskOnly) {
         AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false } });
     }
 }
