@@ -145,208 +145,95 @@ function renderRoadmap() {
     ).join('');
     
     // Helper function to render a single source row (state/milestone classes by position index, not config key)
-    function renderSourceRow(source, isGroupItem = false) {
-        const status = getCurrentStatus(source);
-        const currentState = getStateByKey(status);
-        const stateIndex = Math.min(7, Math.max(0, statesDef.findIndex(s => s.key === status)));
+    function renderSourceRow(source, isGroupItem = false, months, todayPosition) {
+        const vm = buildDeliverableViewModel(source, months, todayPosition, activeDependencyGraph);
+        const stateIndex = Math.min(7, Math.max(0, statesDef.findIndex(s => s.key === vm.status)));
         const statusClass = 'state-' + stateIndex;
         const indicatorClass = 'state-' + stateIndex;
-        const atRiskClass = source.atRisk ? 'at-risk' : '';
-        const descopedClass = source.descoped ? 'descoped' : '';
+        const atRiskClass = vm.atRisk ? 'at-risk' : '';
+        const descopedClass = vm.descoped ? 'descoped' : '';
         const groupItemClass = isGroupItem ? 'group-item' : '';
-        
-        // Collect all milestone markers with positions; then hide overlapping ones (keep the more recent / rightmost in each cluster)
-        const MILESTONE_OVERLAP_THRESHOLD_PCT = 4;
-        const allMarkers = [];
-        const startDate = getMilestoneDate(source, 'START');
-        if (startDate && isDateInRange(startDate, months)) {
-            const position = calculatePosition(startDate, months);
-            const startMilestone = getMilestoneByKey('START');
-            allMarkers.push({ position, slotClass: 'start', short: startMilestone?.short || 'GO', date: startDate });
-        }
-        const nonStartMilestones = milestonesDef.filter(m => m.key !== 'START');
-        nonStartMilestones.forEach((m, i) => {
-            const date = getMilestoneDate(source, m.key);
-            if (!date || !isDateInRange(date, months)) return;
-            const position = calculatePosition(date, months);
-            const milestoneSlot = 'm' + Math.min(i, 5);
-            allMarkers.push({ position, slotClass: milestoneSlot, short: m.short, date });
-        });
-        // Sort by position; cluster within threshold; keep only the rightmost (most recent) in each cluster
-        allMarkers.sort((a, b) => a.position - b.position);
-        const keepIndex = new Set();
-        let i = 0;
-        while (i < allMarkers.length) {
-            let j = i;
-            while (j + 1 < allMarkers.length && (allMarkers[j + 1].position - allMarkers[j].position) < MILESTONE_OVERLAP_THRESHOLD_PCT) j++;
-            keepIndex.add(j);
-            i = j + 1;
-        }
-        const visibleMarkers = allMarkers.filter((_, idx) => keepIndex.has(idx));
-        const milestonesHTMLArr = visibleMarkers.map(m => {
-            const hideLabel = m.position < 2;
-            return `
-                <div class="milestone-marker ${m.slotClass}" style="left: ${m.position}%; ${hideLabel ? 'min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">
-                    ${hideLabel ? '' : `<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(m.date)}</div>`}
-                </div>
-            `;
-        }).join('');
-        
-        // Tooltip listing all milestone dates (used on Gantt bar and on overlay when bar is hidden)
+
+        // Tooltip listing all milestone dates (used on Gantt bar and overlay)
         const ganttTooltipLines = milestonesDef
             .map(m => {
                 const date = getMilestoneDate(source, m.key);
-                return date ? `${m.short || m.key}: ${formatDateDisplay(date)}` : null;
+                return date ? (m.short || m.key) + ': ' + formatDateDisplay(date) : null;
             })
             .filter(Boolean);
         const ganttTooltip = ganttTooltipLines.length ? ganttTooltipLines.join('\n') : '';
-        const ganttTitleAttr = ganttTooltip ? ` title="${escapeHtmlAttr(ganttTooltip)}"` : '';
-        
-        // Generate Gantt bar - shows full timeline with colored segments for each phase
-        // Works dynamically with any milestone configuration
-        // Past portions have full opacity, future portions have reduced opacity
-        // Not Started items show full future bar with reduced opacity
-        let ganttBarsHTML = '';
-        {
-            const segments = [];
-            
-            // Get start date position (using START milestone)
-            const startDate = getMilestoneDate(source, 'START');
-            const startDatePos = startDate ? calculatePosition(startDate, months) : null;
-            
-            // Get all milestone positions dynamically
-            const milestonePositions = {};
-            milestonesDef.forEach(m => {
-                const date = getMilestoneDate(source, m.key);
-                milestonePositions[m.key] = date ? calculatePosition(date, months) : null;
-            });
-            
-            // Helper function to create a segment (milestoneSlot = 0 for start, 1..6 for m0..m5)
-            function createSegment(start, end, milestoneSlot) {
-                if (start === null || end === null || end <= start) return;
-                const segClass = milestoneSlot === 0 ? 'gantt-bar segment-start' : 'gantt-bar segment-m' + (milestoneSlot - 1);
-                const w = end - start;
-                const pastWidth = Math.min(w, Math.max(0, todayPosition - start));
-                const futureWidth = w - pastWidth;
-                if (pastWidth > 0) {
-                    segments.push(`<div class="${segClass}" style="left: ${start}%; width: ${pastWidth}%;"${ganttTitleAttr}></div>`);
-                }
-                if (futureWidth > 0) {
-                    segments.push(`<div class="${segClass} gantt-future" style="left: ${start + pastWidth}%; width: ${futureWidth}%;"${ganttTitleAttr}></div>`);
-                }
-            }
-            
-            // Generate all segments by milestone position (slot 0 = start, 1 = m0, ... 6 = m5)
-            for (let i = 0; i < milestonesDef.length; i++) {
-                const currentMilestone = milestonesDef[i];
-                const currentPos = milestonePositions[currentMilestone.key];
-                const milestoneSlot = i;
-                if (i === 0) {
-                    if (currentPos !== null) {
-                        const segStart = startDatePos !== null ? startDatePos : Math.max(0, currentPos - 5);
-                        createSegment(segStart, currentPos, milestoneSlot);
-                    }
-                }
-                if (i < milestonesDef.length - 1) {
-                    const nextMilestone = milestonesDef[i + 1];
-                    const nextPos = milestonePositions[nextMilestone.key];
-                    createSegment(currentPos, nextPos, milestoneSlot);
-                }
-            }
-            
-            ganttBarsHTML = segments.join('');
-        }
-        
-        // Risk indicator
-        const riskIndicatorHTML = source.atRisk ? 
-            `<div class="risk-indicator" title="At Risk">${riskIconSVG}</div>` : '';
-        
-        // Info link (optional - backwards compatible when link is undefined)
-        const infoLinkHTML = (source.link && source.link.trim()) ?
-            `<a class="info-link" href="${escapeHtmlAttr(source.link)}" target="_blank" rel="noopener noreferrer" title="More info">${infoIconSVG}</a>` : '';
-        
-        // Dependency indicator
-        const depType = getDependencyType(source);
-        const inboundDeps = getInboundDependencies(source);
-        const outboundDeps = getOutboundDependencies(source);
+
+        // Gantt segments from view model
+        const ganttSegmentsHTML = vm.ganttSegments.map(seg =>
+            html`<div class="gantt-bar ${seg.segmentClass}${seg.isFuture ? ' gantt-future' : ''}" style="left: ${seg.left}%; width: ${seg.width}%;" title="${ganttTooltip}"></div>`
+        );
+
+        // Milestone markers from view model
+        const milestonesHTMLArr = vm.milestoneMarkers.map(m =>
+            html`<div class="milestone-marker ${m.slotClass}" style="left: ${m.position}%;${m.hideLabel ? ' min-width: 8px; width: 8px; height: 8px; border-radius: 50%;' : ''}">${m.hideLabel ? [] : [html`<span>${m.short}</span><div class="milestone-date">${formatDateDisplay(m.date)}</div>`]}</div>`
+        );
+
+        // Dependency icon (optional)
         let dependencyIconHTML = '';
-        
-        if (depType !== 'none') {
-            const isActive = activeDependencyGraph === source.name;
-            const activeClass = isActive ? 'active' : '';
-            let iconSVG = '';
-            let tooltip = '';
-            
-            // Format dependency info with extended milestone details
-            // Format dependency info with extended milestone details
-            // Default: from last milestone of source, to first milestone of target
+        if (vm.dependencyType !== 'none') {
             const firstMsKey = getFirstMilestoneKey();
             const formatInboundDep = (dep) => {
                 const fromMsKey = dep.from || lastMilestoneKey;
                 const toMsKey = dep.to || firstMsKey;
                 const fromMsDef = getMilestoneByKey(fromMsKey);
                 const toMsDef = getMilestoneByKey(toMsKey);
-                const fromShort = fromMsDef?.short || fromMsKey;
-                const toShort = toMsDef?.short || toMsKey;
-                return `${dep.task} (${fromShort} → ${toShort})`;
+                const fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
+                const toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
+                return dep.task + ' (' + fromShort + ' → ' + toShort + ')';
             };
             const formatOutboundDep = (dep) => {
                 const fromMsKey = dep.from || lastMilestoneKey;
                 const toMsKey = dep.to || firstMsKey;
                 const fromMsDef = getMilestoneByKey(fromMsKey);
                 const toMsDef = getMilestoneByKey(toMsKey);
-                const fromShort = fromMsDef?.short || fromMsKey;
-                const toShort = toMsDef?.short || toMsKey;
-                return `${dep.task} (${fromShort} → ${toShort})`;
+                const fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
+                const toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
+                return dep.task + ' (' + fromShort + ' → ' + toShort + ')';
             };
-            
-            if (depType === 'inbound') {
-                // Arrow pointing into (blocked by)
-                iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z"/></svg>`;
-                tooltip = `Blocked by:\n${inboundDeps.map(formatInboundDep).join('\n')}`;
-            } else if (depType === 'outbound') {
-                // Arrow pointing out (blocks)
-                iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z"/></svg>`;
-                tooltip = `Blocks:\n${outboundDeps.map(formatOutboundDep).join('\n')}`;
-            } else if (depType === 'both') {
-                // Bidirectional arrow
-                iconSVG = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z"/></svg>`;
-                tooltip = `Blocked by:\n${inboundDeps.map(formatInboundDep).join('\n')}\n\nBlocks:\n${outboundDeps.map(formatOutboundDep).join('\n')}`;
-            }
-            
-            dependencyIconHTML = `<div class="dependency-icon ${depType} ${activeClass}" title="${tooltip}" onclick="toggleDependencyGraph('${escapeHtmlAttr(source.name)}', event)">${iconSVG}</div>`;
-        }
-        
-        // Dependency highlighting classes
-        let dependencyClass = '';
-        if (activeDependencyGraph) {
-            const graph = getDependencyGraph(activeDependencyGraph);
-            if (activeDependencyGraph === source.name) {
-                dependencyClass = 'dependency-active';
-            } else if (graph.nodes.includes(source.name)) {
-                dependencyClass = 'dependency-highlight';
+            let depTooltip = '';
+            let depIconSVG = '';
+            if (vm.dependencyType === 'inbound') {
+                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z"/></svg>';
+                depTooltip = 'Blocked by:\n' + vm.inboundDeps.map(formatInboundDep).join('\n');
+            } else if (vm.dependencyType === 'outbound') {
+                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z"/></svg>';
+                depTooltip = 'Blocks:\n' + vm.outboundDeps.map(formatOutboundDep).join('\n');
             } else {
-                dependencyClass = 'dependency-dimmed';
+                depIconSVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z"/></svg>';
+                depTooltip = 'Blocked by:\n' + vm.inboundDeps.map(formatInboundDep).join('\n') + '\n\nBlocks:\n' + vm.outboundDeps.map(formatOutboundDep).join('\n');
             }
+            const isActive = activeDependencyGraph === vm.name;
+            dependencyIconHTML = html`<div class="dependency-icon ${vm.dependencyType} ${isActive ? 'active' : ''}" title="${depTooltip}" onclick="toggleDependencyGraph('${vm.name}', event)">${raw(depIconSVG)}</div>`;
         }
-        
-        return `
-            <div class="data-source-row ${atRiskClass} ${groupItemClass} ${dependencyClass} ${descopedClass}">
+
+        const riskIndicatorHTML = renderIf(vm.atRisk, raw('<div class="risk-indicator" title="At Risk">' + riskIconSVG + '</div>'));
+        const infoLinkHTML = renderIf(vm.link && vm.link.trim(), raw(html`<a class="info-link" href="${vm.link}" target="_blank" rel="noopener noreferrer" title="More info">${raw(infoIconSVG)}</a>`));
+        const dependencyIconFragment = renderIf(vm.dependencyType !== 'none', raw(dependencyIconHTML));
+
+        const ganttOrOverlay = filterState.showGantt
+            ? ganttSegmentsHTML
+            : (ganttTooltip ? [html`<div class="gantt-tooltip-overlay" title="${ganttTooltip}"></div>`] : []);
+
+        return html`<div class="data-source-row ${atRiskClass} ${groupItemClass} ${vm.dependencyClass} ${descopedClass}">
                 <div class="source-name ${statusClass}">
                     ${riskIndicatorHTML}
-                    <span class="source-name-text">${source.name}</span>
+                    <span class="source-name-text">${vm.name}</span>
                     ${infoLinkHTML}
-                    ${dependencyIconHTML}
-                    <span class="status-indicator ${indicatorClass}" title="${currentState?.title || status}">${currentState?.short || status}</span>
+                    ${dependencyIconFragment}
+                    <span class="status-indicator ${indicatorClass}" title="${(vm.state && vm.state.title) || vm.status}">${(vm.state && vm.state.short) || vm.status}</span>
                 </div>
                 <div class="timeline-track">
-                    ${gridLinesHTML}
-                    ${filterState.showGantt ? ganttBarsHTML : (ganttTitleAttr ? `<div class="gantt-tooltip-overlay"${ganttTitleAttr}></div>` : '')}
+                    ${raw(gridLinesHTML)}
+                    ${ganttOrOverlay}
                     <div class="today-guide-line" style="left: ${todayPosition}%;"></div>
                     ${milestonesHTMLArr}
                 </div>
-            </div>
-        `;
+            </div>`;
     }
     
     // Chevron SVG for group headers
@@ -395,19 +282,19 @@ function renderRoadmap() {
             // Group items (if not collapsed)
             if (!collapsed) {
                 groupSources.forEach(source => {
-                    dataSourceRowsHTML += renderSourceRow(source, true);
+                    dataSourceRowsHTML += renderSourceRow(source, true, months, todayPosition);
                 });
             }
         });
         
         // Render ungrouped items at the end
         ungrouped.forEach(source => {
-            dataSourceRowsHTML += renderSourceRow(source, false);
+            dataSourceRowsHTML += renderSourceRow(source, false, months, todayPosition);
         });
     } else {
         // No groups - render all items normally
         visibleSources.forEach(source => {
-            dataSourceRowsHTML += renderSourceRow(source, false);
+            dataSourceRowsHTML += renderSourceRow(source, false, months, todayPosition);
         });
     }
     
