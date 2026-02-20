@@ -107,7 +107,7 @@ const riskIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 function renderFooter() {
     const v = typeof CONFIG !== 'undefined' ? (CONFIG.VERSION || '?') : '?';
     const b = typeof CONFIG !== 'undefined' ? (CONFIG.BUILD_DATE || '') : '';
-    return '<footer class="page-footer">© 2026 RoadmapSnap · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a></footer>' +
+    return '<footer class="page-footer">© 2026 <a href="https://github.com/moises-prat-epm/RoadmapSnap" target="_blank" rel="noopener">RoadmapSnap</a> · Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener">MIT License</a></footer>' +
         '<footer class="build-version" aria-label="Build version">v' + v + ' · Build ' + b + '</footer>';
 }
 
