@@ -111,7 +111,7 @@ function validateConfig(config) {
                 errors.push('Each deliverable must have a non-empty "name" string (index ' + d + ').');
             } else {
                 if (names.indexOf(del.name) !== -1) {
-                    errors.push('Deliverable names must be unique: "' + del.name + '" appears more than once.');
+                    errors.push('Duplicate deliverable name: "' + del.name + '".');
                 }
                 names.push(del.name);
             }
@@ -172,7 +172,9 @@ function validateConfig(config) {
     return { errors: errors, warnings: warnings };
 }
 
-window.validateConfig = validateConfig;
+if (typeof window !== 'undefined') {
+    window.validateConfig = validateConfig;
+}
 
 export {
     isDDMMYYYY, parseMonthYear, parseDDMMYYYY, getDependencyTaskName, validateConfig
