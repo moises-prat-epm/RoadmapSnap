@@ -5,8 +5,11 @@
  */
 
 // Get all data sources (all deliverables, regardless of visibility)
-function getAllDataSources() {
-    return CONFIG.DELIVERABLES;
+// In Node/tests pass deliverablesOverride; in browser uses CONFIG.DELIVERABLES when absent.
+function getAllDataSources(deliverablesOverride) {
+    if (deliverablesOverride != null) return deliverablesOverride;
+    if (typeof CONFIG !== 'undefined' && CONFIG.DELIVERABLES) return CONFIG.DELIVERABLES;
+    return [];
 }
 
 // Get inbound dependencies (tasks this deliverable depends on / is blocked by)
@@ -43,8 +46,8 @@ function getInboundDependencyNames(source) {
 
 // Get outbound dependencies (tasks that depend on this deliverable / are blocked by it)
 // Returns array of { task, from, to } where task is the dependent task name
-function getOutboundDependencies(source) {
-    const allSources = getAllDataSources();
+function getOutboundDependencies(source, deliverablesOverride) {
+    const allSources = getAllDataSources(deliverablesOverride);
     const dependents = [];
     
     allSources.forEach(s => {
@@ -81,9 +84,9 @@ function hasDependencies(source) {
 
 // Get dependency type for icon display
 // Returns: 'inbound' | 'outbound' | 'both' | 'none'
-function getDependencyType(source) {
+function getDependencyType(source, deliverablesOverride) {
     const inbound = getInboundDependencies(source);
-    const outbound = getOutboundDependencies(source);
+    const outbound = getOutboundDependencies(source, deliverablesOverride);
     
     if (inbound.length > 0 && outbound.length > 0) return 'both';
     if (inbound.length > 0) return 'inbound';
@@ -92,8 +95,8 @@ function getDependencyType(source) {
 }
 
 // Get the full dependency graph for a deliverable (all connected nodes)
-function getDependencyGraph(sourceName) {
-    const allSources = getAllDataSources();
+function getDependencyGraph(sourceName, deliverablesOverride) {
+    const allSources = getAllDataSources(deliverablesOverride);
     const sourceMap = new Map(allSources.map(s => [s.name, s]));
     const graph = new Set([sourceName]);
     // Edges now contain milestone info: { from, to, fromMilestone, toMilestone }
@@ -156,17 +159,19 @@ function getDependencyGraph(sourceName) {
     };
 }
 
-// Export on window for global access
-window.getAllDataSources = getAllDataSources;
-window.normalizeDependency = normalizeDependency;
-window.getDependencyTaskName = getDependencyTaskName;
-window.getInboundDependencies = getInboundDependencies;
-window.getInboundDependencyNames = getInboundDependencyNames;
-window.getOutboundDependencies = getOutboundDependencies;
-window.getOutboundDependencyNames = getOutboundDependencyNames;
-window.hasDependencies = hasDependencies;
-window.getDependencyType = getDependencyType;
-window.getDependencyGraph = getDependencyGraph;
+// Export on window for global access (browser only)
+if (typeof window !== 'undefined') {
+    window.getAllDataSources = getAllDataSources;
+    window.normalizeDependency = normalizeDependency;
+    window.getDependencyTaskName = getDependencyTaskName;
+    window.getInboundDependencies = getInboundDependencies;
+    window.getInboundDependencyNames = getInboundDependencyNames;
+    window.getOutboundDependencies = getOutboundDependencies;
+    window.getOutboundDependencyNames = getOutboundDependencyNames;
+    window.hasDependencies = hasDependencies;
+    window.getDependencyType = getDependencyType;
+    window.getDependencyGraph = getDependencyGraph;
+}
 
 export {
     getAllDataSources, normalizeDependency, getDependencyTaskName,
