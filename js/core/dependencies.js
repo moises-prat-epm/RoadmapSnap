@@ -167,3 +167,10 @@ window.getOutboundDependencyNames = getOutboundDependencyNames;
 window.hasDependencies = hasDependencies;
 window.getDependencyType = getDependencyType;
 window.getDependencyGraph = getDependencyGraph;
+
+export {
+    getAllDataSources, normalizeDependency, getDependencyTaskName,
+    getInboundDependencies, getInboundDependencyNames,
+    getOutboundDependencies, getOutboundDependencyNames,
+    hasDependencies, getDependencyType, getDependencyGraph
+};

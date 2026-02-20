@@ -121,9 +121,11 @@ function getNextMilestone(source) {
     return null;
 }
 
-function getCurrentStatus(source) {
-    const today = parseDate(getTodayDate());
-    const milestones = getMilestones();
+function getCurrentStatus(source, workflowOverride, todayStr) {
+    const today = parseDate(todayStr || getTodayDate());
+    const milestones = workflowOverride
+        ? workflowOverride.filter(i => i.type === 'milestone')
+        : getMilestones();
     for (let i = milestones.length - 1; i >= 0; i--) {
         const milestone = milestones[i];
         const milestoneDate = parseDate(getMilestoneDate(source, milestone.key));
@@ -153,3 +155,9 @@ window.getNonFilterableGroups = getNonFilterableGroups;
 window.isGroupNonFilterable = isGroupNonFilterable;
 window.isDeliverableNonFilterable = isDeliverableNonFilterable;
 window.getFilterableDeliverables = getFilterableDeliverables;
+
+export {
+    getWorkflow, getStates, getMilestones, getStateByKey,
+    getStateAfterMilestone, getFirstState, getLastState,
+    getCurrentStatus, getNextMilestone, getMilestoneDate
+};

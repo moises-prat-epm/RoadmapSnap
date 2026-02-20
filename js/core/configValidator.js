@@ -173,3 +173,7 @@ function validateConfig(config) {
 }
 
 window.validateConfig = validateConfig;
+
+export {
+    isDDMMYYYY, parseMonthYear, parseDDMMYYYY, getDependencyTaskName, validateConfig
+};

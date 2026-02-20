@@ -1,0 +1,12 @@
+{
+  "name": "roadmapsnap",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/**/*.test.js",
+    "test:watch": "node --test --watch tests/**/*.test.js",
+    "validate": "node scripts/validate-config.js",
+    "dev": "npx browser-sync start --server --files '**/*.js,**/*.css,**/*.html' --no-notify --port 3000"
+  },
+  "devDependencies": {}
+}

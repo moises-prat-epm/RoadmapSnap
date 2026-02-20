@@ -116,3 +116,7 @@ window.calculateStats = calculateStats;
 window.getUpcomingMilestones = getUpcomingMilestones;
 window.getVisibleDataSources = getVisibleDataSources;
 window.getAllVisibleDataSources = getAllVisibleDataSources;
+
+export {
+    calculateStats, getUpcomingMilestones, getVisibleDataSources, getAllVisibleDataSources
+};
