@@ -2,7 +2,9 @@
  * RoadmapSnap — statistics calculation
  * Extracted from index.html: stats, upcoming milestones, visible data sources.
  * Depends on global CONFIG; uses filterDeliverables, sortDeliverables, and workflow helpers (window).
+ * calculateStats accepts (deliverables, workflow, todayStr, config?) for testability.
  */
+import { getCurrentStatus, getStates, getLastState } from './workflow.js';
 
 // Get visible data sources (with filters applied)
 function getVisibleDataSources() {
@@ -17,17 +19,31 @@ function getAllVisibleDataSources() {
     return CONFIG.DELIVERABLES.filter(source => source.showInTimeline);
 }
 
+function getFilterableDeliverablesFrom(deliverables, config) {
+    const nonFilterableGroups = (config && config.NON_FILTERABLE_GROUPS) || (typeof CONFIG !== 'undefined' ? (CONFIG.NON_FILTERABLE_GROUPS || []) : []);
+    if (!nonFilterableGroups.length) return deliverables;
+    return deliverables.filter(source => !source.group || !nonFilterableGroups.includes(source.group));
+}
+
 // Calculate Statistics (uses all deliverables, not filtered)
-// Now counts by STATES instead of milestones
-function calculateStats() {
-    // Only count filterable deliverables (exclude non-filterable groups)
-    const allSources = getFilterableDeliverables();
+// Params: deliverables?, workflow?, todayStr?, config? — default to CONFIG.DELIVERABLES, CONFIG.WORKFLOW, getTodayDate(), CONFIG.
+function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride, configOverride) {
+    const deliverables = deliverablesOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG.DELIVERABLES : []);
+    const workflow = workflowOverride ?? (typeof CONFIG !== 'undefined' && CONFIG.WORKFLOW ? CONFIG.WORKFLOW : (typeof window !== 'undefined' && window.getWorkflow ? window.getWorkflow() : null));
+    const todayStr = todayStrOverride ?? (typeof window !== 'undefined' && window.getTodayDate ? window.getTodayDate() : null);
+    const config = configOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG : {});
+
+    const allSources = getFilterableDeliverablesFrom(deliverables, config);
     const visibleSources = allSources.filter(source => source.showInTimeline);
-    const states = getStates();
-    const lastState = getLastState();
-    
-    // Initialize stats dynamically with states
-    const stats = { 
+
+    const states = workflow
+        ? workflow.filter(item => item.type === 'state')
+        : getStates();
+    const lastState = workflow
+        ? (states[states.length - 1] || { key: 'DONE', short: 'DONE', title: 'Done', description: '' })
+        : getLastState();
+
+    const stats = {
         total: allSources.length,
         visible: visibleSources.length,
         hidden: allSources.length - visibleSources.length,
@@ -36,22 +52,23 @@ function calculateStats() {
         hiddenByStatus: {},
         stateKeys: states.map(s => s.key)
     };
-    
-    // Initialize state counts
+
     states.forEach(s => {
         stats[s.key] = 0;
         stats.visibleByStatus[s.key] = 0;
         stats.hiddenByStatus[s.key] = 0;
     });
-    
+
     allSources.forEach(source => {
-        const status = getCurrentStatus(source);
+        const status = workflow != null && todayStr != null
+            ? getCurrentStatus(source, workflow, todayStr)
+            : getCurrentStatus(source);
         if (stats[status] !== undefined) {
             stats[status]++;
         }
-        
+
         if (source.atRisk) stats.atRisk++;
-        
+
         if (source.showInTimeline) {
             if (stats.visibleByStatus[status] !== undefined) {
                 stats.visibleByStatus[status]++;
@@ -62,19 +79,17 @@ function calculateStats() {
             }
         }
     });
-    
-    // Calculate completion percentage (last state = complete/production)
+
     const lastStateKey = lastState.key;
-    stats.completionPercentage = Math.round((stats[lastStateKey] / stats.total) * 100);
-    
-    // Calculate "advanced" percentage (last 2 states)
+    stats.completionPercentage = stats.total === 0 ? 0 : Math.round((stats[lastStateKey] / stats.total) * 100);
+
     if (states.length >= 2) {
         const secondLastState = states[states.length - 2];
-        stats.productionReadyPercentage = Math.round(((stats[secondLastState.key] + stats[lastStateKey]) / stats.total) * 100);
+        stats.productionReadyPercentage = stats.total === 0 ? 0 : Math.round(((stats[secondLastState.key] + stats[lastStateKey]) / stats.total) * 100);
     } else {
         stats.productionReadyPercentage = stats.completionPercentage;
     }
-    
+
     return stats;
 }
 
@@ -111,11 +126,13 @@ function getUpcomingMilestones() {
     return upcoming;
 }
 
-// Export on window for global access
-window.calculateStats = calculateStats;
-window.getUpcomingMilestones = getUpcomingMilestones;
-window.getVisibleDataSources = getVisibleDataSources;
-window.getAllVisibleDataSources = getAllVisibleDataSources;
+// Export on window for global access (browser only)
+if (typeof window !== 'undefined') {
+    window.calculateStats = calculateStats;
+    window.getUpcomingMilestones = getUpcomingMilestones;
+    window.getVisibleDataSources = getVisibleDataSources;
+    window.getAllVisibleDataSources = getAllVisibleDataSources;
+}
 
 export {
     calculateStats, getUpcomingMilestones, getVisibleDataSources, getAllVisibleDataSources
