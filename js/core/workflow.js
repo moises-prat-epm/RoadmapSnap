@@ -2,7 +2,27 @@
  * RoadmapSnap — workflow logic
  * Extracted from index.html: workflow, states, milestones, status, non-filterable groups.
  * Depends on global CONFIG; getNextMilestone and getCurrentStatus use parseDate, getTodayDate (window).
+ * In Node (tests), window/CONFIG/parseDate/getTodayDate may be missing; pass workflow and todayStr where supported.
  */
+
+function parseDateFallback(dateStr) {
+    if (!dateStr) return null;
+    const [day, month, year] = String(dateStr).split('/').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function getParseDate() {
+    if (typeof window !== 'undefined' && window.parseDate) return window.parseDate;
+    return parseDateFallback;
+}
+
+function getTodayDateFallback() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return day + '/' + month + '/' + year;
+}
 
 function getWorkflow() {
     if (CONFIG.WORKFLOW && Array.isArray(CONFIG.WORKFLOW)) {
@@ -50,8 +70,8 @@ function getMilestoneByKey(key) {
     return milestones.find(m => m.key === key) || null;
 }
 
-function getStateAfterMilestone(milestoneKey) {
-    const workflow = getWorkflow();
+function getStateAfterMilestone(milestoneKey, workflowOverride) {
+    const workflow = workflowOverride || getWorkflow();
     const milestoneIndex = workflow.findIndex(item => item.type === 'milestone' && item.key === milestoneKey);
     if (milestoneIndex === -1) return null;
     for (let i = milestoneIndex + 1; i < workflow.length; i++) {
@@ -62,13 +82,17 @@ function getStateAfterMilestone(milestoneKey) {
     return null;
 }
 
-function getFirstState() {
-    const states = getStates();
+function getFirstState(workflowOverride) {
+    const states = workflowOverride
+        ? workflowOverride.filter(item => item.type === 'state')
+        : getStates();
     return states[0] || { key: 'NS', short: 'NS', title: 'Not Started', description: '' };
 }
 
-function getLastState() {
-    const states = getStates();
+function getLastState(workflowOverride) {
+    const states = workflowOverride
+        ? workflowOverride.filter(item => item.type === 'state')
+        : getStates();
     return states[states.length - 1] || { key: 'DONE', short: 'DONE', title: 'Done', description: '' };
 }
 
@@ -109,11 +133,14 @@ function getMilestoneDate(source, milestoneKey) {
     return null;
 }
 
-function getNextMilestone(source) {
-    const today = parseDate(getTodayDate());
-    const milestones = getMilestones();
+function getNextMilestone(source, workflowOverride, todayStr) {
+    const parseDateFn = getParseDate();
+    const today = parseDateFn(todayStr || (typeof window !== 'undefined' && window.getTodayDate ? window.getTodayDate() : getTodayDateFallback()));
+    const milestones = workflowOverride
+        ? workflowOverride.filter(i => i.type === 'milestone')
+        : getMilestones();
     for (const milestone of milestones) {
-        const milestoneDate = parseDate(getMilestoneDate(source, milestone.key));
+        const milestoneDate = parseDateFn(getMilestoneDate(source, milestone.key));
         if (milestoneDate && today < milestoneDate) {
             return milestone;
         }
@@ -122,39 +149,42 @@ function getNextMilestone(source) {
 }
 
 function getCurrentStatus(source, workflowOverride, todayStr) {
-    const today = parseDate(todayStr || getTodayDate());
+    const parseDateFn = getParseDate();
+    const today = parseDateFn(todayStr || (typeof window !== 'undefined' && window.getTodayDate ? window.getTodayDate() : getTodayDateFallback()));
     const milestones = workflowOverride
         ? workflowOverride.filter(i => i.type === 'milestone')
         : getMilestones();
     for (let i = milestones.length - 1; i >= 0; i--) {
         const milestone = milestones[i];
-        const milestoneDate = parseDate(getMilestoneDate(source, milestone.key));
+        const milestoneDate = parseDateFn(getMilestoneDate(source, milestone.key));
         if (milestoneDate && today >= milestoneDate) {
-            const nextState = getStateAfterMilestone(milestone.key);
-            return nextState ? nextState.key : getLastState().key;
+            const nextState = getStateAfterMilestone(milestone.key, workflowOverride);
+            return nextState ? nextState.key : getLastState(workflowOverride).key;
         }
     }
-    return getFirstState().key;
+    return getFirstState(workflowOverride).key;
 }
 
-// Export on window for global access
-window.getWorkflow = getWorkflow;
-window.getStates = getStates;
-window.getMilestones = getMilestones;
-window.getStateByKey = getStateByKey;
-window.getMilestoneByKey = getMilestoneByKey;
-window.getStateAfterMilestone = getStateAfterMilestone;
-window.getFirstState = getFirstState;
-window.getLastState = getLastState;
-window.getFirstMilestoneKey = getFirstMilestoneKey;
-window.getLastMilestoneKey = getLastMilestoneKey;
-window.getCurrentStatus = getCurrentStatus;
-window.getNextMilestone = getNextMilestone;
-window.getMilestoneDate = getMilestoneDate;
-window.getNonFilterableGroups = getNonFilterableGroups;
-window.isGroupNonFilterable = isGroupNonFilterable;
-window.isDeliverableNonFilterable = isDeliverableNonFilterable;
-window.getFilterableDeliverables = getFilterableDeliverables;
+// Export on window for global access (browser only)
+if (typeof window !== 'undefined') {
+    window.getWorkflow = getWorkflow;
+    window.getStates = getStates;
+    window.getMilestones = getMilestones;
+    window.getStateByKey = getStateByKey;
+    window.getMilestoneByKey = getMilestoneByKey;
+    window.getStateAfterMilestone = getStateAfterMilestone;
+    window.getFirstState = getFirstState;
+    window.getLastState = getLastState;
+    window.getFirstMilestoneKey = getFirstMilestoneKey;
+    window.getLastMilestoneKey = getLastMilestoneKey;
+    window.getCurrentStatus = getCurrentStatus;
+    window.getNextMilestone = getNextMilestone;
+    window.getMilestoneDate = getMilestoneDate;
+    window.getNonFilterableGroups = getNonFilterableGroups;
+    window.isGroupNonFilterable = isGroupNonFilterable;
+    window.isDeliverableNonFilterable = isDeliverableNonFilterable;
+    window.getFilterableDeliverables = getFilterableDeliverables;
+}
 
 export {
     getWorkflow, getStates, getMilestones, getStateByKey,
