@@ -69,6 +69,7 @@ function updateFilter(key, value) {
         clearTimeout(window.searchDebounceTimer);
         window.searchDebounceTimer = setTimeout(() => {
             AppState.set({ filter: { ...AppState.get().filter, search: value } });
+            if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
             const searchInput = document.querySelector('.filter-input');
             if (searchInput) {
                 searchInput.focus();
@@ -86,9 +87,11 @@ function updateFilter(key, value) {
     } else {
         AppState.set({ filter: { ...state.filter, [key]: value } });
     }
+    if (key !== 'showGantt' && typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
 function clearFilters() {
+    if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
     AppState.reset();
 }
 
@@ -100,6 +103,7 @@ function filterByStatus(status, event) {
     } else {
         AppState.set({ filter: { ...filter, status, riskOnly: false } });
     }
+    if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
 function clearStatusFilterOnOutsideClick(event) {
@@ -107,8 +111,10 @@ function clearStatusFilterOnOutsideClick(event) {
     const clickedRiskSummary = event.target.closest('.risk-summary.clickable');
     const clickedFilterBar = event.target.closest('.filter-bar');
     const clickedExportControls = event.target.closest('.export-controls');
+    const clickedInfoLink = event.target.closest('.info-link');
+    const clickedDataSourceRow = event.target.closest('.data-source-row');
     const filter = AppState.get().filter;
-    if (clickedKpi || clickedRiskSummary || clickedFilterBar || clickedExportControls) return;
+    if (clickedKpi || clickedRiskSummary || clickedFilterBar || clickedExportControls || clickedInfoLink || clickedDataSourceRow) return;
     if (filter.status !== 'ALL' || filter.riskOnly) {
         AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false } });
     }
@@ -118,6 +124,7 @@ function toggleRiskFilter(event) {
     if (event) event.stopPropagation();
     const filter = AppState.get().filter;
     AppState.set({ filter: { ...filter, riskOnly: !filter.riskOnly } });
+    if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
 function toggleGanttBars() {

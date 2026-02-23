@@ -245,8 +245,17 @@ function clearDependencyArrows() {
     }
 }
 
+/** Close the dependency graph (state + DOM). Call when filters change so the graph is cleared. */
+function closeDependencyGraph() {
+    if (AppState.get().activeDependencyGraph) {
+        AppState.set({ activeDependencyGraph: null });
+        clearDependencyArrows();
+    }
+}
+
 // Export on window for global access
 window.toggleDependencyGraph = toggleDependencyGraph;
 window.clearDependencyGraphOnClickOutside = clearDependencyGraphOnClickOutside;
 window.drawDependencyArrows = drawDependencyArrows;
 window.clearDependencyArrows = clearDependencyArrows;
+window.closeDependencyGraph = closeDependencyGraph;
