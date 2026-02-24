@@ -8,6 +8,7 @@
 # Node (if you ever add tooling)
 node_modules/
 dist/
+.vite/
 
 js/config.js
 
