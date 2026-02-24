@@ -63,6 +63,11 @@ function validateConfig(config) {
         if (config.TIMELINE.TODAY != null && config.TIMELINE.TODAY !== '' && !isDDMMYYYY(config.TIMELINE.TODAY)) {
             warnings.push('TIMELINE.TODAY must match DD/MM/YYYY format when set.');
         }
+        var rangeStart = parseMonthYear(config.TIMELINE.START_MONTH);
+        var rangeEnd = parseMonthYear(config.TIMELINE.END_MONTH);
+        if (rangeStart && rangeEnd && rangeStart > rangeEnd) {
+            warnings.push('TIMELINE.START_MONTH is after TIMELINE.END_MONTH.');
+        }
     }
 
     // --- WORKFLOW ---
@@ -77,6 +82,14 @@ function validateConfig(config) {
             var expectedType = (i % 2 === 0) ? 'state' : 'milestone';
             if (!item || item.type !== expectedType) {
                 errors.push('CONFIG.WORKFLOW must alternate state/milestone: index ' + i + ' should be type "' + expectedType + '".');
+            } else if (typeof item.key !== 'string' || !item.key.trim()) {
+                errors.push('CONFIG.WORKFLOW item at index ' + i + ' must have a non-empty "key" property.');
+            }
+        }
+        if (config.WORKFLOW.length >= 3) {
+            var lastItem = config.WORKFLOW[config.WORKFLOW.length - 1];
+            if (!lastItem || lastItem.type !== 'state') {
+                errors.push('CONFIG.WORKFLOW must end with a state item.');
             }
         }
     }
@@ -140,6 +153,21 @@ function validateConfig(config) {
                     if (taskName && allDeliverableNames.indexOf(taskName) === -1) {
                         warnings.push('Dependency references task "' + taskName + '" not found in DELIVERABLES (deliverable: "' + (del.name || '?') + '").');
                     }
+                }
+            }
+        }
+
+        // Warnings: GROUP_ORDER contains group name not present in any deliverable
+        if (Array.isArray(config.GROUP_ORDER) && config.GROUP_ORDER.length > 0) {
+            var deliverableGroups = new Set();
+            for (var g = 0; g < config.DELIVERABLES.length; g++) {
+                var grp = config.DELIVERABLES[g] && config.DELIVERABLES[g].group;
+                if (typeof grp === 'string' && grp.trim()) deliverableGroups.add(grp.trim());
+            }
+            for (var o = 0; o < config.GROUP_ORDER.length; o++) {
+                var orderName = config.GROUP_ORDER[o];
+                if (typeof orderName === 'string' && orderName.trim() && !deliverableGroups.has(orderName.trim())) {
+                    warnings.push('GROUP_ORDER contains group "' + orderName + '" not present in any deliverable.');
                 }
             }
         }
