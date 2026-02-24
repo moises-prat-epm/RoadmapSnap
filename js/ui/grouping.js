@@ -2,6 +2,7 @@
  * RoadmapSnap — grouping logic
  * Uses AppState for groupCollapsed. Depends on AppState, CONFIG, renderRoadmap (window).
  */
+import AppState from '../state/appState.js';
 
 function groupDeliverables(sources) {
     const groups = {};
@@ -81,3 +82,5 @@ window.expandAllGroups = expandAllGroups;
 window.collapseAllGroups = collapseAllGroups;
 window.getGroupStats = getGroupStats;
 window.expandGroupsForDependencyGraph = expandGroupsForDependencyGraph;
+
+export { hasAnyGroups, groupDeliverables, getGroupStats, expandAllGroups, collapseAllGroups, expandGroupsForDependencyGraph, toggleGroup };
