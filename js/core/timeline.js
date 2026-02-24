@@ -105,3 +105,8 @@ window.getMonthName = getMonthName;
 window.generateMonths = generateMonths;
 window.calculatePosition = calculatePosition;
 window.isDateInRange = isDateInRange;
+
+export {
+    parseDate, formatDateDisplay, formatShortDate, darkenColor, getTodayDate,
+    parseMonthYear, getMonthName, generateMonths, calculatePosition, isDateInRange
+};
