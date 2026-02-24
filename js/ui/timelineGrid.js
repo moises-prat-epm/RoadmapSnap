@@ -1,10 +1,13 @@
 /**
  * RoadmapSnap — timeline section HTML (state legend, roadmap-content with header + data rows).
- * Uses html`` throughout. Defines renderSourceRow internally. Depends on window: html, raw,
- * getStates, getMilestones, getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey,
- * getMilestoneDate, formatDateDisplay, buildDeliverableViewModel, groupDeliverables, hasAnyGroups,
- * getGroupStats, AppState, CONFIG, escapeHtmlAttr, riskIconSVG, infoIconSVG, renderIf.
+ * Uses html`` throughout. Defines renderSourceRow internally. Depends on window: CONFIG, escapeHtmlAttr, riskIconSVG, infoIconSVG.
  */
+import { html, raw, renderIf } from './renderer.js';
+import { getStates, getMilestones, getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
+import { formatDateDisplay } from '../core/timeline.js';
+import { buildDeliverableViewModel } from '../core/viewModel.js';
+import { groupDeliverables, hasAnyGroups, getGroupStats } from './grouping.js';
+import AppState from '../state/appState.js';
 
 var chevronSVG = '<svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" /></svg>';
 

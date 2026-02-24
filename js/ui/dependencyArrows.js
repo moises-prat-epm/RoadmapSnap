@@ -2,6 +2,11 @@
  * RoadmapSnap — dependency arrows overlay and toggle
  * Uses AppState for activeDependencyGraph. Depends on AppState, getDependencyGraph, expandGroupsForDependencyGraph, renderRoadmap, generateMonths, getLastMilestoneKey, getFirstMilestoneKey, getAllDataSources, getMilestoneByKey, getMilestoneDate, formatDateDisplay, isDateInRange, calculatePosition (window).
  */
+import AppState from '../state/appState.js';
+import { getDependencyGraph, getAllDataSources } from '../core/dependencies.js';
+import { expandGroupsForDependencyGraph } from './grouping.js';
+import { generateMonths, formatDateDisplay, isDateInRange, calculatePosition } from '../core/timeline.js';
+import { getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
 
 function toggleDependencyGraph(sourceName, event) {
     if (event) {

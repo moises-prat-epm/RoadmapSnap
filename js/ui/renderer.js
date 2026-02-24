@@ -42,3 +42,5 @@ window.escapeHtml = escapeHtml;
 window.html = html;
 window.raw = raw;
 window.renderIf = renderIf;
+
+export { escapeHtml, html, raw, renderIf };

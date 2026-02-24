@@ -2,6 +2,12 @@
  * RoadmapSnap — filter bar logic
  * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate, drawDependencyArrows (window).
  */
+import AppState from '../state/appState.js';
+import { getCurrentStatus, getStates, getLastMilestoneKey, getMilestoneDate, isDeliverableNonFilterable } from '../core/workflow.js';
+import { parseDate } from '../core/timeline.js';
+import { html, raw } from './renderer.js';
+import { getAllVisibleDataSources } from '../core/stats.js';
+import { hasAnyGroups } from './grouping.js';
 
 function filterDeliverables(sources) {
     const filter = AppState.get().filter;
@@ -138,11 +144,11 @@ function toggleGanttBars() {
 function renderFilterBar(state, sources) {
     var filterableSources = sources.filter(function (s) { return !isDeliverableNonFilterable(s); });
     var filteredCount = filterableSources.length;
-    var allVisible = typeof getAllVisibleDataSources === 'function' ? getAllVisibleDataSources() : [];
+    var allVisible = getAllVisibleDataSources();
     var totalVisible = allVisible.filter(function (s) { return !isDeliverableNonFilterable(s); }).length;
     var entityScopeLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) ? CONFIG.ENTITY_LABELS.scopeLabel : 'items';
-    var hasGroups = typeof hasAnyGroups === 'function' && hasAnyGroups(sources);
-    var lastMilestoneKey = typeof getLastMilestoneKey === 'function' ? getLastMilestoneKey() : 'm3date';
+    var hasGroups = hasAnyGroups(sources);
+    var lastMilestoneKey = getLastMilestoneKey();
     var hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.search;
     var ganttSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
     return html`<div class="filter-bar">

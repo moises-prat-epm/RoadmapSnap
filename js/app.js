@@ -7,7 +7,7 @@
 import './state/appState.js';
 import './core/configValidator.js';
 import './roadmap.utils.js';
-import './core/timeline.js';
+import { parseDate, getTodayDate, generateMonths, calculatePosition } from './core/timeline.js';
 import './core/workflow.js';
 import './core/dependencies.js';
 import './core/viewModel.js';

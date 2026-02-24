@@ -32,3 +32,5 @@ const AppState = (() => {
 })();
 
 window.AppState = AppState;
+
+export default AppState;

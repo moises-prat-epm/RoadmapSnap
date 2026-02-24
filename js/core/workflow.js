@@ -187,7 +187,9 @@ if (typeof window !== 'undefined') {
 }
 
 export {
-    getWorkflow, getStates, getMilestones, getStateByKey,
+    getWorkflow, getStates, getMilestones, getStateByKey, getMilestoneByKey,
     getStateAfterMilestone, getFirstState, getLastState,
-    getCurrentStatus, getNextMilestone, getMilestoneDate
+    getFirstMilestoneKey, getLastMilestoneKey,
+    getCurrentStatus, getNextMilestone, getMilestoneDate,
+    getNonFilterableGroups, isGroupNonFilterable, isDeliverableNonFilterable, getFilterableDeliverables
 };

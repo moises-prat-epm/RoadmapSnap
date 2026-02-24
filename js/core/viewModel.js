@@ -7,6 +7,9 @@
  *   calculatePosition, isDateInRange, getDependencyType, getInboundDependencies,
  *   getOutboundDependencies, getDependencyGraph (window).
  */
+import { getStates, getStateByKey, getCurrentStatus, getMilestones, getMilestoneDate } from './workflow.js';
+import { calculatePosition, isDateInRange } from './timeline.js';
+import { getDependencyType, getInboundDependencies, getOutboundDependencies, getDependencyGraph } from './dependencies.js';
 
 // Light theme state palette (index 0..7) — canonical mapping for resolveStateColor
 var STATE_PALETTE = [
@@ -152,3 +155,5 @@ function buildDeliverableViewModel(source, months, todayPosition, activeDependen
 window.buildDeliverableViewModel = buildDeliverableViewModel;
 window.resolveStateColor = resolveStateColor;
 window.resolveStateTextColor = resolveStateTextColor;
+
+export { buildDeliverableViewModel, resolveStateColor, resolveStateTextColor };

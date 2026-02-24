@@ -3,6 +3,7 @@
  * Extracted from index.html: exportToCSV, downloadFile.
  * Depends on getMilestones, getCurrentStatus, getStateByKey, getNextMilestone, getMilestoneDate, CONFIG (window).
  */
+import { getMilestones, getCurrentStatus, getStateByKey, getNextMilestone, getMilestoneDate } from '../core/workflow.js';
 
 function exportToCSV() {
     const milestones = getMilestones();

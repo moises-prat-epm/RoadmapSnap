@@ -4,7 +4,7 @@
  * Depends on global CONFIG; uses filterDeliverables, sortDeliverables, and workflow helpers (window).
  * calculateStats accepts (deliverables, workflow, todayStr, config?) for testability.
  */
-import { getCurrentStatus, getStates, getLastState } from './workflow.js';
+import { getCurrentStatus, getStates, getLastState, getWorkflow, getMilestones, getMilestoneDate } from './workflow.js';
 
 // Get visible data sources (with filters applied)
 function getVisibleDataSources() {
@@ -29,7 +29,7 @@ function getFilterableDeliverablesFrom(deliverables, config) {
 // Params: deliverables?, workflow?, todayStr?, config? — default to CONFIG.DELIVERABLES, CONFIG.WORKFLOW, getTodayDate(), CONFIG.
 function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride, configOverride) {
     const deliverables = deliverablesOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG.DELIVERABLES : []);
-    const workflow = workflowOverride ?? (typeof CONFIG !== 'undefined' && CONFIG.WORKFLOW ? CONFIG.WORKFLOW : (typeof window !== 'undefined' && window.getWorkflow ? window.getWorkflow() : null));
+    const workflow = workflowOverride ?? (typeof CONFIG !== 'undefined' && CONFIG.WORKFLOW ? CONFIG.WORKFLOW : (typeof window !== 'undefined' ? getWorkflow() : null));
     const todayStr = todayStrOverride ?? (typeof window !== 'undefined' && window.getTodayDate ? window.getTodayDate() : null);
     const config = configOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG : {});
 
