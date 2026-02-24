@@ -6,7 +6,11 @@
     "test": "node --test tests/**/*.test.js",
     "test:watch": "node --test --watch tests/**/*.test.js",
     "validate": "node scripts/validate-config.js",
-    "dev": "npx browser-sync start --server --files '**/*.js,**/*.css,**/*.html' --no-notify --port 3000"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
 }
