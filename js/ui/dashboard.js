@@ -3,6 +3,9 @@
  * Uses html`` tagged template. Depends on window: html, raw, getStates, getLastState, getMilestones,
  * formatShortDate, getTodayDate, filterByStatus, toggleRiskFilter, riskIconSVG, CONFIG.
  */
+import { html, raw, renderIf } from './renderer.js';
+import { getStates, getLastState, getMilestones } from '../core/workflow.js';
+import { formatShortDate, getTodayDate } from '../core/timeline.js';
 
 function getBreakdownText(stats, status) {
     var visible = stats.visibleByStatus && stats.visibleByStatus[status];
