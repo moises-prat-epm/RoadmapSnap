@@ -110,7 +110,6 @@ function renderDashboard(state, stats, upcoming, months) {
         <div class="progress-section">
             <div class="progress-header">
                 <div class="progress-title">Overall Progress (All ${stats.total} ${entityPlural})</div>
-                <div class="progress-percentage">${stats.completionPercentage}% ${lastState.title}</div>
             </div>
             <div class="progress-bar-container">
                 ${progressSegments}
