@@ -155,3 +155,5 @@ function buildDeliverableViewModel(source, months, todayPosition, activeDependen
 window.buildDeliverableViewModel = buildDeliverableViewModel;
 window.resolveStateColor = resolveStateColor;
 window.resolveStateTextColor = resolveStateTextColor;
+
+export { buildDeliverableViewModel, resolveStateColor, resolveStateTextColor };

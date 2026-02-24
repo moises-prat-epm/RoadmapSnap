@@ -3,6 +3,7 @@
  * Extracted from index.html: exportToJSON.
  * Depends on window.downloadFile, getWorkflow, getStates, getMilestones, getStateByKey, getCurrentStatus, getNextMilestone, CONFIG.
  */
+import { getWorkflow, getStates, getMilestones, getStateByKey, getCurrentStatus, getNextMilestone } from '../core/workflow.js';
 
 function exportToJSON() {
     const exportData = {

@@ -3,6 +3,7 @@
  * Extracted from index.html: exportToPNG.
  * Depends on global html2canvas, getTodayDate (window).
  */
+import { getTodayDate } from '../core/timeline.js';
 
 function exportToPNG(elementId, fileNamePrefix) {
     const element = document.getElementById(elementId);
