@@ -122,6 +122,10 @@
             "type": "string",
             "format": "uri"
           },
+          "startDate": {
+            "type": "string",
+            "description": "Legacy: used as START date when milestones.START is absent (getMilestoneDate)."
+          },
           "dependencies": {
             "type": "array",
             "items": {
@@ -145,6 +149,7 @@
             "description": "Keys are milestone keys (e.g. START, M1); values must be DD/MM/YYYY or empty. First milestone key from WORKFLOW is required.",
             "additionalProperties": {
               "oneOf": [
+                { "type": "null" },
                 { "type": "string", "const": "" },
                 { "type": "string", "pattern": "^(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[0-2])/\\d{4}$" }
               ]
