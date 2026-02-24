@@ -7,7 +7,8 @@
     "test:watch": "node --test --watch tests/**/*.test.js",
     "validate": "node scripts/validate-config.js",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && mkdir -p dist/js && cp js/config.js dist/js/",
+    "build:check": "vite build && mkdir -p dist/js && cp js/config.js dist/js/ && echo \"Build succeeded\"",
     "preview": "vite preview"
   },
   "devDependencies": {
