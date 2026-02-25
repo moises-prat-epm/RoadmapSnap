@@ -4,6 +4,7 @@
  */
 import { html, raw, renderIf } from './renderer.js';
 import { getStates, getMilestones, getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
+import { getAllDataSources } from '../core/dependencies.js';
 import { formatDateDisplay } from '../core/timeline.js';
 import { buildDeliverableViewModel } from '../core/viewModel.js';
 import { groupDeliverables, hasAnyGroups, getGroupStats } from './grouping.js';
@@ -49,7 +50,10 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
                 var toMsDef = getMilestoneByKey(toMsKey);
                 var fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
                 var toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
-                return dep.task + ' (' + fromShort + ' → ' + toShort + ')';
+                var otherSource = getAllDataSources().find(function (s) { return s.name === dep.task; });
+                var fromDateStr = otherSource ? getMilestoneDate(otherSource, fromMsKey) : null;
+                var datePart = fromDateStr ? ' — ' + formatDateDisplay(fromDateStr) : '';
+                return dep.task + ' (' + fromShort + ' → ' + toShort + ')' + datePart;
             };
             var formatOutboundDep = function (dep) {
                 var fromMsKey = dep.from || lastMilestoneKey;
@@ -58,7 +62,9 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
                 var toMsDef = getMilestoneByKey(toMsKey);
                 var fromShort = (fromMsDef && fromMsDef.short) ? fromMsDef.short : fromMsKey;
                 var toShort = (toMsDef && toMsDef.short) ? toMsDef.short : toMsKey;
-                return dep.task + ' (' + fromShort + ' → ' + toShort + ')';
+                var fromDateStr = getMilestoneDate(source, fromMsKey);
+                var datePart = fromDateStr ? ' — ' + formatDateDisplay(fromDateStr) : '';
+                return dep.task + ' (' + fromShort + ' → ' + toShort + ')' + datePart;
             };
             var depTooltip = '';
             var depIconSVG = '';
