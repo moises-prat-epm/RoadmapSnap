@@ -1,5 +1,7 @@
 # 🚀 RoadmapSnap
 
+[![CI](https://github.com/moises-prat-epm/RoadmapSnap/actions/workflows/ci.yml/badge.svg)](https://github.com/moises-prat-epm/RoadmapSnap/actions/workflows/ci.yml)
+
 A powerful, client-side roadmap dashboard for project and program management.
 
 **No backend. No database.** Edit `js/config.js` → refresh → done.  
