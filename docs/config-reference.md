@@ -13,9 +13,9 @@ const CONFIG = {
   TIMELINE: { TODAY: '15/04/2026', START_MONTH: '01/2026', END_MONTH: '12/2026' },
   WORKFLOW: [
     { type: 'state', key: 'NS', short: 'NS', title: 'Not Started', description: '' },
-    { type: 'milestone', key: 'START', short: 'GO', title: 'Start', color: '#6554c0' },
+    { type: 'milestone', key: 'START', short: 'GO', title: 'Start' },
     { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development', description: '' },
-    { type: 'milestone', key: 'M1', short: 'M1', title: 'Done', color: '#229954' },
+    { type: 'milestone', key: 'M1', short: 'M1', title: 'Done' },
     { type: 'state', key: 'DONE', short: 'DONE', title: 'Done', description: '' },
   ],
   DELIVERABLES: [
@@ -73,7 +73,6 @@ const CONFIG = {
 
 | Property | State | Milestone | Description |
 | --- | --- | --- | --- |
-| `color` | — | ✓ | Hex color for milestone. |
 | `description` | ✓ | — |  |
 | `key` | ✓ | ✓ |  |
 | `short` | ✓ | ✓ |  |
