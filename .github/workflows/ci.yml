@@ -22,9 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create config for CI
-        run: cp js/config_sample.js js/config.js
-
       - name: Run tests
         run: npm test
 
