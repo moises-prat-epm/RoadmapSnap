@@ -122,6 +122,14 @@ npm run test:watch   # watch mode
 
 Uses the Node.js built-in test runner. Tests live under `tests/` (e.g. `tests/core/configValidator.test.js`, `tests/core/workflow.test.js`, `tests/state/appState.test.js`).
 
+**Generate config reference docs:**
+
+```bash
+npm run docs
+```
+
+Generates `docs/config-reference.md` from `schema/config.schema.json` (human-readable config reference with Quick Start and property tables). The file is intended to be committed. Docs are also generated when you run `npm run build:check`.
+
 -----
 
 ## ⚙️ Configuration
@@ -171,9 +179,9 @@ The workflow must **alternate**: state → milestone → state → … and **end
 ```javascript
 WORKFLOW: [
     { type: 'state', key: 'NS', short: 'NS', title: 'Not Started', description: '' },
-    { type: 'milestone', key: 'START', short: 'GO', title: 'Start', color: '#6554c0' },
+    { type: 'milestone', key: 'START', short: 'GO', title: 'Start' },
     { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development', description: '' },
-    { type: 'milestone', key: 'M1', short: 'M1', title: 'Complete', color: '#229954' },
+    { type: 'milestone', key: 'M1', short: 'M1', title: 'Complete' },
     { type: 'state', key: 'DONE', short: 'DONE', title: 'Done', description: '' }
 ]
 ```

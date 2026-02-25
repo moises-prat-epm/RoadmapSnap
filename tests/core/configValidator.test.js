@@ -26,7 +26,7 @@ test('consecutive state items in WORKFLOW produce error', () => {
   const badWorkflow = [
     { type: 'state', key: 'NS', short: 'NS', title: 'Not Started' },
     { type: 'state', key: 'DEV', short: 'DEV', title: 'Dev' }, // two states in a row
-    { type: 'milestone', key: 'M1', short: 'M1', title: 'Done', color: '#000' },
+    { type: 'milestone', key: 'M1', short: 'M1', title: 'Done' },
     { type: 'state', key: 'DONE', short: 'DONE', title: 'Done' },
   ];
   const { errors } = validateConfig({ ...minimalConfig, WORKFLOW: badWorkflow });

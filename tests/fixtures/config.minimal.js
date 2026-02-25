@@ -1,8 +1,8 @@
 export const minimalWorkflow = [
   { type: 'state', key: 'NS', short: 'NS', title: 'Not Started', description: '' },
-  { type: 'milestone', key: 'START', short: 'GO', title: 'Start', color: '#6554c0' },
+  { type: 'milestone', key: 'START', short: 'GO', title: 'Start' },
   { type: 'state', key: 'DEV', short: 'DEV', title: 'In Development', description: '' },
-  { type: 'milestone', key: 'M1', short: 'M1', title: 'Done', color: '#229954' },
+  { type: 'milestone', key: 'M1', short: 'M1', title: 'Done' },
   { type: 'state', key: 'DONE', short: 'DONE', title: 'Done', description: '' },
 ];
 
