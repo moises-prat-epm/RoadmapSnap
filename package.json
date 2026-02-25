@@ -6,9 +6,10 @@
     "test": "node --test tests/**/*.test.js",
     "test:watch": "node --test --watch tests/**/*.test.js",
     "validate": "node scripts/validate-config.mjs",
+    "docs": "node scripts/generate-docs.mjs",
     "dev": "vite",
     "build": "vite build && mkdir -p dist/js && cp js/config.js dist/js/",
-    "build:check": "vite build && mkdir -p dist/js && cp js/config.js dist/js/ && echo \"Build succeeded\"",
+    "build:check": "vite build && node scripts/generate-docs.mjs && mkdir -p dist/js && cp js/config.js dist/js/ && echo \"Build + docs succeeded\"",
     "preview": "vite preview"
   },
   "devDependencies": {
