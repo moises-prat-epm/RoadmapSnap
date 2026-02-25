@@ -21,7 +21,7 @@ RoadmapSnap is a single-page roadmap visualization tool that runs entirely in yo
 
 - Executive KPI dashboard with automatic status tracking
 - Workflow-driven state management
-- Interactive dependency visualization with tooltips
+- Interactive dependency including visualization wtooltips
 - Risk tracking and filtering (by name, status, risk; KPIs refresh only when filtering by name)
 - Timeline zoom (3/6/12 months, or full range)
 - Export to PNG, CSV, JSON
