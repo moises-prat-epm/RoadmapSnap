@@ -107,9 +107,13 @@ function renderRoadmap() {
     const state = AppState.get();
     const months = generateMonths();
     const todayPosition = calculatePosition(getTodayDate(), months);
-    const stats = calculateStats();
-    const upcoming = getUpcomingMilestones();
     const visibleSources = getVisibleDataSources();
+    const hasSearchFilter = Boolean(state.filter.search && state.filter.search.trim());
+    const sourcesForKpi = hasSearchFilter
+        ? filterBySearchOnly(getAllVisibleDataSources())
+        : null;
+    const stats = hasSearchFilter ? calculateStats(sourcesForKpi) : calculateStats();
+    const upcoming = getUpcomingMilestones();
     const atRiskInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.atRisk).length;
     const statsForDashboard = Object.assign({}, stats, { atRiskInView });
 

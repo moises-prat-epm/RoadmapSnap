@@ -36,6 +36,20 @@ function filterDeliverables(sources) {
     });
 }
 
+/** Filter by search/name only (used for KPI stats when name filter is active so status/risk toggles don't change KPIs). */
+function filterBySearchOnly(sources) {
+    const search = AppState.get().filter.search;
+    if (!search || !String(search).trim()) return sources;
+    const searchLower = String(search).trim().toLowerCase();
+    return sources.filter(source => {
+        const nameMatch = source.name && source.name.toLowerCase().includes(searchLower);
+        const tagsMatch = source.tags && source.tags.some(tag =>
+            tag && String(tag).toLowerCase().includes(searchLower)
+        );
+        return nameMatch || tagsMatch;
+    });
+}
+
 function sortDeliverables(sources) {
     const sorted = [...sources];
     const states = getStates();
@@ -201,6 +215,7 @@ function renderFilterBar(state, sources) {
 
 // Export on window for global access
 window.filterDeliverables = filterDeliverables;
+window.filterBySearchOnly = filterBySearchOnly;
 window.sortDeliverables = sortDeliverables;
 window.updateFilter = updateFilter;
 window.clearFilters = clearFilters;
