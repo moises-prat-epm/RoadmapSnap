@@ -2,6 +2,15 @@
 
 [![CI](https://github.com/moises-prat-epm/RoadmapSnap/actions/workflows/ci.yml/badge.svg)](https://github.com/moises-prat-epm/RoadmapSnap/actions/workflows/ci.yml)
 
+## Products
+
+- **RoadmapSnap Lite** (this repo root): Backend-free roadmap dashboard. Edit `js/config.js`, run from `index.html`, works offline. Deployed to Cloudflare Pages and other static hosts.
+- **RoadmapSnap SaaS**: Multi-tenant version with Auth0 and PostgreSQL, under active development in `packages/api/`.
+
+All existing documentation and usage instructions in this README refer to **Lite**.
+
+-----
+
 A powerful, client-side roadmap dashboard for project and program management.
 
 **No backend. No database.** Edit `js/config.js` → refresh → done.  
