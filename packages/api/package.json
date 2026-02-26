@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node --test tests/**/*.test.js",
+    "test": "NODE_ENV=test node --test tests/**/*.test.js",
     "migrate": "node src/db/migrate.js"
   },
   "dependencies": {

@@ -2,9 +2,13 @@ import './loadEnv.js';
 import Fastify from 'fastify';
 import fastifyCors from '@fastify/cors';
 import fastifyEnv from '@fastify/env';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { join, dirname } from 'node:path';
 import rbacPlugin from './plugins/rbac.js';
 import contextPlugin from './plugins/context.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envPath = join(__dirname, '..', '.env');
 
 const envSchema = {
   type: 'object',
@@ -27,7 +31,7 @@ export async function build() {
 
   await fastify.register(fastifyEnv, {
     schema: envSchema,
-    dotenv: true,
+    dotenv: { path: envPath },
   });
 
   await fastify.register(fastifyCors, {
@@ -47,15 +51,11 @@ export async function build() {
   return fastify;
 }
 
-async function start() {
-  const fastify = await build();
-  const port = Number(fastify.config.PORT) || 4000;
-  await fastify.listen({ port, host: '0.0.0.0' });
-  return fastify;
-}
-
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  start().catch((err) => {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  (async () => {
+    const app = await build();
+    await app.listen({ port: Number(process.env.PORT) || 4000, host: '0.0.0.0' });
+  })().catch((err) => {
     console.error(err);
     process.exit(1);
   });

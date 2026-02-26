@@ -18,6 +18,19 @@ async function authPlugin(fastify) {
   const JWKS = createRemoteJWKSet(new URL(jwksUrl));
 
   fastify.decorate('authenticate', async function authenticate(request, reply) {
+    // TEST MODE ONLY — never active in production
+    if (process.env.NODE_ENV === 'test') {
+      const testSub = request.headers['x-test-user-sub'];
+      if (testSub != null && testSub !== '') {
+        request.user = {
+          sub: testSub,
+          email: 'test@example.com',
+          name: 'Test User',
+        };
+        return;
+      }
+    }
+
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return reply.status(401).send({
@@ -27,6 +40,13 @@ async function authPlugin(fastify) {
     }
 
     const token = authHeader.slice(7);
+    if (!token) {
+      return reply.status(401).send({
+        error: 'Unauthorized',
+        message: 'Missing or invalid token',
+      });
+    }
+
     try {
       const { payload } = await jwtVerify(token, JWKS, {
         issuer,
