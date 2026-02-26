@@ -2,6 +2,8 @@ import Fastify from 'fastify';
 import fastifyCors from '@fastify/cors';
 import fastifyEnv from '@fastify/env';
 import { pathToFileURL } from 'node:url';
+import authPlugin from './plugins/auth.js';
+import rbacPlugin from './plugins/rbac.js';
 
 const envSchema = {
   type: 'object',
@@ -29,6 +31,9 @@ export async function build() {
   await fastify.register(fastifyCors, {
     origin: fastify.config.CORS_ORIGIN,
   });
+
+  await fastify.register(authPlugin);
+  await fastify.register(rbacPlugin);
 
   fastify.get('/health', async () => ({
     status: 'ok',
