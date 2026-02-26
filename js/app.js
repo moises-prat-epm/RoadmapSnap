@@ -110,7 +110,7 @@ function renderRoadmap() {
     const visibleSources = getVisibleDataSources();
     const hasSearchFilter = Boolean(state.filter.search && state.filter.search.trim());
     const sourcesForKpi = hasSearchFilter
-        ? filterBySearchOnly(getAllVisibleDataSources())
+        ? filterBySearchOnly(CONFIG.DELIVERABLES)
         : null;
     const stats = hasSearchFilter ? calculateStats(sourcesForKpi) : calculateStats();
     const upcoming = getUpcomingMilestones();
