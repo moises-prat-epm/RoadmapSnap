@@ -48,7 +48,7 @@ async function authPlugin(fastify) {
   });
 
   fastify.get('/auth/me', {
-    preHandler: [fastify.authenticate],
+    preHandler: [fastify.authenticate, fastify.setRequestContext],
   }, async (request) => request.user);
 }
 

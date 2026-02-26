@@ -1,9 +1,10 @@
+import './loadEnv.js';
 import Fastify from 'fastify';
 import fastifyCors from '@fastify/cors';
 import fastifyEnv from '@fastify/env';
 import { pathToFileURL } from 'node:url';
-import authPlugin from './plugins/auth.js';
 import rbacPlugin from './plugins/rbac.js';
+import contextPlugin from './plugins/context.js';
 
 const envSchema = {
   type: 'object',
@@ -15,6 +16,7 @@ const envSchema = {
     AUTH0_DOMAIN: { type: 'string' },
     AUTH0_AUDIENCE: { type: 'string' },
     CORS_ORIGIN: { type: 'string', default: 'http://localhost:3000' },
+    DEFAULT_ORG_ID: { type: 'string', default: '' },
   },
 };
 
@@ -32,7 +34,7 @@ export async function build() {
     origin: fastify.config.CORS_ORIGIN,
   });
 
-  await fastify.register(authPlugin);
+  await fastify.register(contextPlugin);
   await fastify.register(rbacPlugin);
 
   fastify.get('/health', async () => ({
