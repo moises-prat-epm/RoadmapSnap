@@ -1,0 +1,70 @@
+name: API CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['packages/api/**', '.github/workflows/api-ci.yml']
+  pull_request:
+    branches: [main]
+    paths: ['packages/api/**', '.github/workflows/api-ci.yml']
+  workflow_dispatch:
+
+jobs:
+  api-ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: roadmapsnap_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache API node_modules
+        uses: actions/cache@v4
+        with:
+          path: packages/api/node_modules
+          key: ${{ runner.os }}-api-${{ hashFiles('packages/api/package.json') }}
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install API dependencies
+        run: cd packages/api && npm install
+
+      - name: Pre-create app role
+        run: |
+          psql postgresql://postgres:postgres@localhost:5432/roadmapsnap_test \
+            -c "CREATE ROLE roadmapsnap_app WITH LOGIN PASSWORD 'apppassword' NOSUPERUSER;" \
+            || true
+
+      - name: Run migrations
+        run: cd packages/api && npm run migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
+
+      - name: Run API tests
+        run: cd packages/api && npm test
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roadmapsnap_test
+          APP_DATABASE_URL: postgresql://roadmapsnap_app:apppassword@localhost:5432/roadmapsnap_test
+          AUTH0_DOMAIN: placeholder.auth0.com
+          AUTH0_AUDIENCE: http://localhost:4000
+          PORT: "4000"
+
+      - name: API CI passed
+        run: echo '✅ API CI passed'
