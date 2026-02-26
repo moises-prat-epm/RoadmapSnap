@@ -1,0 +1,20 @@
+{
+  "name": "@roadmapsnap/api",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test tests/**/*.test.js",
+    "migrate": "node src/db/migrate.js"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "@fastify/jwt": "^9.0.0",
+    "@fastify/cors": "^10.0.0",
+    "@fastify/env": "^5.0.0",
+    "pg": "^8.13.0",
+    "jose": "^5.9.0"
+  },
+  "devDependencies": {}
+}
