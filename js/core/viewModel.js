@@ -7,7 +7,7 @@
  *   calculatePosition, isDateInRange, getDependencyType, getInboundDependencies,
  *   getOutboundDependencies, getDependencyGraph (window).
  */
-import { getStates, getStateByKey, getCurrentStatus, getMilestones, getMilestoneDate } from './workflow.js';
+import { getStates, getStateByKey, getCurrentStatus, getMilestones, getMilestoneDate, getFirstMilestoneKey, getMilestoneByKey } from './workflow.js';
 import { calculatePosition, isDateInRange } from './timeline.js';
 import { getDependencyType, getInboundDependencies, getOutboundDependencies, getDependencyGraph } from './dependencies.js';
 
@@ -41,14 +41,15 @@ function resolveStateTextColor(hexColor) {
 function buildMilestoneMarkers(source, months, milestonesDef) {
     var MILESTONE_OVERLAP_THRESHOLD_PCT = 1.5;
     var allMarkers = [];
-    var startDate = getMilestoneDate(source, 'START');
-    var startMilestone = getMilestoneByKey('START');
+    var firstKey = getFirstMilestoneKey();
+    var startDate = getMilestoneDate(source, firstKey);
+    var startMilestone = getMilestoneByKey(firstKey);
     if (startDate && isDateInRange(startDate, months)) {
         var position = calculatePosition(startDate, months);
         allMarkers.push({ position: position, slotClass: 'start', short: (startMilestone && startMilestone.short) ? startMilestone.short : 'GO', date: startDate });
     }
-    var nonStart = milestonesDef.filter(function (m) { return m.key !== 'START'; });
-    nonStart.forEach(function (m, i) {
+    var nonFirst = milestonesDef.filter(function (m) { return m.key !== firstKey; });
+    nonFirst.forEach(function (m, i) {
         var date = getMilestoneDate(source, m.key);
         if (!date || !isDateInRange(date, months)) return;
         var pos = calculatePosition(date, months);
@@ -77,7 +78,8 @@ function buildMilestoneMarkers(source, months, milestonesDef) {
 
 function buildGanttSegments(source, months, todayPosition, milestonesDef) {
     var segments = [];
-    var startDate = getMilestoneDate(source, 'START');
+    var firstKey = getFirstMilestoneKey();
+    var startDate = getMilestoneDate(source, firstKey);
     var startDatePos = startDate ? calculatePosition(startDate, months) : null;
     var milestonePositions = {};
     milestonesDef.forEach(function (m) {

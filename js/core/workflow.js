@@ -127,7 +127,13 @@ function getMilestoneDate(source, milestoneKey) {
     if (source.milestones && source.milestones[milestoneKey]) {
         return source.milestones[milestoneKey];
     }
-    if (milestoneKey === 'START' && source.startDate) {
+    var firstKey;
+    try {
+        firstKey = getFirstMilestoneKey();
+    } catch (e) {
+        firstKey = 'START';
+    }
+    if (milestoneKey === firstKey && source.startDate) {
         return source.startDate;
     }
     return null;
