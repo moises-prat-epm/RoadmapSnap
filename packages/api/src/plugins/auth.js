@@ -69,7 +69,39 @@ async function authPlugin(fastify) {
 
   fastify.get('/auth/me', {
     preHandler: [fastify.authenticate, fastify.setRequestContext],
-  }, async (request) => request.user);
+  }, async (request, reply) => {
+    // Upsert the user row so first-time logins are automatically provisioned.
+    // setRequestContext populates request.dbClient and request.dbUser if the row
+    // already exists; if dbUser is absent the row needs to be created now.
+    if (!request.dbUser) {
+      const client = request.dbClient;
+      if (!client) {
+        return reply.status(500).send({ error: 'Internal Server Error', message: 'Database client unavailable' });
+      }
+      const email = request.user.email || `${request.user.sub}@unknown`;
+      const displayName = request.user.name || request.user.nickname || null;
+
+      const upsert = await client.query(
+        `INSERT INTO users (auth0_id, email, display_name)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (auth0_id) DO UPDATE
+           SET email        = EXCLUDED.email,
+               display_name = COALESCE(EXCLUDED.display_name, users.display_name),
+               updated_at   = NOW()
+         RETURNING id, email, display_name`,
+        [request.user.sub, email, displayName]
+      );
+      const row = upsert.rows[0];
+      request.dbUser = { id: row.id, email: row.email, display_name: row.display_name };
+    }
+
+    return {
+      sub: request.user.sub,
+      email: request.dbUser.email,
+      display_name: request.dbUser.display_name,
+      id: request.dbUser.id,
+    };
+  });
 }
 
 export default authPlugin;

@@ -7,6 +7,16 @@ import { join, dirname } from 'node:path';
 import rbacPlugin from './plugins/rbac.js';
 import contextPlugin from './plugins/context.js';
 
+// Domain route plugins — add imports here as Phase 2 routes are implemented.
+// Each module must export a default Fastify plugin registered under /api/v1/.
+// Example (Phase 2):
+//   import workspacesRoutes from './routes/workspaces.js';
+//   import projectsRoutes   from './routes/projects.js';
+const domainRoutes = [
+  // workspacesRoutes,
+  // projectsRoutes,
+];
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPath = join(__dirname, '..', '.env');
 
@@ -47,6 +57,11 @@ export async function build() {
     version,
     timestamp: new Date().toISOString(),
   }));
+
+  // Register all domain route plugins under /api/v1/
+  for (const routePlugin of domainRoutes) {
+    await fastify.register(routePlugin, { prefix: '/api/v1' });
+  }
 
   return fastify;
 }

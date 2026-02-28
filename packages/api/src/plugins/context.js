@@ -1,8 +1,12 @@
 /**
- * Request context plugin: resolves DB user, sets PostgreSQL session vars for RLS/audit.
- * Use fastify.setRequestContext as a preHandler after authenticate (e.g. on /auth/me).
+ * Request context plugin: resolves DB user and org, sets PostgreSQL session vars for RLS/audit.
+ * Use fastify.setRequestContext as a preHandler after authenticate.
  * Skip context setup for /health (do not add this preHandler to /health).
- * TODO Epic 2: resolve org from JWT claims or workspace param
+ *
+ * Org resolution order:
+ *   1. x-org-id request header (explicit, used by SaaS frontend)
+ *   2. org claim in JWT payload (set by Auth0 organisation feature)
+ *   3. DEFAULT_ORG_ID env var (dev/test fallback only)
  */
 
 import { pool } from '../db/client.js';
@@ -19,9 +23,7 @@ async function contextPlugin(fastify) {
     const release = () => {
       if (released) return;
       released = true;
-      try {
-        client.release();
-      } catch (_) {}
+      try { client.release(); } catch (_) {}
     };
     reply.raw.once('finish', release);
     reply.raw.once('close', release);
@@ -43,10 +45,17 @@ async function contextPlugin(fastify) {
       display_name: row.display_name,
     };
 
-    // Epic 1 stub: use hardcoded org from env; skip if not set
-    const defaultOrgId = fastify.config.DEFAULT_ORG_ID || process.env.DEFAULT_ORG_ID;
-    if (defaultOrgId) {
-      await client.query('SET LOCAL app.current_org_id = $1', [defaultOrgId]);
+    // Resolve org: header → JWT claim → env fallback
+    const orgId =
+      request.headers['x-org-id'] ||
+      request.user['https://roadmapsnap.io/org_id'] ||
+      fastify.config.DEFAULT_ORG_ID ||
+      process.env.DEFAULT_ORG_ID ||
+      null;
+
+    if (orgId) {
+      request.orgId = orgId;
+      await client.query('SET LOCAL app.current_org_id = $1', [orgId]);
       await client.query('SET LOCAL app.current_user_id = $1', [row.id]);
     }
   });
