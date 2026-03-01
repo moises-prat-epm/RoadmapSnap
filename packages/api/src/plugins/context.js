@@ -17,9 +17,9 @@ async function contextPlugin(fastify) {
     if (request.routerPath === '/health') return;
     if (!request.user?.sub) return;
 
-    // TEST MODE: no real database in the test environment; authenticate already
-    // set request.user from the x-test-user-sub header bypass.
-    if (process.env.NODE_ENV === 'test') return;
+    // No database configured (e.g. unit tests without DATABASE_URL).
+    // Skip DB context; routes needing dbUser handle the absent case themselves.
+    if (!process.env.DATABASE_URL) return;
 
     const client = await pool.connect();
     request.dbClient = client;

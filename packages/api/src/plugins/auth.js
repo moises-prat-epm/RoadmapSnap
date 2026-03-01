@@ -4,6 +4,7 @@
  */
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { pool } from '../db/client.js';
 
 async function authPlugin(fastify) {
   const domain = fastify.config.AUTH0_DOMAIN;
@@ -74,29 +75,35 @@ async function authPlugin(fastify) {
     // setRequestContext populates request.dbClient and request.dbUser if the row
     // already exists; if dbUser is absent the row needs to be created now.
     if (!request.dbUser) {
-      // TEST MODE: setRequestContext skips DB; return the mock user from request.user directly.
+      // In test mode, authenticate injects mock users via x-test-user-sub.
+      // These are not real DB users; return the mock data directly without
+      // attempting a DB upsert (which would also fail if multiple test subs
+      // share the same email and the users table has a unique constraint).
       if (process.env.NODE_ENV === 'test') {
         return { sub: request.user.sub, email: request.user.email, name: request.user.name };
       }
-      const client = request.dbClient;
-      if (!client) {
-        return reply.status(500).send({ error: 'Internal Server Error', message: 'Database client unavailable' });
-      }
-      const email = request.user.email || `${request.user.sub}@unknown`;
-      const displayName = request.user.name || request.user.nickname || null;
+      // DB is available but context couldn't find the user (first login).
+      // context.js released its client early; open a dedicated one for the upsert.
+      const client = await pool.connect();
+      try {
+        const email = request.user.email || `${request.user.sub}@unknown`;
+        const displayName = request.user.name || request.user.nickname || null;
 
-      const upsert = await client.query(
-        `INSERT INTO users (auth0_id, email, display_name)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (auth0_id) DO UPDATE
-           SET email        = EXCLUDED.email,
-               display_name = COALESCE(EXCLUDED.display_name, users.display_name),
-               updated_at   = NOW()
-         RETURNING id, email, display_name`,
-        [request.user.sub, email, displayName]
-      );
-      const row = upsert.rows[0];
-      request.dbUser = { id: row.id, email: row.email, display_name: row.display_name };
+        const upsert = await client.query(
+          `INSERT INTO users (auth0_id, email, display_name)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (auth0_id) DO UPDATE
+             SET email        = EXCLUDED.email,
+                 display_name = COALESCE(EXCLUDED.display_name, users.display_name),
+                 updated_at   = NOW()
+           RETURNING id, email, display_name`,
+          [request.user.sub, email, displayName]
+        );
+        const row = upsert.rows[0];
+        request.dbUser = { id: row.id, email: row.email, display_name: row.display_name };
+      } finally {
+        client.release();
+      }
     }
 
     return {
