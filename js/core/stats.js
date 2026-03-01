@@ -8,7 +8,7 @@ import { getCurrentStatus, getStates, getLastState, getWorkflow, getMilestones, 
 
 // Get visible data sources (with filters applied)
 function getVisibleDataSources() {
-    let sources = CONFIG.DELIVERABLES.filter(source => source.showInTimeline);
+    let sources = CONFIG.DELIVERABLES.filter(source => source.showInTimeline !== false);
     sources = filterDeliverables(sources);
     sources = sortDeliverables(sources);
     return sources;
@@ -16,7 +16,7 @@ function getVisibleDataSources() {
 
 // Get all visible sources (without filters, for stats)
 function getAllVisibleDataSources() {
-    return CONFIG.DELIVERABLES.filter(source => source.showInTimeline);
+    return CONFIG.DELIVERABLES.filter(source => source.showInTimeline !== false);
 }
 
 function getFilterableDeliverablesFrom(deliverables, config) {
@@ -34,7 +34,7 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
     const config = configOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG : {});
 
     const allSources = getFilterableDeliverablesFrom(deliverables, config);
-    const visibleSources = allSources.filter(source => source.showInTimeline);
+    const visibleSources = allSources.filter(source => source.showInTimeline !== false);
 
     const states = workflow
         ? workflow.filter(item => item.type === 'state')
