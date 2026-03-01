@@ -74,6 +74,39 @@ function generateMonths() {
     return months;
 }
 
+/**
+ * Returns header periods for the timeline. When span > 12 months, returns quarters (Q1 2026, Q2 2026, ...)
+ * to avoid crowded month labels; otherwise returns one period per month.
+ * Each period: { label: string, widthPct: number }.
+ */
+function getTimelineHeaderPeriods(months) {
+    if (!months || months.length === 0) return [];
+    if (months.length <= 12) {
+        return months.map(function (m) { return { label: m.name, widthPct: 100 / months.length }; });
+    }
+    var periods = [];
+    var i = 0;
+    while (i < months.length) {
+        var d = months[i].date;
+        var year = d.getFullYear();
+        var q = Math.floor(d.getMonth() / 3) + 1;
+        var label = 'Q' + q + ' ' + year;
+        var count = 0;
+        while (i < months.length) {
+            var d2 = months[i].date;
+            var q2 = Math.floor(d2.getMonth() / 3) + 1;
+            if (d2.getFullYear() === year && q2 === q) {
+                count++;
+                i++;
+            } else {
+                break;
+            }
+        }
+        periods.push({ label: label, widthPct: (count / months.length) * 100 });
+    }
+    return periods;
+}
+
 function calculatePosition(dateStr, months) {
     var date = parseDate(dateStr);
     if (!date) return null;
@@ -103,10 +136,11 @@ window.getTodayDate = getTodayDate;
 window.parseMonthYear = parseMonthYear;
 window.getMonthName = getMonthName;
 window.generateMonths = generateMonths;
+window.getTimelineHeaderPeriods = getTimelineHeaderPeriods;
 window.calculatePosition = calculatePosition;
 window.isDateInRange = isDateInRange;
 
 export {
     parseDate, formatDateDisplay, formatShortDate, darkenColor, getTodayDate,
-    parseMonthYear, getMonthName, generateMonths, calculatePosition, isDateInRange
+    parseMonthYear, getMonthName, generateMonths, getTimelineHeaderPeriods, calculatePosition, isDateInRange
 };

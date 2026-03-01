@@ -39,7 +39,8 @@ function resolveStateTextColor(hexColor) {
 }
 
 function buildMilestoneMarkers(source, months, milestonesDef) {
-    var MILESTONE_OVERLAP_THRESHOLD_PCT = 1.5;
+    // When markers are within this % of the timeline, show only the last (most relevant) one
+    var MILESTONE_OVERLAP_THRESHOLD_PCT = 4;
     var allMarkers = [];
     var firstKey = getFirstMilestoneKey();
     var startDate = getMilestoneDate(source, firstKey);

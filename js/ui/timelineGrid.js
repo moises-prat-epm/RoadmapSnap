@@ -5,7 +5,7 @@
 import { html, raw, renderIf } from './renderer.js';
 import { getStates, getMilestones, getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
 import { getAllDataSources } from '../core/dependencies.js';
-import { formatDateDisplay } from '../core/timeline.js';
+import { formatDateDisplay, getTimelineHeaderPeriods } from '../core/timeline.js';
 import { buildDeliverableViewModel } from '../core/viewModel.js';
 import { groupDeliverables, hasAnyGroups, getGroupStats } from './grouping.js';
 import AppState from '../state/appState.js';
@@ -104,8 +104,9 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
     }
 
     var columnHeaderLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular)) ? (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular) : 'Item';
-    var monthColumns = months.map(function (m) {
-        return html`<div class="month-column">${m.name}</div>`;
+    var headerPeriods = getTimelineHeaderPeriods(months);
+    var monthColumns = headerPeriods.map(function (p) {
+        return html`<div class="month-column" style="width: ${p.widthPct}%;">${p.label}</div>`;
     });
     var hasGroups = hasAnyGroups(visibleSources);
 
