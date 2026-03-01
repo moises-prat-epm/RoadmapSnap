@@ -74,6 +74,10 @@ async function authPlugin(fastify) {
     // setRequestContext populates request.dbClient and request.dbUser if the row
     // already exists; if dbUser is absent the row needs to be created now.
     if (!request.dbUser) {
+      // TEST MODE: setRequestContext skips DB; return the mock user from request.user directly.
+      if (process.env.NODE_ENV === 'test') {
+        return { sub: request.user.sub, email: request.user.email, name: request.user.name };
+      }
       const client = request.dbClient;
       if (!client) {
         return reply.status(500).send({ error: 'Internal Server Error', message: 'Database client unavailable' });
@@ -98,6 +102,7 @@ async function authPlugin(fastify) {
     return {
       sub: request.user.sub,
       email: request.dbUser.email,
+      name: request.user.name || request.dbUser.display_name || null,
       display_name: request.dbUser.display_name,
       id: request.dbUser.id,
     };
