@@ -125,6 +125,23 @@ const CONFIG = {
             tags: ["frontend", "export"],
             milestones: { KO: "15/03/2026", BETA: "25/04/2026", LIVE: "16/05/2026" },
         },
+        {
+            // The schema is the AI contract: pass config.schema.json + user brief → Claude returns
+            // a valid config.js. This embeds the existing Claude-prompt workflow directly in the tool.
+            name: "AI Roadmap Builder — Lite",
+            group: "Phase 1 — React Migration",
+            tags: ["ai", "ux", "generation"],
+            milestones: { KO: "01/04/2026", BETA: "05/05/2026", LIVE: "16/05/2026" },
+            dependencies: [{ task: "packages/web Scaffold", from: "BETA", to: "KO" }],
+        },
+        {
+            // Multi-turn chat: "Make the backend phase 3 weeks shorter" → Claude updates config
+            name: "Iterative AI Refinement",
+            group: "Phase 1 — React Migration",
+            tags: ["ai", "ux"],
+            milestones: { KO: "05/05/2026", BETA: "12/05/2026", LIVE: "16/05/2026" },
+            dependencies: [{ task: "AI Roadmap Builder — Lite", from: "BETA", to: "KO" }],
+        },
 
         // ─────────────────────────────────────────────────────────────────────
         // PHASE 2 — SaaS API: Domain Entities, CRUD, Multi-Tenancy (6–8 weeks)
@@ -186,6 +203,15 @@ const CONFIG = {
             group: "Phase 2 — SaaS API",
             tags: ["api", "migration"],
             milestones: { KO: "15/04/2026", BETA: "10/06/2026", LIVE: "10/07/2026" },
+        },
+        {
+            // Server-side AI Builder: no user API key; backend calls Claude; generated workspace
+            // saved directly to Postgres; multi-turn refinement stored in ai_generation_sessions table
+            name: "AI Roadmap Builder — SaaS",
+            group: "Phase 2 — SaaS API",
+            tags: ["ai", "api", "generation"],
+            milestones: { KO: "01/06/2026", BETA: "25/06/2026", LIVE: "10/07/2026" },
+            dependencies: ["AI Roadmap Builder — Lite", { task: "Projects & Milestones API", from: "LIVE", to: "KO" }],
         },
 
         // ─────────────────────────────────────────────────────────────────────

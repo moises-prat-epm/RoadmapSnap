@@ -6,12 +6,28 @@
 
 ---
 
+## Core Design Principle: The Schema as AI Contract
+
+A key strength of RoadmapSnap is that `schema/config.schema.json` acts as a **strict contract between the user and AI**. The current workflow — paste the schema into Claude, describe your project, get back a valid `config.js` — is practical, fast, and produces immediately renderable roadmaps.
+
+This workflow must be preserved and evolved into a **first-class embedded feature** called the **AI Roadmap Builder**. It is available from Phase 1 in Lite mode (no backend required) and from Phase 2 in SaaS mode (no user API key required).
+
+The schema as AI contract means:
+- Claude's output is structurally constrained to exactly what the tool can render
+- `configValidator.js` catches any rule violations before the user sees them
+- Schema and tool stay in sync automatically (they are in the same repo)
+- The schema can be extended with PMO-specific fields (contract type, effort days, owner) as the tool matures
+
+See `schema/ai-generation-prompt.md` for a ready-to-use prompt template that works today with Claude.ai.
+
+---
+
 ## Phase Dependencies
 
 ```
 Phase 0: Close open stubs (RBAC, org resolution, user provisioning)   ← unblocks everything
-Phase 1: React migration + in-browser editor                           ← parallel with Phase 0
-Phase 2: SaaS API — CRUD, RBAC, multi-tenancy                         ← after Phase 0
+Phase 1: React migration + AI Roadmap Builder (Lite)                   ← parallel with Phase 0
+Phase 2: SaaS API — CRUD, RBAC, AI Builder (SaaS)                     ← after Phase 0
 Phase 3: Program intelligence — analytics, portfolio, real-time        ← after Phase 2
 Phase 4: AI Layer 1 — risk scoring, forecasting, NL chat, reports      ← after Phase 3
 Phase 5: AI Layer 2 — NL mutations, integrations                       ← after Phase 4
@@ -38,10 +54,10 @@ Unblocks all subsequent API work by replacing the two stubs explicitly marked `T
 
 ---
 
-## Phase 1 — React Migration + In-Browser Editor
+## Phase 1 — React Migration + AI Roadmap Builder (Lite)
 **Timeline:** ~6–8 weeks | **Starts:** immediately (parallel with Phase 0)
 
-Modernise the Lite frontend and add CRUD editing without a backend. All existing features preserved.
+Modernise the Lite frontend, add CRUD editing, and embed the AI Roadmap Builder. The AI Builder is available in Lite mode — no backend required. All existing features preserved.
 
 | Initiative | Details |
 |---|---|
@@ -51,17 +67,54 @@ Modernise the Lite frontend and add CRUD editing without a backend. All existing
 | In-Browser Config Editor | Sidebar/modal to add/edit/delete deliverables, milestones, groups, workflow — React Hook Form + real-time `configValidator.js` validation |
 | LocalStorage Persistence | Config edits survive page refresh; "Reset to file" button reverts to original `config.js` |
 | Config Import/Export v2 | Load full CONFIG from JSON file; save to JSON; extends existing `js/export/json.js` |
+| **AI Roadmap Builder — Lite** | See below |
+| **Iterative AI Refinement** | See below |
+
+### AI Roadmap Builder — Lite
+
+A panel (accessible via "Generate with AI" button) that produces a complete, valid `config.js` from natural language or structured inputs — embedding the current manual Claude workflow directly in the tool.
+
+**User inputs:**
+- Free-text project description OR structured form fields:
+  - Program name and overall deadline
+  - Teams / resources (names, sizes)
+  - Effort estimates per phase (weeks/months)
+  - Deliverable list (bullet points welcome)
+  - Dependencies between deliverables
+  - Known risk areas
+  - Contract type (fixed-price, T&M, milestone-based, hybrid)
+  - Hard milestone dates (e.g. contract payment events)
+
+**How it works:**
+1. User enters their Anthropic API key once — stored in `localStorage`, never sent to any server
+2. Tool builds a system prompt: `config.schema.json` + `configValidator.js` alternation/first-key rules summary
+3. Claude uses **structured output** (`tool_use`) to return a `generate_config` tool call containing the CONFIG JSON
+4. `validateConfig()` is called immediately; errors shown inline; AI asked to self-correct if invalid
+5. Valid config is rendered in the timeline instantly — no copy-paste required
+6. "Apply" saves to `localStorage`; "Export" downloads as `config.js`
+
+**Iterative AI Refinement:**
+- After initial generation, a chat input stays open: "Make the backend phase 3 weeks shorter"
+- Each refinement sends the current config + the instruction; Claude returns an updated config
+- Full generation history stored in `localStorage` for undo
+
+**Key files:**
+- New: `src/components/AIBuilder/AIBuilderPanel.tsx`
+- New: `src/components/AIBuilder/useConfigGeneration.ts` (Claude API call + validation loop)
+- New: `src/components/AIBuilder/ProjectBriefForm.tsx` (structured input form)
+- Existing: `js/core/configValidator.js` — used for immediate validation of AI output
+- Existing: `schema/config.schema.json` — embedded in the system prompt as output contract
 
 **Stack additions:** React 19, TypeScript, React Router v7, TanStack Query v5, React Hook Form
 
-**Verification:** All 5 root test suites pass after migration. Load `js/config_roadmap_evolution.js` to verify meta-config renders correctly.
+**Verification:** All 5 root test suites pass after migration. Load `js/config_roadmap_evolution.js` to verify meta-config renders. Generate a roadmap with the AI Builder from a 3-sentence description and verify it renders without validator errors.
 
 ---
 
-## Phase 2 — SaaS API: Domain Entities, CRUD, Multi-Tenancy
+## Phase 2 — SaaS API: Domain Entities, CRUD, AI Builder (SaaS)
 **Timeline:** ~6–8 weeks | **Starts:** after Phase 0
 
-Replace the static `config.js` with a real Postgres backend. Teams can collaborate on workspaces with proper access control.
+Replace the static `config.js` with a real Postgres backend. Teams can collaborate on workspaces with proper access control. The AI Roadmap Builder moves server-side — no user API key required.
 
 | Initiative | Details |
 |---|---|
@@ -73,10 +126,62 @@ Replace the static `config.js` with a real Postgres backend. Teams can collabora
 | Member Invitation Flow | `POST /api/v1/orgs/:id/members`; transactional email via Resend |
 | Audit Log UI | Surface existing PostgreSQL trigger audit trail; no new infrastructure required |
 | Config Migration Import | `POST /api/v1/workspaces/import` accepts a Lite JSON export; migration path for existing users |
+| **AI Roadmap Builder — SaaS** | See below |
 
-**Stack additions:** `@fastify/swagger` + `@fastify/swagger-ui` (OpenAPI 3.1), Resend (email)
+### AI Roadmap Builder — SaaS
 
-**Verification:** Auth, health, and RLS tests pass. Manual flow: create workspace → add project → set milestone → export JSON → re-import.
+The Lite AI Builder moves server-side. No user API key required; the service calls Claude.
+
+**Endpoint:** `POST /api/v1/ai/generate-workspace`
+
+**Inputs** (request body):
+```json
+{
+  "brief": "We are building a payments platform...",
+  "structured": {
+    "program_name": "Payments Platform",
+    "deadline": "30/09/2026",
+    "teams": [{ "name": "Backend", "size": 5 }, { "name": "Frontend", "size": 3 }],
+    "effort_estimates": { "Backend API": "8 weeks", "Frontend": "6 weeks" },
+    "contract_type": "fixed-price with milestone payments",
+    "known_risks": ["Third-party payment API stability", "PCI DSS certification"],
+    "hard_milestones": [{ "name": "Contract Payment 1", "date": "30/06/2026" }]
+  }
+}
+```
+
+**How it works:**
+1. Backend builds the prompt (same schema + rules as Lite, but server-side)
+2. Claude returns structured CONFIG JSON via `tool_use`
+3. `validateConfig()` runs server-side; if invalid, Claude is asked to self-correct (max 2 retries)
+4. On success: workspace + projects + milestones created in Postgres from the generated config
+5. Frontend receives workspace ID and navigates to the new live Gantt
+
+**Generation session stored in DB:**
+```sql
+CREATE TABLE ai_generation_sessions (
+  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  workspace_id  UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+  org_id        UUID NOT NULL REFERENCES organizations(id),
+  created_by    UUID NOT NULL REFERENCES users(id),
+  brief         TEXT,
+  structured_inputs JSONB,
+  messages      JSONB NOT NULL DEFAULT '[]',  -- full conversation history
+  model         TEXT NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**Iterative refinement via API:**
+- `POST /api/v1/ai/generation-sessions/:id/refine`
+- Body: `{ "instruction": "Make the backend phase 3 weeks shorter" }`
+- Full message history sent to Claude; workspace updated with refined config
+
+**Plan gating:** AI Roadmap Builder available on `starter` plan and above. Token usage metered in `audit_events.metadata`.
+
+**Stack additions:** `@fastify/swagger` + `@fastify/swagger-ui` (OpenAPI 3.1), Resend (email), `@anthropic-ai/sdk`
+
+**Verification:** Auth, health, and RLS tests pass. Manual flow: create workspace via AI Builder → verify 10+ projects and milestones in DB → refine once → verify update.
 
 ---
 
@@ -105,7 +210,7 @@ Deterministic PMO analytics that don't require AI but produce the historical dat
 ## Phase 4 — AI Layer 1: Risk Scoring, Forecasting, NL Chat, Reports
 **Timeline:** ~8–10 weeks | **Starts:** after Phase 3
 
-AI-powered features grounded in the historical data accumulated in Phase 3.
+AI-powered features grounded in the historical data accumulated in Phase 3. Extends the AI Roadmap Builder into a full PMO intelligence layer.
 
 | Initiative | Model | Details |
 |---|---|---|
@@ -115,6 +220,7 @@ AI-powered features grounded in the historical data accumulated in Phase 3.
 | Status Report Generator | `claude-sonnet-4-6` | Weekly/on-demand executive narrative; input: stats, top risks, `audit_events` diff, budget alerts; exportable as Markdown/PDF |
 | Anomaly Detection Alerts | `claude-haiku-4-5` | Nightly job; detects completion regression, milestone push >2 weeks, budget threshold crossing; AI explanation + recommended action |
 | AI-Assisted Risk Entry | `claude-haiku-4-5` | Real-time suggestions as user types: probability/impact, mitigation text, similar past risks |
+| **Schema Evolution Assistant** | `claude-sonnet-4-6` | Suggests schema extensions when users describe PMO data they can't represent (e.g. contract type, effort, owner); produces a PR-ready schema diff |
 
 **New migrations:**
 ```sql
@@ -122,14 +228,16 @@ ALTER TABLE projects ADD COLUMN ai_risk_assessment JSONB;
 ALTER TABLE milestones ADD COLUMN ai_deadline_forecast JSONB;
 CREATE TABLE reports (id, workspace_id, org_id, report_type, generated_by, content_md, metadata JSONB, created_at);
 CREATE TABLE notifications (id, org_id, user_id, type, payload JSONB, read_at, created_at);
+CREATE TABLE ai_generation_sessions (...);  -- see Phase 2
 ```
 
 **Architecture notes:**
 - Never call LLM from the Fastify request path for slow operations — queue via `pg-boss` (Postgres-backed, no Redis needed)
 - Context window: targeted DB query objects, not raw table dumps
 - Prompt security: user text injected as JSON data fields, never concatenated into instruction sections
+- AI Roadmap Builder refinement sessions are a natural extension of the PMO Chat infrastructure
 
-**Stack additions:** `@anthropic-ai/sdk`, `pg-boss`, `@react-pdf/renderer`
+**Stack additions:** `@anthropic-ai/sdk` (already added in Phase 2 for Builder), `pg-boss`, `@react-pdf/renderer`
 
 ---
 
@@ -146,6 +254,7 @@ Extend AI from answering questions to taking actions; connect to tools teams alr
 | Slack & Teams Bot | Outbound: anomaly alerts and weekly reports to channels. Inbound: `/pmo status [workspace]` slash command |
 | AI Onboarding Briefing | Personalised first-login summary (program state, assigned items, risks, milestones); uses report generation infrastructure |
 | Feature Gating & Billing | Enforce `organizations.plan` (`trial \| starter \| professional \| enterprise`); AI features at `professional+`; token usage metered |
+| **Roadmap Regeneration from Change** | When a deliverable slips significantly, AI proposes a revised roadmap (dates + at-risk flags updated); user reviews diff and accepts/rejects |
 
 **Stack additions:** `@slack/bolt`, `@octokit/webhooks`, Stripe SDK
 
@@ -176,10 +285,11 @@ Use the accumulated historical corpus to build intelligence that improves over t
 | Layer | Current | Added by Phase |
 |---|---|---|
 | Frontend | Vanilla JS + Vite | React 19 + TypeScript + React Router + TanStack Query *(Phase 1)* |
-| API | Fastify 5 skeleton | Domain routes + `@fastify/swagger` *(Phase 2)*, WebSocket *(Phase 3)* |
+| AI (client) | — | Claude API via user-provided key, AI Roadmap Builder *(Phase 1)* |
+| API | Fastify 5 skeleton | Domain routes + `@fastify/swagger` *(Phase 2)*, AI proxy *(Phase 2)* |
+| AI (server) | — | `@anthropic-ai/sdk` (Haiku + Sonnet) *(Phase 2)* |
 | Database | PostgreSQL 16 + RLS | `pgvector` *(Phase 6)* |
 | Auth | Auth0 JWT | — |
-| AI | — | `@anthropic-ai/sdk` (Haiku + Sonnet) *(Phase 4)* |
 | Jobs | — | `pg-boss` *(Phase 4)*, `node-cron` worker service *(Phase 3)* |
 | Email | — | Resend *(Phase 2)* |
 | Integrations | — | `@slack/bolt`, `@octokit/webhooks`, Stripe *(Phase 5)* |
