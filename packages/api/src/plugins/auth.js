@@ -25,7 +25,7 @@ async function authPlugin(fastify) {
       if (testSub != null && testSub !== '') {
         request.user = {
           sub: testSub,
-          email: 'test@example.com',
+          email: `${testSub}@test.example.com`,
           name: 'Test User',
         };
         return;
@@ -75,11 +75,8 @@ async function authPlugin(fastify) {
     // setRequestContext populates request.dbClient and request.dbUser if the row
     // already exists; if dbUser is absent the row needs to be created now.
     if (!request.dbUser) {
-      // In test mode, authenticate injects mock users via x-test-user-sub.
-      // These are not real DB users; return the mock data directly without
-      // attempting a DB upsert (which would also fail if multiple test subs
-      // share the same email and the users table has a unique constraint).
-      if (process.env.NODE_ENV === 'test') {
+      // No database configured: fall back to the JWT/mock user data directly.
+      if (!process.env.DATABASE_URL) {
         return { sub: request.user.sub, email: request.user.email, name: request.user.name };
       }
       // DB is available but context couldn't find the user (first login).
