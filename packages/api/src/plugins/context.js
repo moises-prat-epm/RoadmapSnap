@@ -46,8 +46,12 @@ async function contextPlugin(fastify) {
     // Epic 1 stub: use hardcoded org from env; skip if not set
     const defaultOrgId = fastify.config.DEFAULT_ORG_ID || process.env.DEFAULT_ORG_ID;
     if (defaultOrgId) {
-      await client.query('SET LOCAL app.current_org_id = $1', [defaultOrgId]);
-      await client.query('SET LOCAL app.current_user_id = $1', [row.id]);
+      // SET LOCAL does not support bound parameters ($1); values must be literal.
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const orgIdSafe = uuidRegex.test(String(defaultOrgId)) ? defaultOrgId : null;
+      const userIdSafe = row.id != null && uuidRegex.test(String(row.id)) ? row.id : null;
+      if (orgIdSafe) await client.query(`SET LOCAL app.current_org_id = '${orgIdSafe}'`);
+      if (userIdSafe) await client.query(`SET LOCAL app.current_user_id = '${userIdSafe}'`);
     }
   });
 
