@@ -115,7 +115,8 @@ function renderRoadmap() {
     const stats = hasSearchFilter ? calculateStats(sourcesForKpi) : calculateStats();
     const upcoming = getUpcomingMilestones();
     const atRiskInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.atRisk).length;
-    const statsForDashboard = Object.assign({}, stats, { atRiskInView });
+    const descopedInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.descoped).length;
+    const statsForDashboard = Object.assign({}, stats, { atRiskInView, descopedInView });
 
     const pageHTML =
         renderFilterBar(state, visibleSources) +

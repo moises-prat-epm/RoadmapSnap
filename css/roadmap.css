@@ -496,6 +496,44 @@ body {
     color: var(--color-risk);
 }
 
+.descoped-summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(128, 128, 128, 0.12);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.descoped-summary.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.descoped-summary.clickable:hover {
+    background: rgba(128, 128, 128, 0.2);
+    border-color: rgba(128, 128, 128, 0.5);
+}
+
+.descoped-summary.clickable.active {
+    background: rgba(128, 128, 128, 0.25);
+    border-color: #666;
+    box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2);
+}
+
+.descoped-summary.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.descoped-summary-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+}
+
 .today-date-container {
     display: flex;
     align-items: center;

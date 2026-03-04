@@ -48,6 +48,7 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
         visible: visibleSources.length,
         hidden: allSources.length - visibleSources.length,
         atRisk: 0,
+        descoped: 0,
         visibleByStatus: {},
         hiddenByStatus: {},
         stateKeys: states.map(s => s.key)
@@ -68,6 +69,7 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
         }
 
         if (source.atRisk) stats.atRisk++;
+        if (source.descoped) stats.descoped++;
 
         if (source.showInTimeline) {
             if (stats.visibleByStatus[status] !== undefined) {

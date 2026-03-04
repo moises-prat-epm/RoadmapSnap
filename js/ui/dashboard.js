@@ -1,7 +1,7 @@
 /**
  * RoadmapSnap — summary dashboard HTML (header, KPI cards, progress bar, milestone cards).
  * Uses html`` tagged template. Depends on window: html, raw, getStates, getLastState, getMilestones,
- * formatShortDate, getTodayDate, filterByStatus, toggleRiskFilter, riskIconSVG, CONFIG.
+ * formatShortDate, getTodayDate, filterByStatus, toggleRiskFilter, toggleDescopedFilter, riskIconSVG, CONFIG.
  */
 import { html, raw, renderIf } from './renderer.js';
 import { getStates, getLastState, getMilestones } from '../core/workflow.js';
@@ -37,6 +37,13 @@ function renderDashboard(state, stats, upcoming, months) {
                 <span class="risk-summary-text">0 At Risk</span>
               </div>`)
             : []);
+
+    var descopedInView = stats.descopedInView != null ? stats.descopedInView : (stats.descoped || 0);
+    var descopedSummaryBlock = descopedInView > 0
+        ? raw(html`<div class="descoped-summary clickable ${state.filter.descopedOnly ? 'active' : ''}" onclick="toggleDescopedFilter(event)" title="Click to filter Descoped items">
+            <span class="descoped-summary-text">${descopedInView} Descoped</span>
+          </div>`)
+        : [];
 
     var kpiCards = statesDef.map(function (s, i) {
         var stateClass = 'state-' + Math.min(i, 7);
@@ -95,6 +102,7 @@ function renderDashboard(state, stats, upcoming, months) {
             </div>
             <div class="header-right">
                 ${riskSummaryBlock}
+                ${descopedSummaryBlock}
                 <div class="today-date-container">
                     <span class="today-date-label">Today:</span>
                     <span class="today-date-value">${formatShortDate(getTodayDate())}</span>

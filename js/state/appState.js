@@ -1,6 +1,6 @@
 const AppState = (() => {
   const DEFAULT_STATE = {
-    filter: { status: 'ALL', riskOnly: false, search: '' },
+    filter: { status: 'ALL', riskOnly: false, descopedOnly: false, search: '' },
     sort: { by: 'm3date', order: 'asc' },
     zoom: 'all',
     showGantt: true,

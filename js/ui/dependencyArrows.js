@@ -21,7 +21,7 @@ function toggleDependencyGraph(sourceName, event) {
         const graphNodes = getDependencyGraph(sourceName).nodes;
         expandGroupsForDependencyGraph(graphNodes);
         AppState.set({
-            filter: { status: 'ALL', riskOnly: false, search: '' }
+            filter: { status: 'ALL', riskOnly: false, descopedOnly: false, search: '' }
         });
     }
 

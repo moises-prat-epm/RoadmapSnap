@@ -19,11 +19,15 @@ function filterDeliverables(sources) {
         if (filter.riskOnly && !source.atRisk) {
             return false;
         }
+        if (filter.descopedOnly && !source.descoped) {
+            return false;
+        }
         if (filter.status !== 'ALL') {
             const status = getCurrentStatus(source);
             if (status !== filter.status) return false;
         }
         if (filter.riskOnly && !source.atRisk) return false;
+        if (filter.descopedOnly && !source.descoped) return false;
         if (filter.search) {
             const searchLower = filter.search.toLowerCase();
             const nameMatch = source.name.toLowerCase().includes(searchLower);
@@ -119,9 +123,9 @@ function filterByStatus(status, event) {
     if (event) event.stopPropagation();
     const filter = AppState.get().filter;
     if (filter.status === status) {
-        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false } });
+        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false, descopedOnly: false } });
     } else {
-        AppState.set({ filter: { ...filter, status, riskOnly: false } });
+        AppState.set({ filter: { ...filter, status, riskOnly: false, descopedOnly: false } });
     }
     if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
@@ -133,17 +137,25 @@ function clearStatusFilterOnOutsideClick(event) {
     const clickedExportControls = event.target.closest('.export-controls');
     const clickedInfoLink = event.target.closest('.info-link');
     const clickedDataSourceRow = event.target.closest('.data-source-row');
+    const clickedDescopedSummary = event.target.closest('.descoped-summary.clickable');
     const filter = AppState.get().filter;
-    if (clickedKpi || clickedRiskSummary || clickedFilterBar || clickedExportControls || clickedInfoLink || clickedDataSourceRow) return;
-    if (filter.status !== 'ALL' || filter.riskOnly) {
-        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false } });
+    if (clickedKpi || clickedRiskSummary || clickedDescopedSummary || clickedFilterBar || clickedExportControls || clickedInfoLink || clickedDataSourceRow) return;
+    if (filter.status !== 'ALL' || filter.riskOnly || filter.descopedOnly) {
+        AppState.set({ filter: { ...filter, status: 'ALL', riskOnly: false, descopedOnly: false } });
     }
 }
 
 function toggleRiskFilter(event) {
     if (event) event.stopPropagation();
     const filter = AppState.get().filter;
-    AppState.set({ filter: { ...filter, riskOnly: !filter.riskOnly } });
+    AppState.set({ filter: { ...filter, riskOnly: !filter.riskOnly, descopedOnly: false } });
+    if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
+}
+
+function toggleDescopedFilter(event) {
+    if (event) event.stopPropagation();
+    const filter = AppState.get().filter;
+    AppState.set({ filter: { ...filter, descopedOnly: !filter.descopedOnly, riskOnly: false } });
     if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
@@ -163,7 +175,7 @@ function renderFilterBar(state, sources) {
     var entityScopeLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && CONFIG.ENTITY_LABELS.scopeLabel) ? CONFIG.ENTITY_LABELS.scopeLabel : 'items';
     var hasGroups = hasAnyGroups(sources);
     var lastMilestoneKey = getLastMilestoneKey();
-    var hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.search;
+    var hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.descopedOnly || state.filter.search;
     var ganttSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
     return html`<div class="filter-bar">
         <div class="filter-group">
@@ -222,5 +234,6 @@ window.clearFilters = clearFilters;
 window.filterByStatus = filterByStatus;
 window.clearStatusFilterOnOutsideClick = clearStatusFilterOnOutsideClick;
 window.toggleRiskFilter = toggleRiskFilter;
+window.toggleDescopedFilter = toggleDescopedFilter;
 window.toggleGanttBars = toggleGanttBars;
 window.renderFilterBar = renderFilterBar;
