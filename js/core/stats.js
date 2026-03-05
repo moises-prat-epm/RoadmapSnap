@@ -34,7 +34,9 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
     const config = configOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG : {});
 
     const allSources = getFilterableDeliverablesFrom(deliverables, config);
-    const visibleSources = allSources.filter(source => source.showInTimeline !== false);
+    // KPIs exclude descoped items: only count non-descoped for totals, state counts, and progress
+    const kpiSources = allSources.filter(source => !source.descoped);
+    const visibleSources = kpiSources.filter(source => source.showInTimeline !== false);
 
     const states = workflow
         ? workflow.filter(item => item.type === 'state')
@@ -44,9 +46,9 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
         : getLastState();
 
     const stats = {
-        total: allSources.length,
+        total: kpiSources.length,
         visible: visibleSources.length,
-        hidden: allSources.length - visibleSources.length,
+        hidden: kpiSources.length - visibleSources.length,
         atRisk: 0,
         descoped: 0,
         visibleByStatus: {},
@@ -60,7 +62,12 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
         stats.hiddenByStatus[s.key] = 0;
     });
 
+    // Count descoped from full set (for filter pill); all other counts from kpiSources (non-descoped)
     allSources.forEach(source => {
+        if (source.descoped) stats.descoped++;
+    });
+
+    kpiSources.forEach(source => {
         const status = workflow != null && todayStr != null
             ? getCurrentStatus(source, workflow, todayStr)
             : getCurrentStatus(source);
@@ -69,7 +76,7 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
         }
 
         if (source.atRisk) stats.atRisk++;
-        if (source.descoped) stats.descoped++;
+        // descoped already counted above from allSources
 
         if (source.showInTimeline) {
             if (stats.visibleByStatus[status] !== undefined) {
