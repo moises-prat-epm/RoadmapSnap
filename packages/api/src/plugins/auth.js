@@ -67,9 +67,8 @@ async function authPlugin(fastify) {
     }
   });
 
-  fastify.get('/auth/me', {
-    preHandler: [fastify.authenticate, fastify.setRequestContext],
-  }, async (request) => request.user);
+  const { registerAuthRoutes } = await import('../routes/auth.js');
+  await registerAuthRoutes(fastify);
 }
 
 export default authPlugin;
