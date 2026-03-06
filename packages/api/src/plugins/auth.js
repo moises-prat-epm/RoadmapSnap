@@ -18,8 +18,9 @@ async function authPlugin(fastify) {
   const JWKS = createRemoteJWKSet(new URL(jwksUrl));
 
   fastify.decorate('authenticate', async function authenticate(request, reply) {
-    // TEST MODE ONLY — never active in production
-    if (process.env.NODE_ENV === 'test') {
+    // Test / dev: allow X-Test-User-Sub to bypass JWT (never active when NODE_ENV=production)
+    const allowTestHeader = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
+    if (allowTestHeader) {
       const testSub = request.headers['x-test-user-sub'];
       if (testSub != null && testSub !== '') {
         request.user = {
@@ -69,6 +70,8 @@ async function authPlugin(fastify) {
 
   const { registerAuthRoutes } = await import('../routes/auth.js');
   await registerAuthRoutes(fastify);
+  const workspacesRoutes = (await import('../routes/workspaces.js')).default;
+  await fastify.register(workspacesRoutes, { prefix: '/api/v1' });
 }
 
 export default authPlugin;

@@ -125,6 +125,30 @@ async function contextPlugin(fastify) {
       }
     }
 
+    // Development: if user has no org, get-or-create a default dev org and add user as admin
+    if (!resolvedOrgId && process.env.NODE_ENV === 'development') {
+      const setupClient = await pool.connect();
+      try {
+        await setupClient.query('SET LOCAL row_security = off');
+        const devOrg = await setupClient.query(
+          `INSERT INTO organizations (name, slug, plan) VALUES ('Dev Default', 'dev-default', 'trial')
+           ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`
+        );
+        const devOrgId = devOrg.rows[0]?.id;
+        if (devOrgId) {
+          await setupClient.query(
+            `INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'admin')
+             ON CONFLICT (org_id, user_id) DO UPDATE SET role = 'admin'`,
+            [devOrgId, row.id]
+          );
+          resolvedOrgId = devOrgId;
+          role = 'admin';
+        }
+      } finally {
+        setupClient.release();
+      }
+    }
+
     request.dbUser = {
       id: row.id,
       email: row.email,
