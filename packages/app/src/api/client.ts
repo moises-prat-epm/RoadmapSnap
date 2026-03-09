@@ -83,6 +83,13 @@ export class ApiClient {
     body?: unknown
   ): Promise<T> {
     const token = await this.getAccessToken()
+    if (!token || typeof token !== 'string' || token.trim() === '') {
+      throw new ApiError(401, 'No access token available. Please sign in again.')
+    }
+    const parts = token.split('.')
+    if (parts.length !== 3) {
+      throw new ApiError(401, 'Invalid access token format. Please sign in again.')
+    }
     const url = this.baseUrl + path
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,

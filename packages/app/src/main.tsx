@@ -18,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         redirect_uri: (import.meta.env.VITE_AUTH0_REDIRECT_URI || window.location.origin) + '/callback',
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
       }}
+      cacheLocation="localstorage"
     >
       <QueryClientProvider client={queryClient}>
         <App />

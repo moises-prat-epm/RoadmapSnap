@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth0 } from '@auth0/auth0-react'
 import LoginPage from './pages/LoginPage'
@@ -5,13 +6,61 @@ import CallbackPage from './pages/CallbackPage'
 import DashboardPage from './pages/DashboardPage'
 import AuthGuard from './auth/AuthGuard'
 
+const LOADING_TIMEOUT_MS = 12_000
+
 export default function App() {
   const { isLoading } = useAuth0()
-  if (isLoading) return (
-    <div className="flex h-screen items-center justify-center">
-      <div className="text-gray-500">Loading...</div>
-    </div>
-  )
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false)
+
+  useEffect(() => {
+    if (!isLoading) return
+    const t = setTimeout(() => setLoadingTimedOut(true), LOADING_TIMEOUT_MS)
+    return () => clearTimeout(t)
+  }, [isLoading])
+
+  useEffect(() => {
+    if (!isLoading) setLoadingTimedOut(false)
+  }, [isLoading])
+
+  if (isLoading && !loadingTimedOut) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+      </div>
+    )
+  }
+
+  if (loadingTimedOut) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+        <p className="text-gray-600 dark:text-gray-300 text-center mb-6 max-w-sm">
+          Taking longer than usual. You can try signing in again or continue to the app.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <a
+            href="/login"
+            className="rounded-lg bg-blue-600 px-6 py-2.5 text-white font-medium hover:bg-blue-700 text-center"
+          >
+            Sign in
+          </a>
+          <a
+            href="/dashboard"
+            className="rounded-lg border border-gray-300 dark:border-gray-600 px-6 py-2.5 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 text-center"
+          >
+            Continue to app
+          </a>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
+          >
+            Refresh page
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <BrowserRouter>
       <Routes>

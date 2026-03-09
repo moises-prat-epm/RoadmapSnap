@@ -13,7 +13,7 @@ export function useCurrentUser() {
 }
 
 export function useRole() {
-  const { data } = useCurrentUser()
+  useCurrentUser() // for future: derive role from me or workspace context
   // role is returned in WorkspaceWithProjects response in a later step
   // For now derive from the me endpoint — will be workspace-scoped in Epic 3
   return {
