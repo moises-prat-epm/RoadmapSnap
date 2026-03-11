@@ -6,12 +6,16 @@ import { calculateStats, getTodayStr } from '../lib/stats'
 import type { Project } from '../api/client'
 import AppShell from '../components/layout/AppShell'
 import KpiCards from '../components/dashboard/KpiCards'
+import GanttTimeline from '../components/timeline/GanttTimeline'
+
+type TabId = 'dashboard' | 'timeline' | 'projects'
 
 export default function DashboardPage() {
   const { data: userData } = useCurrentUser()
   const { data: workspacesData, isLoading: workspacesLoading, error: workspacesError, refetch: refetchWorkspaces } = useWorkspaces()
   const workspaces = workspacesData?.workspaces ?? []
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabId>('dashboard')
 
   const effectiveWorkspaceId = selectedWorkspaceId ?? (workspaces[0]?.id ?? null)
   const { data: projectsData, isLoading: projectsLoading, error: projectsError, refetch: refetchProjects } = useWorkspaceProjects(effectiveWorkspaceId)
@@ -67,6 +71,12 @@ export default function DashboardPage() {
     </select>
   )
 
+  const tabs: { id: TabId; label: string }[] = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'projects', label: 'Projects' },
+  ]
+
   return (
     <AppShell workspaceName={workspaceName} workspaceSelector={workspaceSelector}>
       {error && (
@@ -104,22 +114,58 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!error && !isLoading && stats && (
+      {!error && !isLoading && (workspaces.length > 0 || projectsData) && (
         <div className="space-y-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <KpiCards stats={stats} workflow={workflow} />
+
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-700">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 text-sm font-medium rounded-t border-b-2 -mb-px transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'dashboard' && (
+            <>
+              {stats ? (
+                <KpiCards stats={stats} workflow={workflow} />
+              ) : workspaces.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400">No workspaces yet. Create one to get started.</p>
+              ) : effectiveWorkspaceId && projectsData && projects.length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400">No projects in this workspace yet.</p>
+              ) : null}
+            </>
+          )}
+
+          {activeTab === 'timeline' && workspace && (
+            <GanttTimeline
+              projects={projects}
+              workspace={workspace}
+            />
+          )}
+
+          {activeTab === 'timeline' && !workspace && projectsData && (
+            <p className="text-gray-500 dark:text-gray-400">Select a workspace to view the timeline.</p>
+          )}
+
+          {activeTab === 'projects' && (
+            <p className="text-gray-500 dark:text-gray-400">Projects view — coming soon.</p>
+          )}
         </div>
       )}
 
-      {!error && !isLoading && !stats && workspaces.length === 0 && (
+      {!error && !isLoading && !projectsData && workspaces.length === 0 && (
         <p className="text-gray-500 dark:text-gray-400">No workspaces yet. Create one to get started.</p>
-      )}
-
-      {!error && !isLoading && !stats && workspaces.length > 0 && effectiveWorkspaceId && projectsData && projects.length === 0 && (
-        <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="text-gray-500 dark:text-gray-400">No projects in this workspace yet.</p>
-        </div>
       )}
     </AppShell>
   )

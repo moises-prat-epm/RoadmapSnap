@@ -78,6 +78,15 @@ async function contextPlugin(fastify) {
           throw err;
         }
       }
+      // Add new user to seed org if it exists so they can see seeded workspaces
+      if (userRow.rowCount > 0) {
+        await client.query(
+          `INSERT INTO org_members (org_id, user_id, role)
+           SELECT o.id, $1, 'admin' FROM organizations o WHERE o.slug = 'config-seed-org' LIMIT 1
+           ON CONFLICT (org_id, user_id) DO NOTHING`,
+          [userRow.rows[0].id]
+        );
+      }
     }
 
     if (userRow.rowCount === 0) {
@@ -115,8 +124,13 @@ async function contextPlugin(fastify) {
     }
 
     if (!resolvedOrgId) {
+      // Prefer an org that has at least one workspace so users see seeded data when present
       const firstOrg = await client.query(
-        'SELECT org_id, role FROM org_members WHERE user_id = $1 ORDER BY created_at ASC LIMIT 1',
+        `SELECT om.org_id, om.role
+         FROM org_members om
+         WHERE om.user_id = $1
+         ORDER BY (SELECT COUNT(*) FROM workspaces w WHERE w.org_id = om.org_id) DESC, om.created_at ASC
+         LIMIT 1`,
         [row.id]
       );
       if (firstOrg.rowCount > 0) {
