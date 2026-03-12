@@ -1,0 +1,11 @@
+{
+  "name": "@roadmapsnap/tokens",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "tokens.js",
+  "exports": {
+    ".": "./tokens.js",
+    "./css": "./tokens.css",
+    "./components.css": "./components.css"
+  }
+}

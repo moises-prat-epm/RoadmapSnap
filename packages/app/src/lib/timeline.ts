@@ -13,7 +13,7 @@ export interface WorkflowMilestone {
   type: 'milestone'
   key: string
   short: string
-  title?: string
+  title: string
   subtitle?: string
 }
 
@@ -39,7 +39,9 @@ export interface MilestoneMarker {
 export interface GanttSegment {
   startPct: number
   widthPct: number
-  className: string
+  /** For shared CSS: 'start' | 'm0' | 'm1' | ... | 'm5' */
+  segmentClass: string
+  isFuture: boolean
 }
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -252,7 +254,8 @@ export function buildGanttSegments(
   return segments.map((seg) => ({
     startPct: seg.left,
     widthPct: seg.width,
-    className: seg.isFuture ? 'gantt-future' : 'gantt-past',
+    segmentClass: seg.segmentClass, // 'segment-start' | 'segment-m0' | ...
+    isFuture: seg.isFuture,
   }))
 }
 

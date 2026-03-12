@@ -4,11 +4,19 @@ import { useWorkspaceProjects } from '../hooks/useWorkspace'
 import { useCurrentUser } from '../hooks/useRole'
 import { calculateStats, getTodayStr } from '../lib/stats'
 import type { Project } from '../api/client'
+import type { GanttFilter } from '../components/timeline/GanttTimeline'
 import AppShell from '../components/layout/AppShell'
 import KpiCards from '../components/dashboard/KpiCards'
 import GanttTimeline from '../components/timeline/GanttTimeline'
 
 type TabId = 'dashboard' | 'timeline' | 'projects'
+
+const defaultFilter: GanttFilter = {
+  search: '',
+  statusFilter: 'ALL',
+  riskOnly: false,
+  descopedOnly: false,
+}
 
 export default function DashboardPage() {
   const { data: userData } = useCurrentUser()
@@ -16,6 +24,7 @@ export default function DashboardPage() {
   const workspaces = workspacesData?.workspaces ?? []
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('dashboard')
+  const [filter, setFilter] = useState<GanttFilter>(defaultFilter)
 
   const effectiveWorkspaceId = selectedWorkspaceId ?? (workspaces[0]?.id ?? null)
   const { data: projectsData, isLoading: projectsLoading, error: projectsError, refetch: refetchProjects } = useWorkspaceProjects(effectiveWorkspaceId)
@@ -42,11 +51,13 @@ export default function DashboardPage() {
   const projects = projectsData?.projects ?? []
 
   const projectsForStats: Array<{
+    name?: string
     milestones: Record<string, string>
     at_risk: boolean
     show_in_timeline: boolean
     descoped: boolean
   }> = projects.map((p: Project) => ({
+    name: p.name,
     milestones: p.milestones ?? {},
     at_risk: p.at_risk,
     show_in_timeline: p.show_in_timeline,
@@ -138,7 +149,27 @@ export default function DashboardPage() {
           {activeTab === 'dashboard' && (
             <>
               {stats ? (
-                <KpiCards stats={stats} workflow={workflow} />
+                <KpiCards
+                  stats={stats}
+                  workflow={workflow}
+                  onFilterByStatus={(key) =>
+                    setFilter((f) => ({
+                      ...f,
+                      statusFilter: f.statusFilter === key ? 'ALL' : key,
+                      riskOnly: false,
+                      descopedOnly: false,
+                    }))
+                  }
+                  onToggleRisk={() =>
+                    setFilter((f) => ({ ...f, riskOnly: !f.riskOnly, descopedOnly: false }))
+                  }
+                  onToggleDescoped={() =>
+                    setFilter((f) => ({ ...f, descopedOnly: !f.descopedOnly, riskOnly: false }))
+                  }
+                  activeStatusFilter={filter.statusFilter}
+                  riskOnly={filter.riskOnly}
+                  descopedOnly={filter.descopedOnly}
+                />
               ) : workspaces.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400">No workspaces yet. Create one to get started.</p>
               ) : effectiveWorkspaceId && projectsData && projects.length === 0 ? (
@@ -151,6 +182,8 @@ export default function DashboardPage() {
             <GanttTimeline
               projects={projects}
               workspace={workspace}
+              filter={filter}
+              onFilterChange={setFilter}
             />
           )}
 

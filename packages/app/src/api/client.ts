@@ -12,6 +12,13 @@ export interface MilestoneMap {
   [key: string]: string
 }
 
+/** Dependency from API (task name; optional from/to milestone keys later) */
+export interface ProjectDependency {
+  task: string
+  from?: string
+  to?: string
+}
+
 export interface Project {
   id: string
   name: string
@@ -23,6 +30,8 @@ export interface Project {
   external_link: string | null
   display_order: number
   milestones: MilestoneMap
+  /** Inbound/outbound dependency task names (from API); empty if none */
+  dependencies?: ProjectDependency[]
 }
 
 export interface WorkflowItem {

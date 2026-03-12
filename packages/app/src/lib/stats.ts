@@ -13,6 +13,7 @@ export interface WorkflowItem {
 }
 
 export interface ProjectForStats {
+  name?: string
   milestones: Record<string, string>
   at_risk?: boolean
   show_in_timeline?: boolean
@@ -22,6 +23,7 @@ export interface ProjectForStats {
 export interface StatsResult {
   total: number
   atRisk: number
+  descoped: number
   completionPercentage: number
   visibleByStatus: Record<string, number>
   stateKeys: string[]
@@ -124,6 +126,7 @@ export function calculateStats(
   const lastStateKey = lastState.key
 
   const kpiProjects = projects.filter((p) => !p.descoped)
+  const descoped = projects.filter((p) => p.descoped).length
   const visibleByStatus: Record<string, number> = {}
   states.forEach((s) => {
     visibleByStatus[s.key] = 0
@@ -142,8 +145,45 @@ export function calculateStats(
   return {
     total,
     atRisk,
+    descoped,
     completionPercentage,
     visibleByStatus,
     stateKeys: states.map((s) => s.key),
   }
+}
+
+export interface UpcomingMilestone {
+  source: string
+  date: string
+  atRisk: boolean
+}
+
+/** For each workflow milestone, the nearest future (or today) project date. */
+export function getUpcomingMilestones(
+  projects: ProjectForStats[],
+  workflow: WorkflowItem[],
+  todayStr: string
+): Record<string, UpcomingMilestone | undefined> {
+  const today = parseDate(todayStr)
+  const milestones = getMilestones(workflow)
+  const visible = projects.filter((p) => p.show_in_timeline !== false)
+  const result: Record<string, UpcomingMilestone | undefined> = {}
+  milestones.forEach((m) => {
+    let nearest: UpcomingMilestone | null = null
+    let nearestDate: Date | null = null
+    visible.forEach((proj) => {
+      const name = proj.name
+      if (!name) return
+      const dateStr = getMilestoneDate(proj, m.key, workflow)
+      const date = parseDate(dateStr)
+      if (date && today && date >= today) {
+        if (!nearestDate || date < nearestDate) {
+          nearestDate = date
+          nearest = { source: name, date: dateStr!, atRisk: proj.at_risk ?? false }
+        }
+      }
+    })
+    if (nearest) result[m.key] = nearest
+  })
+  return result
 }

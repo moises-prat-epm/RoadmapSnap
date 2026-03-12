@@ -368,6 +368,21 @@ export default async function workspacesRoutes(fastify) {
        ORDER BY p.display_order, p.name, m.milestone_key`,
       [request.params.workspaceId]
     );
+    const depResult = await client.query(
+      `SELECT d.to_project_id, p_from.name AS from_name, d.from_milestone_key, d.to_milestone_key
+       FROM dependencies d
+       JOIN projects p_from ON p_from.id = d.from_project_id
+       WHERE d.to_project_id IN (SELECT id FROM projects WHERE workspace_id = $1)`,
+      [request.params.workspaceId]
+    );
+    const inboundByProject = new Map();
+    for (const row of depResult.rows) {
+      if (!inboundByProject.has(row.to_project_id)) inboundByProject.set(row.to_project_id, []);
+      const dep = { task: row.from_name };
+      if (row.from_milestone_key != null) dep.from = row.from_milestone_key;
+      if (row.to_milestone_key != null) dep.to = row.to_milestone_key;
+      inboundByProject.get(row.to_project_id).push(dep);
+    }
     const byProject = new Map();
     for (const r of projResult.rows) {
       if (!byProject.has(r.id)) {
@@ -382,7 +397,7 @@ export default async function workspacesRoutes(fastify) {
           external_link: r.external_link ?? null,
           display_order: r.display_order ?? 0,
           milestones: {},
-          dependencies: [],
+          dependencies: inboundByProject.get(r.id) ?? [],
         });
       }
       const proj = byProject.get(r.id);

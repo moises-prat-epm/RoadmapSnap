@@ -1,3 +1,117 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Dark mode: use design tokens when .dark is on html (SaaS theme toggle) */
+html.dark {
+  color-scheme: dark;
+}
+html.dark body,
+html.dark #root {
+  background: var(--color-bg-page);
+  color: var(--color-text-dark);
+}
+
+/* Timeline toolbar (no sticky/floating in SaaS) */
+.filter-bar {
+  margin: 0 auto 12px auto;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-white, #fff);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.filter-select,
+.filter-input {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white, #fff);
+  color: var(--color-text-dark);
+}
+.filter-input {
+  width: 160px;
+}
+.filter-toggle {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white, #fff);
+  color: var(--color-text-dark);
+  cursor: pointer;
+}
+.filter-toggle.active {
+  background: rgba(222, 53, 11, 0.1);
+  border-color: var(--color-risk);
+  color: var(--color-risk);
+}
+.filter-clear {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  background: var(--color-bg-secondary, #f4f5f7);
+  color: var(--color-text-light);
+  cursor: pointer;
+}
+.group-controls {
+  display: flex;
+  gap: 6px;
+}
+.group-control-btn {
+  padding: 6px 10px;
+  font-size: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white, #fff);
+  cursor: pointer;
+}
+.export-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.export-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-primary, #0065ff);
+  color: white;
+  cursor: pointer;
+}
+.export-btn.secondary {
+  background: var(--color-bg-secondary, #6b778c);
+}
+.timeline-export-wrapper {
+  min-height: 200px;
+}
+
+/* Dependency icon as button: keep icon look, no default button chrome */
+button.dependency-icon {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  background: inherit;
+}

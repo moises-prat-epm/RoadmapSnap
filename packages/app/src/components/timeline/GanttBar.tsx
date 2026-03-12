@@ -2,25 +2,24 @@ import type { GanttSegment } from '../../lib/timeline'
 
 interface GanttBarProps {
   segments: GanttSegment[]
+  /** Tooltip shown when hovering over the bar (milestone dates) */
+  title?: string
 }
 
-export default function GanttBar({ segments }: GanttBarProps) {
+export default function GanttBar({ segments, title }: GanttBarProps) {
   return (
-    <div className="absolute inset-0 flex">
+    <>
       {segments.map((seg, i) => (
         <div
           key={i}
-          className={`absolute top-0 h-full rounded-sm ${
-            seg.className === 'gantt-past'
-              ? 'bg-emerald-500 dark:bg-emerald-600'
-              : 'bg-slate-200 dark:bg-slate-600'
-          }`}
+          className={`gantt-bar ${seg.segmentClass} ${seg.isFuture ? 'gantt-future' : ''}`}
           style={{
             left: `${seg.startPct}%`,
             width: `${seg.widthPct}%`,
           }}
+          title={title}
         />
       ))}
-    </div>
+    </>
   )
 }

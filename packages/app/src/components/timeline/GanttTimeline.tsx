@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import type { Project, Workspace, WorkflowItem } from '../../api/client'
 import {
   generateMonths,
@@ -6,13 +6,18 @@ import {
   getTodayStr,
   buildMilestoneMarkers,
   buildGanttSegments,
+  formatDateDisplay,
   type MonthInfo,
   type ProjectLike,
   type WorkflowMilestone,
 } from '../../lib/timeline'
 import { getCurrentStatus } from '../../lib/stats'
+import { exportToPNG, exportToCSV, exportToJSON } from '../../lib/export'
+import { getDependencyGraph } from '../../lib/dependencyGraph'
 import GanttBar from './GanttBar'
 import MilestoneMarkerComponent from './MilestoneMarker'
+import KeyMilestones from './KeyMilestones'
+import DependencyArrows from './DependencyArrows'
 
 export type ZoomPreset = '3m' | '6m' | '12m' | 'all'
 
@@ -20,12 +25,14 @@ export interface GanttFilter {
   search: string
   statusFilter: string
   riskOnly: boolean
+  descopedOnly: boolean
 }
 
 interface GanttTimelineProps {
   projects: Project[]
   workspace: Workspace | null
   filter?: GanttFilter
+  onFilterChange?: (f: GanttFilter) => void
   zoom?: ZoomPreset
 }
 
@@ -44,14 +51,36 @@ function projectToProjectLike(p: Project): ProjectLike {
   }
 }
 
+/** 'inbound' | 'outbound' | 'both' | null when no deps */
+function getDependencyType(project: Project, allProjects: Project[]): 'inbound' | 'outbound' | 'both' | null {
+  const inbound = project.dependencies?.length ?? 0
+  const outbound = allProjects.filter(
+    (p) => p.id !== project.id && p.dependencies?.some((d) => (typeof d === 'string' ? d : d.task) === project.name)
+  ).length
+  if (inbound > 0 && outbound > 0) return 'both'
+  if (inbound > 0) return 'inbound'
+  if (outbound > 0) return 'outbound'
+  return null
+}
+
 export default function GanttTimeline({
   projects,
   workspace,
-  filter = { search: '', statusFilter: 'ALL', riskOnly: false },
+  filter = { search: '', statusFilter: 'ALL', riskOnly: false, descopedOnly: false },
+  onFilterChange,
   zoom: zoomProp = 'all',
 }: GanttTimelineProps) {
   const [zoom, setZoom] = useState<ZoomPreset>(zoomProp)
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  const [activeDependencyGraph, setActiveDependencyGraph] = useState<string | null>(null)
+  const timelineContainerRef = useRef<HTMLDivElement>(null)
+  const arrowsContainerRef = useRef<HTMLDivElement>(null)
+  const safeFilter = filter ?? { search: '', statusFilter: 'ALL', riskOnly: false, descopedOnly: false }
+  const hasActiveFilters =
+    safeFilter.statusFilter !== 'ALL' ||
+    safeFilter.riskOnly ||
+    safeFilter.descopedOnly ||
+    !!safeFilter.search?.trim()
 
   const workflow = workspace?.workflow_definition ?? []
   const workflowMilestones = useMemo(() => getWorkflowMilestones(workflow), [workflow])
@@ -94,24 +123,27 @@ export default function GanttTimeline({
 
   const filteredProjects = useMemo(() => {
     let list = projects.filter((p) => p.show_in_timeline !== false)
-    if (filter.search.trim()) {
-      const q = filter.search.toLowerCase()
+    if (safeFilter.search.trim()) {
+      const q = safeFilter.search.toLowerCase()
       list = list.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           (p.tags ?? []).some((t) => t.toLowerCase().includes(q))
       )
     }
-    if (filter.statusFilter !== 'ALL') {
+    if (safeFilter.statusFilter !== 'ALL') {
       list = list.filter(
-        (p) => getCurrentStatus(projectToProjectLike(p), workflow, todayStr) === filter.statusFilter
+        (p) => getCurrentStatus(projectToProjectLike(p), workflow, todayStr) === safeFilter.statusFilter
       )
     }
-    if (filter.riskOnly) {
+    if (safeFilter.riskOnly) {
       list = list.filter((p) => p.at_risk === true)
     }
+    if (safeFilter.descopedOnly) {
+      list = list.filter((p) => p.descoped === true)
+    }
     return list
-  }, [projects, filter, workflow, todayStr])
+  }, [projects, safeFilter, workflow, todayStr])
 
   const totalDays = useMemo(
     () => visibleMonths.reduce((sum, m) => sum + m.daysInMonth, 0),
@@ -128,7 +160,34 @@ export default function GanttTimeline({
     return groups
   }, [filteredProjects])
 
-  const groupNames = useMemo(() => Object.keys(grouped).sort(), [grouped])
+  const groupOrder = (workspace?.settings as { group_order?: string[] } | undefined)?.group_order
+  const groupNames = useMemo(() => {
+    const names = Object.keys(grouped)
+    if (Array.isArray(groupOrder) && groupOrder.length > 0) {
+      return names.sort((a, b) => {
+        const i = groupOrder.indexOf(a)
+        const j = groupOrder.indexOf(b)
+        if (i === -1 && j === -1) return a.localeCompare(b)
+        if (i === -1) return 1
+        if (j === -1) return -1
+        return i - j
+      })
+    }
+    return names.sort()
+  }, [grouped, groupOrder])
+
+  const dependencyGraph = useMemo(
+    () => (activeDependencyGraph ? getDependencyGraph(activeDependencyGraph, projects) : null),
+    [activeDependencyGraph, projects]
+  )
+  const dependencyGraphNodes = useMemo(
+    () => new Set(dependencyGraph?.nodes ?? []),
+    [dependencyGraph]
+  )
+
+  useEffect(() => {
+    setActiveDependencyGraph(null)
+  }, [safeFilter.search, safeFilter.statusFilter, safeFilter.riskOnly, safeFilter.descopedOnly])
 
   const toggleGroup = (name: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [name]: !prev[name] }))
@@ -142,85 +201,193 @@ export default function GanttTimeline({
     )
   }
 
+  const stateKeys = useMemo(
+    () => workflow.filter((w) => w.type === 'state').map((w) => w.key),
+    [workflow]
+  )
+
+  const clearFilters = () =>
+    onFilterChange?.({
+      search: '',
+      statusFilter: 'ALL',
+      riskOnly: false,
+      descopedOnly: false,
+    })
+
+  const expandAll = () => setCollapsedGroups({})
+  const collapseAll = () => {
+    const next: Record<string, boolean> = {}
+    groupNames.forEach((g) => (next[g] = true))
+    setCollapsedGroups(next)
+  }
+
+  const handleExportPNG = () => {
+    exportToPNG(timelineContainerRef.current, 'Timeline').catch(console.error)
+  }
+  const handleExportCSV = () => exportToCSV(filteredProjects, workflow, todayStr)
+  const handleExportJSON = () =>
+    exportToJSON(filteredProjects, workspace, workflow, todayStr)
+
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
-      {/* Zoom controls */}
-      <div className="flex items-center gap-2 p-2 border-b border-slate-200 dark:border-slate-700">
-        <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Zoom:</span>
-        {(['3m', '6m', '12m', 'all'] as const).map((z) => (
-          <button
-            key={z}
-            type="button"
-            onClick={() => setZoom(z)}
-            className={`px-3 py-1 text-sm rounded ${
-              zoom === z
-                ? 'bg-blue-600 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-            }`}
-          >
-            {z === 'all' ? 'All' : z.toUpperCase()}
-          </button>
-        ))}
+    <div className="timeline-view">
+      {/* Key milestones — above toolbar */}
+      <KeyMilestones projects={projects} workflow={workflow} todayStr={todayStr} />
+
+      {/* State legend */}
+      <div className="state-legend">
+        <div className="state-legend-items">
+          {stateKeys.map((key, i) => {
+            const stateItem = workflow.find((w) => w.type === 'state' && w.key === key)
+            const stateClass = `state-${Math.min(i, 7)}`
+            return (
+              <div key={key} className="state-legend-item">
+                <span className={`state-legend-badge ${stateClass}`}>{stateItem?.short ?? key}</span>
+                <span className="state-legend-label">{stateItem?.title ?? key}</span>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Header row — month columns */}
-      <div className="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80">
-        <div className="w-[200px] shrink-0 py-2 px-3 text-sm font-medium text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700">
-          Project
+      {/* Single toolbar: zoom, search, status, risk, descope, clear, group, export */}
+      <div className="filter-bar">
+        <div className="filter-group zoom-controls">
+          <span className="filter-label">Zoom:</span>
+          {(['3m', '6m', '12m', 'all'] as const).map((z) => (
+            <button
+              key={z}
+              type="button"
+              onClick={() => setZoom(z)}
+              className={`zoom-btn ${zoom === z ? 'active' : ''}`}
+            >
+              {z === 'all' ? 'All' : z.toUpperCase()}
+            </button>
+          ))}
         </div>
-        <div className="flex-1 relative min-w-0">
-          <div className="flex h-full">
-            {visibleMonths.map((m) => (
-              <div
-                key={m.name}
-                className="shrink-0 py-2 px-1 text-center text-xs font-medium text-slate-600 dark:text-slate-400"
-                style={{
-                  width: `${totalDays > 0 ? (m.daysInMonth / totalDays) * 100 : 100 / visibleMonths.length}%`,
-                }}
-              >
-                {m.name}
-              </div>
-            ))}
+        <div className="filter-group">
+          <input
+            type="text"
+            className="filter-input"
+            placeholder="Search by name..."
+            value={safeFilter.search}
+            onChange={(e) => onFilterChange?.({ ...safeFilter, search: e.target.value })}
+          />
+        </div>
+        <div className="filter-group">
+          <span className="filter-label">Status:</span>
+          <select
+            className="filter-select"
+            value={safeFilter.statusFilter}
+            onChange={(e) => onFilterChange?.({ ...safeFilter, statusFilter: e.target.value })}
+          >
+            <option value="ALL">All</option>
+            {stateKeys.map((k) => {
+              const s = workflow.find((w) => w.type === 'state' && w.key === k)
+              return (
+                <option key={k} value={k}>
+                  {s?.short ?? k}
+                </option>
+              )}
+            )}
+          </select>
+        </div>
+        <div className="filter-group">
+          <button
+            type="button"
+            className={`filter-toggle ${safeFilter.riskOnly ? 'active' : ''}`}
+            onClick={() => onFilterChange?.({ ...safeFilter, riskOnly: !safeFilter.riskOnly, descopedOnly: false })}
+          >
+            At Risk
+          </button>
+        </div>
+        <div className="filter-group">
+          <button
+            type="button"
+            className={`filter-toggle ${safeFilter.descopedOnly ? 'active' : ''}`}
+            onClick={() => onFilterChange?.({ ...safeFilter, descopedOnly: !safeFilter.descopedOnly, riskOnly: false })}
+          >
+            Descoped
+          </button>
+        </div>
+        {hasActiveFilters && (
+          <button type="button" className="filter-clear" onClick={clearFilters}>
+            Clear Filters
+          </button>
+        )}
+        {groupNames.length > 0 && (
+          <div className="group-controls">
+            <button type="button" className="group-control-btn" onClick={expandAll}>
+              Expand All
+            </button>
+            <button type="button" className="group-control-btn" onClick={collapseAll}>
+              Collapse All
+            </button>
           </div>
-          {/* Today line */}
+        )}
+        <div className="export-controls">
+          <button type="button" className="export-btn" onClick={handleExportPNG}>
+            Export PNG
+          </button>
+          <button type="button" className="export-btn secondary" onClick={handleExportCSV}>
+            CSV
+          </button>
+          <button type="button" className="export-btn secondary" onClick={handleExportJSON}>
+            JSON
+          </button>
+        </div>
+      </div>
+
+      <div ref={timelineContainerRef} className="timeline-export-wrapper">
+      <div ref={arrowsContainerRef} style={{ position: 'relative' }}>
+      <div className="timeline-header">
+        <div className="timeline-label">Project</div>
+        <div className="timeline-months relative flex-1 flex">
+          {visibleMonths.map((m) => (
+            <div
+              key={m.name}
+              className="month-column flex-1 text-center"
+              style={{
+                width: `${totalDays > 0 ? (m.daysInMonth / totalDays) * 100 : 100 / visibleMonths.length}%`,
+              }}
+            >
+              {m.name}
+            </div>
+          ))}
           {todayPosition != null && (
             <div
-              className="absolute top-0 bottom-0 w-0 border-l-2 border-dashed border-red-500 z-20 pointer-events-none"
+              className="today-guide-line"
               style={{ left: `${todayPosition}%` }}
             />
           )}
         </div>
       </div>
 
-      {/* Project rows by group */}
       {groupNames.map((groupName) => {
         const groupProjects = grouped[groupName]
         const collapsed = collapsedGroups[groupName] ?? false
         return (
           <div key={groupName}>
-            {/* Group header */}
             <button
               type="button"
               onClick={() => toggleGroup(groupName)}
-              className="w-full flex items-center gap-2 py-2 px-3 text-left bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700 border-b border-slate-200 dark:border-slate-700"
+              className="group-header"
             >
-              <svg
-                className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${collapsed ? '' : 'rotate-90'}`}
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-              </svg>
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <div className="group-header-name">
+                <span className={`group-chevron ${collapsed ? 'collapsed' : ''}`}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                  </svg>
+                </span>
                 {groupName}
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {groupProjects.length} item{groupProjects.length !== 1 ? 's' : ''}
-              </span>
+                <span className="group-stats">
+                  {groupProjects.length} item{groupProjects.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div className="group-header-track" />
             </button>
 
             {!collapsed &&
-              groupProjects.map((project, rowIndex) => {
+              groupProjects.map((project) => {
                 const like = projectToProjectLike(project)
                 const segments = buildGanttSegments(
                   like,
@@ -230,52 +397,118 @@ export default function GanttTimeline({
                 )
                 const markers = buildMilestoneMarkers(like, visibleMonths, workflowMilestones)
                 const status = getCurrentStatus(like, workflow, todayStr)
+                const stateIndex = stateKeys.indexOf(status)
+                const stateIndexClamp = stateIndex >= 0 ? Math.min(stateIndex, 7) : 0
                 const stateItem = workflow.find((w) => w.type === 'state' && w.key === status)
-                const bgRow =
-                  rowIndex % 2 === 0
-                    ? 'bg-white dark:bg-slate-800'
-                    : 'bg-gray-50 dark:bg-slate-800/50'
+                const depType = getDependencyType(project, projects)
+                const depTooltip = depType
+                  ? 'Blocked by: ' +
+                    (project.dependencies?.map((d) => (typeof d === 'string' ? d : d.task)).join(', ') ?? '') +
+                    (depType === 'outbound' || depType === 'both'
+                      ? ' | Blocks: ' +
+                        projects
+                          .filter((p) => p.id !== project.id && p.dependencies?.some((d) => (typeof d === 'string' ? d : d.task) === project.name))
+                          .map((p) => p.name)
+                          .join(', ')
+                      : '')
+                  : ''
+                const ganttTooltip = workflowMilestones
+                  .map((m) => {
+                    const dateStr = project.milestones?.[m.key]
+                    return dateStr ? `${m.short}: ${formatDateDisplay(dateStr)}` : null
+                  })
+                  .filter(Boolean)
+                  .join('\n')
+
+                const isInDependencyGraph = dependencyGraphNodes.has(project.name)
+                const isActiveDependency = activeDependencyGraph === project.name
+                const dependencyRowClass =
+                  activeDependencyGraph == null
+                    ? ''
+                    : isActiveDependency
+                      ? 'dependency-active'
+                      : isInDependencyGraph
+                        ? 'dependency-highlight'
+                        : 'dependency-dimmed'
 
                 return (
                   <div
                     key={project.id}
-                    className={`flex items-stretch border-b border-slate-100 dark:border-slate-700/50 ${bgRow}`}
+                    className={`data-source-row ${project.at_risk ? 'at-risk' : ''} ${project.descoped ? 'descoped' : ''} ${dependencyRowClass}`}
                   >
-                    {/* Label column */}
-                    <div className="w-[200px] shrink-0 py-2 px-3 border-r border-slate-200 dark:border-slate-700 flex items-center gap-2">
-                      <div className="min-w-0 flex-1 flex items-center gap-2">
-                        {project.at_risk && (
-                          <span
-                            className="shrink-0 w-2 h-2 rounded-full bg-amber-500"
-                            title="At risk"
-                          />
-                        )}
-                        <span
-                          className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate"
-                          title={project.name}
-                        >
-                          {project.name}
-                        </span>
-                      </div>
-                      {project.group_name && (
-                        <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
-                          {project.group_name}
+                    <div className={`source-name state-${stateIndexClamp}`}>
+                      {project.at_risk && (
+                        <span className="risk-indicator" title="At risk">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z" />
+                          </svg>
                         </span>
                       )}
+                      <span className="source-name-text" title={project.name}>
+                        {project.name}
+                      </span>
+                      {project.external_link?.trim() ? (
+                        <a
+                          className="info-link"
+                          href={project.external_link.trim()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="More info"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm9-3.75a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H12a.75.75 0 01-.75-.75V8.25zm.75 2.25a.75.75 0 00-.75.75v4.5c0 .414.336.75.75.75h.008a.75.75 0 00.75-.75v-4.5a.75.75 0 00-.75-.75H12z" clipRule="evenodd" />
+                          </svg>
+                        </a>
+                      ) : null}
+                      {depType && (
+                        <button
+                          type="button"
+                          className={`dependency-icon ${depType} ${isActiveDependency ? 'active' : ''}`}
+                          title={depTooltip}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setActiveDependencyGraph((prev) => (prev === project.name ? null : project.name))
+                          }}
+                          aria-label={isActiveDependency ? 'Hide dependency graph' : 'Show dependency graph'}
+                        >
+                          {depType === 'inbound' ? (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3v7H6l6 8 6-8h-3.5V3z" /></svg>
+                          ) : depType === 'outbound' ? (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 21v-7H18l-6-8-6 8h3.5v7z" /></svg>
+                          ) : (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5-5 5 5H7zm0 4l5 5 5-5H7z" /></svg>
+                          )}
+                        </button>
+                      )}
                       <span
-                        className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                        className={`status-indicator state-${stateIndexClamp}`}
                         title={stateItem?.title ?? status}
                       >
                         {stateItem?.short ?? status}
                       </span>
                     </div>
 
-                    {/* Timeline track */}
-                    <div className="flex-1 relative min-h-[44px] min-w-0 py-1">
-                      <GanttBar segments={segments} />
+                    <div
+                      className="timeline-track relative"
+                      title={ganttTooltip || undefined}
+                    >
+                      <GanttBar segments={segments} title={ganttTooltip || undefined} />
+                      {visibleMonths.map((_, i) => {
+                        const leftPct =
+                          totalDays > 0
+                            ? (visibleMonths.slice(0, i).reduce((s, mo) => s + mo.daysInMonth, 0) / totalDays) * 100
+                            : (i / visibleMonths.length) * 100
+                        return (
+                          <div
+                            key={i}
+                            className="month-grid-line"
+                            style={{ left: `${leftPct}%` }}
+                          />
+                        )
+                      })}
                       {todayPosition != null && (
                         <div
-                          className="absolute top-0 bottom-0 w-0 border-l-2 border-dashed border-red-500 z-10 pointer-events-none"
+                          className="today-guide-line"
                           style={{ left: `${todayPosition}%` }}
                         />
                       )}
@@ -291,10 +524,19 @@ export default function GanttTimeline({
       })}
 
       {groupNames.length === 0 && (
-        <div className="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+        <div className="py-8 text-center text-color-text-light text-sm">
           No projects match the current filters.
         </div>
       )}
+      <DependencyArrows
+        containerRef={arrowsContainerRef}
+        projects={projects}
+        activeProjectName={activeDependencyGraph}
+        visibleMonths={visibleMonths}
+        workflowMilestones={workflowMilestones}
+      />
+      </div>
+      </div>
     </div>
   )
 }
