@@ -29,6 +29,9 @@ function getMilestoneDateStr(
   return null
 }
 
+/** Match .data-source-row grid: first column width so we don't cover the dependency icon. */
+const LABEL_COLUMN_WIDTH = 250
+
 interface DependencyArrowsProps {
   containerRef: React.RefObject<HTMLElement | null>
   projects: Project[]
@@ -130,10 +133,14 @@ export default function DependencyArrows({
       const curve = Math.min(20, vertDist * 0.2 + 8)
       const midY = (fromY + toY) / 2
       const ctrlX = Math.max(fromX, toX) + curve
+      // Path in track-only coordinates so SVG can sit over track area only (label column stays clickable)
+      const x0 = fromX - LABEL_COLUMN_WIDTH
+      const x1 = toX - LABEL_COLUMN_WIDTH
+      const cx = ctrlX - LABEL_COLUMN_WIDTH
       const d =
         vertDist < 4
-          ? `M ${fromX} ${fromY} L ${toX} ${toY}`
-          : `M ${fromX} ${fromY} Q ${ctrlX} ${midY} ${toX} ${toY}`
+          ? `M ${x0} ${fromY} L ${x1} ${toY}`
+          : `M ${x0} ${fromY} Q ${cx} ${midY} ${x1} ${toY}`
 
       const isInbound = graph.inboundEdges.some(
         (e) => e.from === edge.from && e.to === edge.to
@@ -173,11 +180,11 @@ export default function DependencyArrows({
       id="dependency-arrows-svg"
       style={{
         position: 'absolute',
-        left: 0,
+        left: LABEL_COLUMN_WIDTH,
         top: 0,
-        width: '100%',
+        width: `calc(100% - ${LABEL_COLUMN_WIDTH}px)`,
         height: '100%',
-        zIndex: 10,
+        zIndex: 12,
         pointerEvents: 'auto',
       }}
     >
@@ -225,10 +232,11 @@ export default function DependencyArrows({
             strokeWidth="16"
             fill="none"
             style={{ pointerEvents: 'stroke', cursor: 'default' }}
-            title={path.tooltip}
             onMouseEnter={() => setHoveredPathIndex(i)}
             onMouseLeave={() => setHoveredPathIndex(null)}
-          />
+          >
+            <title>{path.tooltip}</title>
+          </path>
         ))}
       </g>
       {/* Visible arrows; no pointer events so hit area and timeline get events */}
@@ -246,7 +254,9 @@ export default function DependencyArrows({
               fill="none"
               markerEnd={path.type === 'inbound' ? markerEndInbound : markerEndOutbound}
               opacity="0.95"
-            />
+            >
+              <title>{path.tooltip}</title>
+            </path>
           )
         })}
       </g>
