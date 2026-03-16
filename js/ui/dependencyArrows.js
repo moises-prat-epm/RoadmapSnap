@@ -5,7 +5,7 @@
 import AppState from '../state/appState.js';
 import { getDependencyGraph, getAllDataSources } from '../core/dependencies.js';
 import { expandGroupsForDependencyGraph } from './grouping.js';
-import { generateMonths, formatDateDisplay, isDateInRange, calculatePosition } from '../core/timeline.js';
+import { generateMonths, generateVisibleMonthsForZoom, getTodayDate, parseDate, formatDateDisplay, isDateInRange, calculatePosition } from '../core/timeline.js';
 import { getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
 
 function toggleDependencyGraph(sourceName, event) {
@@ -47,7 +47,8 @@ function clearDependencyGraphOnClickOutside(event) {
 }
 
 function drawDependencyArrows() {
-    const activeDependencyGraph = AppState.get().activeDependencyGraph;
+    const state = AppState.get();
+    const activeDependencyGraph = state.activeDependencyGraph;
     if (!activeDependencyGraph) return;
 
     const graph = getDependencyGraph(activeDependencyGraph);
@@ -58,7 +59,7 @@ function drawDependencyArrows() {
 
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.id = 'dependency-arrows-svg';
-    svg.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;';
+    svg.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20;';
     svg.setAttribute('pointer-events', 'none');
 
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -91,6 +92,11 @@ function drawDependencyArrows() {
 
     const containerRect = container.getBoundingClientRect();
 
+    // Use same visible months as timeline (today at beginning + next X months for 3mo/6mo/12mo)
+    const months = (state.zoom === 'all' || !state.zoom)
+        ? generateMonths()
+        : generateVisibleMonthsForZoom(parseDate(getTodayDate()), parseInt(state.zoom, 10));
+
     function getRowElement(name) {
         const rows = container.querySelectorAll('.data-source-row');
         for (const row of rows) {
@@ -101,8 +107,6 @@ function drawDependencyArrows() {
         }
         return null;
     }
-
-    const months = generateMonths();
     const lastMilestoneKey = getLastMilestoneKey();
 
     function getSourceByName(name) {

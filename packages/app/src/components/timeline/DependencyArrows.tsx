@@ -184,7 +184,7 @@ export default function DependencyArrows({
         top: 0,
         width: `calc(100% - ${LABEL_COLUMN_WIDTH}px)`,
         height: '100%',
-        zIndex: 12,
+        zIndex: 20,
         pointerEvents: 'auto',
       }}
     >

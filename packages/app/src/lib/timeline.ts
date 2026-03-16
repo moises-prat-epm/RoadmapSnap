@@ -107,14 +107,55 @@ export function generateMonths(startMonth: string, endMonth: string): MonthInfo[
   return months
 }
 
-/** Position of a date in the timeline as percentage 0..100. */
+/**
+ * Generate visible months for 3M/6M/12M zoom: timeline starts at **today** (today at beginning),
+ * remaining shows the next `count` months. Uses partial first/last month when needed.
+ */
+export function generateVisibleMonthsForZoom(today: Date, count: number): MonthInfo[] {
+  const months: MonthInfo[] = []
+  const startDate = new Date(today.getTime())
+  const endDate = new Date(today.getFullYear(), today.getMonth() + count, today.getDate())
+  const lastDayOfEndMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate()
+  if (endDate.getDate() > lastDayOfEndMonth) endDate.setDate(lastDayOfEndMonth)
+
+  const cur = new Date(startDate.getTime())
+  const end = new Date(endDate.getTime())
+
+  while (cur <= end) {
+    const isFirst = months.length === 0
+    const isLastMonth = cur.getFullYear() === end.getFullYear() && cur.getMonth() === end.getMonth()
+    const monthStart = new Date(cur.getFullYear(), cur.getMonth(), 1)
+    const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0)
+    let segmentStart: Date
+    let daysInSegment: number
+    if (isFirst && startDate.getTime() > monthStart.getTime()) {
+      segmentStart = new Date(startDate.getTime())
+      daysInSegment = Math.ceil((monthEnd.getTime() - segmentStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    } else if (isLastMonth && endDate.getTime() < monthEnd.getTime()) {
+      segmentStart = new Date(monthStart.getTime())
+      daysInSegment = endDate.getDate()
+    } else {
+      segmentStart = new Date(monthStart.getTime())
+      daysInSegment = monthEnd.getDate()
+    }
+    months.push({
+      date: segmentStart,
+      name: getMonthName(cur),
+      daysInMonth: daysInSegment,
+    })
+    cur.setMonth(cur.getMonth() + 1)
+    cur.setDate(1)
+  }
+  return months
+}
+
+/** Position of a date in the timeline as percentage 0..100. Uses sum(daysInMonth) to match grid. */
 export function calculatePosition(dateStr: string | null | undefined, months: MonthInfo[]): number | null {
   const date = parseDate(dateStr)
   if (!date || months.length === 0) return null
   const timelineStart = months[0].date
-  const timelineEnd = new Date(months[months.length - 1].date)
-  timelineEnd.setMonth(timelineEnd.getMonth() + 1)
-  const totalDays = (timelineEnd.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24)
+  const totalDays = months.reduce((sum, m) => sum + m.daysInMonth, 0)
+  if (totalDays <= 0) return null
   const daysFromStart = (date.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24)
   return Math.max(0, Math.min(100, (daysFromStart / totalDays) * 100))
 }
@@ -123,9 +164,10 @@ export function calculatePosition(dateStr: string | null | undefined, months: Mo
 export function isDateInRange(date: Date, months: MonthInfo[]): boolean {
   if (!date || months.length === 0) return false
   const timelineStart = months[0].date
-  const timelineEnd = new Date(months[months.length - 1].date)
-  timelineEnd.setMonth(timelineEnd.getMonth() + 1)
-  return date.getTime() >= timelineStart.getTime() && date.getTime() <= timelineEnd.getTime()
+  const last = months[months.length - 1]
+  const timelineEnd = new Date(last.date)
+  timelineEnd.setDate(timelineEnd.getDate() + last.daysInMonth)
+  return date.getTime() >= timelineStart.getTime() && date.getTime() < timelineEnd.getTime()
 }
 
 function getFirstMilestoneKey(milestones: WorkflowMilestone[]): string {
@@ -146,7 +188,7 @@ export function buildMilestoneMarkers(
   months: MonthInfo[],
   workflowMilestones: WorkflowMilestone[]
 ): MilestoneMarker[] {
-  const MILESTONE_OVERLAP_THRESHOLD_PCT = 4
+  const MILESTONE_OVERLAP_THRESHOLD_PCT = 2
   const firstKey = getFirstMilestoneKey(workflowMilestones)
   const startDate = getMilestoneDate(project, firstKey, firstKey)
   const startMilestone = workflowMilestones.find((m) => m.key === firstKey)

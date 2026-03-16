@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import type { Project, Workspace, WorkflowItem } from '../../api/client'
 import {
   generateMonths,
+  generateVisibleMonthsForZoom,
   calculatePosition,
   getTodayStr,
   buildMilestoneMarkers,
@@ -98,22 +99,8 @@ export default function GanttTimeline({
   const visibleMonths = useMemo((): MonthInfo[] => {
     if (zoom === 'all' || allMonths.length === 0) return allMonths
     const today = new Date()
-    const todayYear = today.getFullYear()
-    const todayMonth = today.getMonth()
-    let startIndex = 0
-    for (let i = 0; i < allMonths.length; i++) {
-      const m = allMonths[i].date
-      if (m.getFullYear() === todayYear && m.getMonth() === todayMonth) {
-        startIndex = i
-        break
-      }
-      if (m.getFullYear() > todayYear || (m.getFullYear() === todayYear && m.getMonth() > todayMonth)) {
-        startIndex = i
-        break
-      }
-    }
     const count = zoom === '3m' ? 3 : zoom === '6m' ? 6 : 12
-    return allMonths.slice(startIndex, startIndex + count)
+    return generateVisibleMonthsForZoom(today, count)
   }, [allMonths, zoom])
 
   const todayPosition = useMemo(
@@ -257,7 +244,10 @@ export default function GanttTimeline({
             <button
               key={z}
               type="button"
-              onClick={() => setZoom(z)}
+              onClick={() => {
+                setZoom(z)
+                setActiveDependencyGraph(null)
+              }}
               className={`zoom-btn ${zoom === z ? 'active' : ''}`}
             >
               {z === 'all' ? 'All' : z.toUpperCase()}
@@ -342,17 +332,21 @@ export default function GanttTimeline({
       <div className="timeline-header">
         <div className="timeline-label">Project</div>
         <div className="timeline-months relative flex-1 flex">
-          {visibleMonths.map((m) => (
-            <div
-              key={m.name}
-              className="month-column flex-1 text-center"
-              style={{
-                width: `${totalDays > 0 ? (m.daysInMonth / totalDays) * 100 : 100 / visibleMonths.length}%`,
-              }}
-            >
-              {m.name}
-            </div>
-          ))}
+          {visibleMonths.map((m) => {
+            const pct = totalDays > 0 ? (m.daysInMonth / totalDays) * 100 : 100 / visibleMonths.length
+            return (
+              <div
+                key={m.name}
+                className="month-column text-center"
+                style={{
+                  flex: `0 0 ${pct}%`,
+                  width: `${pct}%`,
+                }}
+              >
+                {m.name}
+              </div>
+            )
+          })}
           {todayPosition != null && (
             <div
               className="today-guide-line"

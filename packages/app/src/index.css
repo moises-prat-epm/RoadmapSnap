@@ -12,7 +12,7 @@ html.dark #root {
   color: var(--color-text-dark);
 }
 
-/* Timeline toolbar (no sticky/floating in SaaS) */
+/* Timeline toolbar: above dependency arrows when sticky/overlap */
 .filter-bar {
   margin: 0 auto 12px auto;
   padding: 12px 16px;
@@ -23,6 +23,8 @@ html.dark #root {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 20;
 }
 .filter-group {
   display: flex;

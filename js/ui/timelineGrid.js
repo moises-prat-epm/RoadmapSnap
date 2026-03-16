@@ -16,9 +16,11 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
     var statesDef = getStates();
     var milestonesDef = getMilestones();
     var lastMilestoneKey = getLastMilestoneKey();
-    var monthWidth = months.length ? 100 / months.length : 0;
+    var totalDays = months.length ? months.reduce(function (s, m) { return s + m.daysInMonth; }, 0) : 0;
     var gridLinesHTML = months.slice(1).map(function (m, i) {
-        return '<div class="month-grid-line" style="left: ' + (i + 1) * monthWidth + '%;"></div>';
+        var cumDays = months.slice(0, i + 1).reduce(function (s, mo) { return s + mo.daysInMonth; }, 0);
+        var leftPct = totalDays ? (cumDays / totalDays) * 100 : 0;
+        return '<div class="month-grid-line" style="left: ' + leftPct + '%;"></div>';
     }).join('');
 
     function renderSourceRow(source, isGroupItem, months, todayPosition) {
@@ -106,7 +108,7 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
     var columnHeaderLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular)) ? (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular) : 'Item';
     var headerPeriods = getTimelineHeaderPeriods(months);
     var monthColumns = headerPeriods.map(function (p) {
-        return html`<div class="month-column" style="width: ${p.widthPct}%;">${p.label}</div>`;
+        return html`<div class="month-column" style="width: ${p.widthPct}%; flex: 0 0 ${p.widthPct}%;">${p.label}</div>`;
     });
     var hasGroups = hasAnyGroups(visibleSources);
 
