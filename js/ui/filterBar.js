@@ -5,7 +5,7 @@
 import AppState from '../state/appState.js';
 import { getCurrentStatus, getStates, getLastMilestoneKey, getMilestoneDate, isDeliverableNonFilterable } from '../core/workflow.js';
 import { parseDate } from '../core/timeline.js';
-import { getEffectiveAtRiskSet } from '../core/dependencies.js';
+import { getEffectiveAtRiskSet, getRedDependencyEndpointSet } from '../core/dependencies.js';
 import { html, raw } from './renderer.js';
 import { getAllVisibleDataSources } from '../core/stats.js';
 import { hasAnyGroups } from './grouping.js';
@@ -13,12 +13,13 @@ import { hasAnyGroups } from './grouping.js';
 function filterDeliverables(sources) {
     const filter = AppState.get().filter;
     const effectiveAtRiskSet = getEffectiveAtRiskSet();
+    const redDependencyEndpoints = getRedDependencyEndpointSet();
     return sources.filter(source => {
         const isNonFilterable = isDeliverableNonFilterable(source);
         if (filter.status !== 'ALL' && isNonFilterable) {
             return false;
         }
-        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name)) {
+        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name) && !redDependencyEndpoints.has(source.name)) {
             return false;
         }
         if (filter.descopedOnly && !source.descoped) {
@@ -28,7 +29,7 @@ function filterDeliverables(sources) {
             const status = getCurrentStatus(source);
             if (status !== filter.status) return false;
         }
-        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name)) return false;
+        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name) && !redDependencyEndpoints.has(source.name)) return false;
         if (filter.descopedOnly && !source.descoped) return false;
         if (filter.search) {
             const searchLower = filter.search.toLowerCase();

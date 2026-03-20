@@ -87,10 +87,40 @@ function getBlockedByRedDependencySet(projects: Project[], workflowMilestones: W
       const fromDate = parseDate(getMilestoneDateStr(fromProject, fromKey, firstKey))
       const toDate = parseDate(getMilestoneDateStr(toProject, toKey, firstKey))
       if (!fromDate || !toDate) return
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (fromDate.getTime() <= today.getTime()) return
       if (fromDate.getTime() > toDate.getTime()) blocked.add(toProject.name)
     })
   })
   return blocked
+}
+
+function getRedDependencyEndpointSet(projects: Project[], workflowMilestones: WorkflowMilestone[]): Set<string> {
+  const endpoints = new Set<string>()
+  const firstKey = workflowMilestones[0]?.key ?? 'START'
+  const lastKey = workflowMilestones[workflowMilestones.length - 1]?.key ?? 'M3'
+  const nameToProject = new Map(projects.map((p) => [p.name, p]))
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  projects.forEach((toProject) => {
+    ;(toProject.dependencies ?? []).forEach((dep) => {
+      const fromName = typeof dep === 'string' ? dep : dep.task
+      const fromProject = nameToProject.get(fromName)
+      if (!fromProject) return
+      const fromKey = typeof dep === 'object' && dep?.from ? dep.from : lastKey
+      const toKey = typeof dep === 'object' && dep?.to ? dep.to : firstKey
+      const fromDate = parseDate(getMilestoneDateStr(fromProject, fromKey, firstKey))
+      const toDate = parseDate(getMilestoneDateStr(toProject, toKey, firstKey))
+      if (!fromDate || !toDate) return
+      if (fromDate.getTime() <= today.getTime()) return
+      if (fromDate.getTime() > toDate.getTime()) {
+        endpoints.add(fromProject.name)
+        endpoints.add(toProject.name)
+      }
+    })
+  })
+  return endpoints
 }
 
 export default function GanttTimeline({
@@ -139,6 +169,7 @@ export default function GanttTimeline({
 
   const filteredProjects = useMemo(() => {
     const redBlockedSet = getBlockedByRedDependencySet(projects, workflowMilestones)
+    const redEndpointsSet = getRedDependencyEndpointSet(projects, workflowMilestones)
     let list = projects.filter((p) => p.show_in_timeline !== false)
     if (safeFilter.search.trim()) {
       const q = safeFilter.search.toLowerCase()
@@ -154,7 +185,7 @@ export default function GanttTimeline({
       )
     }
     if (safeFilter.riskOnly) {
-      list = list.filter((p) => p.at_risk === true || redBlockedSet.has(p.name))
+      list = list.filter((p) => p.at_risk === true || redBlockedSet.has(p.name) || redEndpointsSet.has(p.name))
     }
     if (safeFilter.descopedOnly) {
       list = list.filter((p) => p.descoped === true)

@@ -20,6 +20,17 @@ function getMilestoneDateFromSource(source, milestoneKey, firstKey) {
     return null;
 }
 
+function getTodayDateLocal() {
+    if (typeof CONFIG !== 'undefined' && CONFIG.TIMELINE && CONFIG.TIMELINE.TODAY) {
+        return CONFIG.TIMELINE.TODAY;
+    }
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return day + '/' + month + '/' + year;
+}
+
 // Get all data sources (all deliverables, regardless of visibility)
 // In Node/tests pass deliverablesOverride; in browser uses CONFIG.DELIVERABLES when absent.
 function getAllDataSources(deliverablesOverride) {
@@ -211,6 +222,7 @@ function getBlockedByRedDependencySet(deliverablesOverride) {
     const lastMilestoneKey = 'M3';
     const blocked = new Set();
 
+    const todayDateStr = getTodayDateLocal();
     allSources.forEach(targetSource => {
         const inbound = getInboundDependencies(targetSource);
         inbound.forEach(dep => {
@@ -220,16 +232,43 @@ function getBlockedByRedDependencySet(deliverablesOverride) {
             const toKey = dep.to || firstMilestoneKey;
             const fromDateStr = getMilestoneDateFromSource(fromSource, fromKey, firstMilestoneKey);
             const toDateStr = getMilestoneDateFromSource(targetSource, toKey, firstMilestoneKey);
-            const fromDate = parseDateLocal(fromDateStr);
-            const toDate = parseDateLocal(toDateStr);
-            if (!fromDate || !toDate) return;
-            if (fromDate.getTime() > toDate.getTime()) {
+            const color = getDependencyColorForDates(fromDateStr, toDateStr, todayDateStr);
+            if (color === 'red') {
                 blocked.add(targetSource.name);
             }
         });
     });
 
     return blocked;
+}
+
+/** Returns both source+target deliverables that participate in red dependency edges. */
+function getRedDependencyEndpointSet(deliverablesOverride) {
+    const allSources = getAllDataSources(deliverablesOverride);
+    const sourceMap = new Map(allSources.map(s => [s.name, s]));
+    const firstMilestoneKey = 'START';
+    const lastMilestoneKey = 'M3';
+    const todayDateStr = getTodayDateLocal();
+    const endpoints = new Set();
+
+    allSources.forEach(targetSource => {
+        const inbound = getInboundDependencies(targetSource);
+        inbound.forEach(dep => {
+            const fromSource = sourceMap.get(dep.task);
+            if (!fromSource) return;
+            const fromKey = dep.from || lastMilestoneKey;
+            const toKey = dep.to || firstMilestoneKey;
+            const fromDateStr = getMilestoneDateFromSource(fromSource, fromKey, firstMilestoneKey);
+            const toDateStr = getMilestoneDateFromSource(targetSource, toKey, firstMilestoneKey);
+            const color = getDependencyColorForDates(fromDateStr, toDateStr, todayDateStr);
+            if (color === 'red') {
+                endpoints.add(fromSource.name);
+                endpoints.add(targetSource.name);
+            }
+        });
+    });
+
+    return endpoints;
 }
 
 /** Config atRisk OR blocked by red dependency. */
@@ -257,6 +296,7 @@ if (typeof window !== 'undefined') {
     window.getDependencyGraph = getDependencyGraph;
     window.getDependencyColorForDates = getDependencyColorForDates;
     window.getBlockedByRedDependencySet = getBlockedByRedDependencySet;
+    window.getRedDependencyEndpointSet = getRedDependencyEndpointSet;
     window.getEffectiveAtRiskSet = getEffectiveAtRiskSet;
 }
 
@@ -266,5 +306,5 @@ export {
     getOutboundDependencies, getOutboundDependencyNames,
     hasDependencies, getDependencyType, getDependencyGraph,
     getDependencyColorForDates,
-    getBlockedByRedDependencySet, getEffectiveAtRiskSet
+    getBlockedByRedDependencySet, getRedDependencyEndpointSet, getEffectiveAtRiskSet
 };
