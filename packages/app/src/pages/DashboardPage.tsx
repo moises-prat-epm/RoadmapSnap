@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useWorkspaces } from '../hooks/useWorkspace'
 import { useWorkspaceProjects } from '../hooks/useWorkspace'
 import { useCurrentUser } from '../hooks/useRole'
@@ -7,7 +7,12 @@ import type { Project } from '../api/client'
 import type { GanttFilter } from '../components/timeline/GanttTimeline'
 import AppShell from '../components/layout/AppShell'
 import KpiCards from '../components/dashboard/KpiCards'
+import ProgressBar from '../components/dashboard/ProgressBar'
 import GanttTimeline from '../components/timeline/GanttTimeline'
+import FilterBar from '../components/projects/FilterBar'
+import type { FilterState } from '../components/projects/FilterBar'
+import ProjectList from '../components/projects/ProjectList'
+import { applyProjectFilters, countTimelineEligible } from '../lib/projectFilters'
 
 type TabId = 'dashboard' | 'timeline' | 'projects'
 
@@ -65,7 +70,51 @@ export default function DashboardPage() {
   }))
 
   const workflow = workspace?.workflow_definition ?? []
-  const stats = workflow.length > 0 ? calculateStats(projectsForStats, workflow, getTodayStr()) : null
+  const todayStr = getTodayStr()
+  const stats = workflow.length > 0 ? calculateStats(projectsForStats, workflow, todayStr) : null
+
+  const handleFilterBarChange = useCallback((partial: Partial<FilterState>) => {
+    setFilter((f) => {
+      const next = { ...f, ...partial }
+      if (
+        'search' in partial &&
+        'statusFilter' in partial &&
+        'riskOnly' in partial &&
+        partial.search === '' &&
+        partial.statusFilter === 'ALL' &&
+        partial.riskOnly === false
+      ) {
+        next.descopedOnly = false
+      }
+      return next
+    })
+  }, [])
+
+  const clearAllFilters = useCallback(() => setFilter(defaultFilter), [])
+
+  const filterBarFilter: FilterState = useMemo(
+    () => ({ search: filter.search, statusFilter: filter.statusFilter, riskOnly: filter.riskOnly }),
+    [filter.search, filter.statusFilter, filter.riskOnly]
+  )
+
+  const { totalCount, filteredCount } = useMemo(() => {
+    const wf = workspace?.workflow_definition ?? []
+    if (!workspace || wf.length === 0) {
+      return { totalCount: projects.length, filteredCount: projects.length }
+    }
+    const listFiltered = applyProjectFilters(projects, wf, filter, todayStr, 'list')
+    const timelineFiltered = applyProjectFilters(projects, wf, filter, todayStr, 'timeline')
+    if (activeTab === 'projects') {
+      return { totalCount: projects.length, filteredCount: listFiltered.length }
+    }
+    if (activeTab === 'timeline') {
+      return {
+        totalCount: countTimelineEligible(projects),
+        filteredCount: timelineFiltered.length,
+      }
+    }
+    return { totalCount: projects.length, filteredCount: projects.length }
+  }, [activeTab, projects, workspace, filter, todayStr])
 
   const workspaceSelector = (
     <select
@@ -146,30 +195,49 @@ export default function DashboardPage() {
             ))}
           </div>
 
+          {(activeTab === 'timeline' || activeTab === 'projects') && workspace && (
+            <FilterBar
+              workflow={workflow}
+              filter={filterBarFilter}
+              onFilterChange={handleFilterBarChange}
+              totalCount={totalCount}
+              filteredCount={filteredCount}
+            />
+          )}
+
           {activeTab === 'dashboard' && (
             <>
               {stats ? (
-                <KpiCards
-                  stats={stats}
-                  workflow={workflow}
-                  onFilterByStatus={(key) =>
-                    setFilter((f) => ({
-                      ...f,
-                      statusFilter: f.statusFilter === key ? 'ALL' : key,
-                      riskOnly: false,
-                      descopedOnly: false,
-                    }))
-                  }
-                  onToggleRisk={() =>
-                    setFilter((f) => ({ ...f, riskOnly: !f.riskOnly, descopedOnly: false }))
-                  }
-                  onToggleDescoped={() =>
-                    setFilter((f) => ({ ...f, descopedOnly: !f.descopedOnly, riskOnly: false }))
-                  }
-                  activeStatusFilter={filter.statusFilter}
-                  riskOnly={filter.riskOnly}
-                  descopedOnly={filter.descopedOnly}
-                />
+                <>
+                  <KpiCards
+                    stats={stats}
+                    workflow={workflow}
+                    onFilterByStatus={(key) =>
+                      setFilter((f) => ({
+                        ...f,
+                        statusFilter: f.statusFilter === key ? 'ALL' : key,
+                        riskOnly: false,
+                        descopedOnly: false,
+                      }))
+                    }
+                    onToggleRisk={() =>
+                      setFilter((f) => ({ ...f, riskOnly: !f.riskOnly, descopedOnly: false }))
+                    }
+                    onToggleDescoped={() =>
+                      setFilter((f) => ({ ...f, descopedOnly: !f.descopedOnly, riskOnly: false }))
+                    }
+                    activeStatusFilter={filter.statusFilter}
+                    riskOnly={filter.riskOnly}
+                    descopedOnly={filter.descopedOnly}
+                  />
+                  <div className="mt-4">
+                    <ProgressBar
+                      completionPercentage={stats.completionPercentage}
+                      total={stats.total}
+                      label="Overall completion"
+                    />
+                  </div>
+                </>
               ) : workspaces.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400">No workspaces yet. Create one to get started.</p>
               ) : effectiveWorkspaceId && projectsData && projects.length === 0 ? (
@@ -191,8 +259,17 @@ export default function DashboardPage() {
             <p className="text-gray-500 dark:text-gray-400">Select a workspace to view the timeline.</p>
           )}
 
-          {activeTab === 'projects' && (
-            <p className="text-gray-500 dark:text-gray-400">Projects view — coming soon.</p>
+          {activeTab === 'projects' && workspace && (
+            <ProjectList
+              projects={projects}
+              workspace={workspace}
+              filter={filter}
+              onClearFilters={clearAllFilters}
+            />
+          )}
+
+          {activeTab === 'projects' && !workspace && projectsData && (
+            <p className="text-gray-500 dark:text-gray-400">Select a workspace to view projects.</p>
           )}
         </div>
       )}

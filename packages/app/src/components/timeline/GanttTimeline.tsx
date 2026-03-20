@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
-import type { Project, Workspace, WorkflowItem } from '../../api/client'
+import type { Project, Workspace } from '../../api/client'
 import {
   generateMonths,
   generateVisibleMonthsForZoom,
@@ -8,12 +8,16 @@ import {
   buildMilestoneMarkers,
   buildGanttSegments,
   formatDateDisplay,
-  parseDate,
   type MonthInfo,
   type ProjectLike,
-  type WorkflowMilestone,
 } from '../../lib/timeline'
 import { getCurrentStatus } from '../../lib/stats'
+import {
+  applyProjectFilters,
+  getBlockedByRedDependencySet,
+  getWorkflowMilestones,
+  type WorkspaceProjectFilter,
+} from '../../lib/projectFilters'
 import { exportToPNG, exportToCSV, exportToJSON } from '../../lib/export'
 import { getDependencyGraph } from '../../lib/dependencyGraph'
 import GanttBar from './GanttBar'
@@ -23,12 +27,7 @@ import DependencyArrows from './DependencyArrows'
 
 export type ZoomPreset = '3m' | '6m' | '12m' | 'all'
 
-export interface GanttFilter {
-  search: string
-  statusFilter: string
-  riskOnly: boolean
-  descopedOnly: boolean
-}
+export type GanttFilter = WorkspaceProjectFilter
 
 interface GanttTimelineProps {
   projects: Project[]
@@ -36,10 +35,6 @@ interface GanttTimelineProps {
   filter?: GanttFilter
   onFilterChange?: (f: GanttFilter) => void
   zoom?: ZoomPreset
-}
-
-function getWorkflowMilestones(workflow: WorkflowItem[]): WorkflowMilestone[] {
-  return workflow.filter((item): item is WorkflowMilestone => item.type === 'milestone')
 }
 
 function projectToProjectLike(p: Project): ProjectLike {
@@ -65,64 +60,6 @@ function getDependencyType(project: Project, allProjects: Project[]): 'inbound' 
   return null
 }
 
-function getMilestoneDateStr(project: Project, milestoneKey: string, firstKey: string): string | null {
-  const m = project.milestones?.[milestoneKey]
-  if (m) return m
-  if (milestoneKey === firstKey && project.milestones?.START) return project.milestones.START
-  return null
-}
-
-function getBlockedByRedDependencySet(projects: Project[], workflowMilestones: WorkflowMilestone[]): Set<string> {
-  const blocked = new Set<string>()
-  const firstKey = workflowMilestones[0]?.key ?? 'START'
-  const lastKey = workflowMilestones[workflowMilestones.length - 1]?.key ?? 'M3'
-  const nameToProject = new Map(projects.map((p) => [p.name, p]))
-  projects.forEach((toProject) => {
-    ;(toProject.dependencies ?? []).forEach((dep) => {
-      const fromName = typeof dep === 'string' ? dep : dep.task
-      const fromProject = nameToProject.get(fromName)
-      if (!fromProject) return
-      const fromKey = typeof dep === 'object' && dep?.from ? dep.from : lastKey
-      const toKey = typeof dep === 'object' && dep?.to ? dep.to : firstKey
-      const fromDate = parseDate(getMilestoneDateStr(fromProject, fromKey, firstKey))
-      const toDate = parseDate(getMilestoneDateStr(toProject, toKey, firstKey))
-      if (!fromDate || !toDate) return
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      if (fromDate.getTime() <= today.getTime()) return
-      if (fromDate.getTime() > toDate.getTime()) blocked.add(toProject.name)
-    })
-  })
-  return blocked
-}
-
-function getRedDependencyEndpointSet(projects: Project[], workflowMilestones: WorkflowMilestone[]): Set<string> {
-  const endpoints = new Set<string>()
-  const firstKey = workflowMilestones[0]?.key ?? 'START'
-  const lastKey = workflowMilestones[workflowMilestones.length - 1]?.key ?? 'M3'
-  const nameToProject = new Map(projects.map((p) => [p.name, p]))
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  projects.forEach((toProject) => {
-    ;(toProject.dependencies ?? []).forEach((dep) => {
-      const fromName = typeof dep === 'string' ? dep : dep.task
-      const fromProject = nameToProject.get(fromName)
-      if (!fromProject) return
-      const fromKey = typeof dep === 'object' && dep?.from ? dep.from : lastKey
-      const toKey = typeof dep === 'object' && dep?.to ? dep.to : firstKey
-      const fromDate = parseDate(getMilestoneDateStr(fromProject, fromKey, firstKey))
-      const toDate = parseDate(getMilestoneDateStr(toProject, toKey, firstKey))
-      if (!fromDate || !toDate) return
-      if (fromDate.getTime() <= today.getTime()) return
-      if (fromDate.getTime() > toDate.getTime()) {
-        endpoints.add(fromProject.name)
-        endpoints.add(toProject.name)
-      }
-    })
-  })
-  return endpoints
-}
-
 export default function GanttTimeline({
   projects,
   workspace,
@@ -136,11 +73,6 @@ export default function GanttTimeline({
   const timelineContainerRef = useRef<HTMLDivElement>(null)
   const arrowsContainerRef = useRef<HTMLDivElement>(null)
   const safeFilter = filter ?? { search: '', statusFilter: 'ALL', riskOnly: false, descopedOnly: false }
-  const hasActiveFilters =
-    safeFilter.statusFilter !== 'ALL' ||
-    safeFilter.riskOnly ||
-    safeFilter.descopedOnly ||
-    !!safeFilter.search?.trim()
 
   const workflow = workspace?.workflow_definition ?? []
   const workflowMilestones = useMemo(() => getWorkflowMilestones(workflow), [workflow])
@@ -167,31 +99,10 @@ export default function GanttTimeline({
     [todayStr, visibleMonths]
   )
 
-  const filteredProjects = useMemo(() => {
-    const redBlockedSet = getBlockedByRedDependencySet(projects, workflowMilestones)
-    const redEndpointsSet = getRedDependencyEndpointSet(projects, workflowMilestones)
-    let list = projects.filter((p) => p.show_in_timeline !== false)
-    if (safeFilter.search.trim()) {
-      const q = safeFilter.search.toLowerCase()
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.tags ?? []).some((t) => t.toLowerCase().includes(q))
-      )
-    }
-    if (safeFilter.statusFilter !== 'ALL') {
-      list = list.filter(
-        (p) => getCurrentStatus(projectToProjectLike(p), workflow, todayStr) === safeFilter.statusFilter
-      )
-    }
-    if (safeFilter.riskOnly) {
-      list = list.filter((p) => p.at_risk === true || redBlockedSet.has(p.name) || redEndpointsSet.has(p.name))
-    }
-    if (safeFilter.descopedOnly) {
-      list = list.filter((p) => p.descoped === true)
-    }
-    return list
-  }, [projects, safeFilter, workflow, todayStr, workflowMilestones])
+  const filteredProjects = useMemo(
+    () => applyProjectFilters(projects, workflow, safeFilter, todayStr, 'timeline'),
+    [projects, workflow, safeFilter, todayStr]
+  )
 
   const redBlockedSet = useMemo(
     () => getBlockedByRedDependencySet(projects, workflowMilestones),
@@ -259,14 +170,6 @@ export default function GanttTimeline({
     [workflow]
   )
 
-  const clearFilters = () =>
-    onFilterChange?.({
-      search: '',
-      statusFilter: 'ALL',
-      riskOnly: false,
-      descopedOnly: false,
-    })
-
   const expandAll = () => setCollapsedGroups({})
   const collapseAll = () => {
     const next: Record<string, boolean> = {}
@@ -302,7 +205,7 @@ export default function GanttTimeline({
         </div>
       </div>
 
-      {/* Single toolbar: zoom, search, status, risk, descope, clear, group, export */}
+      {/* Timeline toolbar: zoom, descoped (filters live in dashboard FilterBar), group, export */}
       <div className="filter-bar">
         <div className="filter-group zoom-controls">
           <span className="filter-label">Zoom:</span>
@@ -321,42 +224,6 @@ export default function GanttTimeline({
           ))}
         </div>
         <div className="filter-group">
-          <input
-            type="text"
-            className="filter-input"
-            placeholder="Search by name..."
-            value={safeFilter.search}
-            onChange={(e) => onFilterChange?.({ ...safeFilter, search: e.target.value })}
-          />
-        </div>
-        <div className="filter-group">
-          <span className="filter-label">Status:</span>
-          <select
-            className="filter-select"
-            value={safeFilter.statusFilter}
-            onChange={(e) => onFilterChange?.({ ...safeFilter, statusFilter: e.target.value })}
-          >
-            <option value="ALL">All</option>
-            {stateKeys.map((k) => {
-              const s = workflow.find((w) => w.type === 'state' && w.key === k)
-              return (
-                <option key={k} value={k}>
-                  {s?.short ?? k}
-                </option>
-              )}
-            )}
-          </select>
-        </div>
-        <div className="filter-group">
-          <button
-            type="button"
-            className={`filter-toggle ${safeFilter.riskOnly ? 'active' : ''}`}
-            onClick={() => onFilterChange?.({ ...safeFilter, riskOnly: !safeFilter.riskOnly, descopedOnly: false })}
-          >
-            At Risk
-          </button>
-        </div>
-        <div className="filter-group">
           <button
             type="button"
             className={`filter-toggle ${safeFilter.descopedOnly ? 'active' : ''}`}
@@ -365,11 +232,6 @@ export default function GanttTimeline({
             Descoped
           </button>
         </div>
-        {hasActiveFilters && (
-          <button type="button" className="filter-clear" onClick={clearFilters}>
-            Clear Filters
-          </button>
-        )}
         {groupNames.length > 0 && (
           <div className="group-controls">
             <button type="button" className="group-control-btn" onClick={expandAll}>
