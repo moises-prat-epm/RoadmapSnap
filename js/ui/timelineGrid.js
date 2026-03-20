@@ -4,7 +4,7 @@
  */
 import { html, raw, renderIf } from './renderer.js';
 import { getStates, getMilestones, getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
-import { getAllDataSources } from '../core/dependencies.js';
+import { getAllDataSources, getEffectiveAtRiskSet } from '../core/dependencies.js';
 import { formatDateDisplay, getTimelineHeaderPeriods } from '../core/timeline.js';
 import { buildDeliverableViewModel } from '../core/viewModel.js';
 import { groupDeliverables, hasAnyGroups, getGroupStats } from './grouping.js';
@@ -13,6 +13,7 @@ import AppState from '../state/appState.js';
 var chevronSVG = '<svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" /></svg>';
 
 function renderTimelineGrid(state, visibleSources, months, todayPosition) {
+    var effectiveAtRiskSet = getEffectiveAtRiskSet();
     var statesDef = getStates();
     var milestonesDef = getMilestones();
     var lastMilestoneKey = getLastMilestoneKey();
@@ -24,7 +25,7 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
     }).join('');
 
     function renderSourceRow(source, isGroupItem, months, todayPosition) {
-        var vm = buildDeliverableViewModel(source, months, todayPosition, AppState.get().activeDependencyGraph);
+        var vm = buildDeliverableViewModel(source, months, todayPosition, AppState.get().activeDependencyGraph, effectiveAtRiskSet);
         var stateIndex = Math.min(7, Math.max(0, statesDef.findIndex(function (s) { return s.key === vm.status; })));
         var statusClass = 'state-' + stateIndex;
         var indicatorClass = 'state-' + stateIndex;

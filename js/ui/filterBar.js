@@ -5,18 +5,20 @@
 import AppState from '../state/appState.js';
 import { getCurrentStatus, getStates, getLastMilestoneKey, getMilestoneDate, isDeliverableNonFilterable } from '../core/workflow.js';
 import { parseDate } from '../core/timeline.js';
+import { getEffectiveAtRiskSet } from '../core/dependencies.js';
 import { html, raw } from './renderer.js';
 import { getAllVisibleDataSources } from '../core/stats.js';
 import { hasAnyGroups } from './grouping.js';
 
 function filterDeliverables(sources) {
     const filter = AppState.get().filter;
+    const effectiveAtRiskSet = getEffectiveAtRiskSet();
     return sources.filter(source => {
         const isNonFilterable = isDeliverableNonFilterable(source);
         if (filter.status !== 'ALL' && isNonFilterable) {
             return false;
         }
-        if (filter.riskOnly && !source.atRisk) {
+        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name)) {
             return false;
         }
         if (filter.descopedOnly && !source.descoped) {
@@ -26,7 +28,7 @@ function filterDeliverables(sources) {
             const status = getCurrentStatus(source);
             if (status !== filter.status) return false;
         }
-        if (filter.riskOnly && !source.atRisk) return false;
+        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name)) return false;
         if (filter.descopedOnly && !source.descoped) return false;
         if (filter.search) {
             const searchLower = filter.search.toLowerCase();
@@ -59,6 +61,7 @@ function sortDeliverables(sources) {
     const states = getStates();
     const lastMilestoneKey = getLastMilestoneKey();
     const sort = AppState.get().sort;
+    const effectiveAtRiskSet = getEffectiveAtRiskSet();
 
     sorted.sort((a, b) => {
         let comparison = 0;
@@ -78,7 +81,7 @@ function sortDeliverables(sources) {
                 comparison = dateA - dateB;
                 break;
             case 'risk':
-                comparison = (b.atRisk ? 1 : 0) - (a.atRisk ? 1 : 0);
+                comparison = (effectiveAtRiskSet.has(b.name) ? 1 : 0) - (effectiveAtRiskSet.has(a.name) ? 1 : 0);
                 break;
         }
         return sort.order === 'desc' ? -comparison : comparison;

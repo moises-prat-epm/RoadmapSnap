@@ -8,6 +8,8 @@ export interface ArrowPath {
   d: string
   type: 'inbound' | 'outbound'
   tooltip: string
+  color: string
+  markerEnd: string
 }
 
 function getFirstMilestoneKey(milestones: WorkflowMilestone[]): string {
@@ -37,6 +39,7 @@ interface DependencyArrowsProps {
   projects: Project[]
   /** When null, no arrows are drawn. When set, draw full graph from this project (Lite behavior). */
   activeProjectName: string | null
+  showRiskOnlyRed: boolean
   visibleMonths: MonthInfo[]
   workflowMilestones: WorkflowMilestone[]
 }
@@ -45,14 +48,17 @@ export default function DependencyArrows({
   containerRef,
   projects,
   activeProjectName,
+  showRiskOnlyRed,
   visibleMonths,
   workflowMilestones,
 }: DependencyArrowsProps) {
   const [paths, setPaths] = useState<ArrowPath[]>([])
   const [hoveredPathIndex, setHoveredPathIndex] = useState<number | null>(null)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
   useLayoutEffect(() => {
-    if (!activeProjectName || visibleMonths.length === 0) {
+    if ((!activeProjectName && !showRiskOnlyRed) || visibleMonths.length === 0) {
       setPaths([])
       return
     }
@@ -63,8 +69,18 @@ export default function DependencyArrows({
       return
     }
 
-    const graph = getDependencyGraph(activeProjectName, projects)
-    const allEdges = [...graph.inboundEdges, ...graph.outboundEdges]
+    const graph = activeProjectName ? getDependencyGraph(activeProjectName, projects) : null
+    const allInboundEdges = graph
+      ? graph.inboundEdges
+      : projects.flatMap((to) =>
+          (to.dependencies ?? []).map((dep) => ({
+            from: typeof dep === 'string' ? dep : dep.task,
+            to: to.name,
+            fromMilestone: typeof dep === 'object' ? dep.from : undefined,
+            toMilestone: typeof dep === 'object' ? dep.to : undefined,
+          }))
+        )
+    const allEdges = [...allInboundEdges, ...(graph ? graph.outboundEdges : [])]
     const nameToProject = new Map(projects.map((p) => [p.name, p]))
     const firstKey = getFirstMilestoneKey(workflowMilestones)
     const lastKey = getLastMilestoneKey(workflowMilestones)
@@ -100,13 +116,13 @@ export default function DependencyArrows({
       const toMilestoneKey = edge.toMilestone ?? firstKey
       const fromDateStr = getMilestoneDateStr(fromProject, fromMilestoneKey, firstKey)
       const toDateStr = getMilestoneDateStr(toProject, toMilestoneKey, firstKey)
+      const fromDate = fromDateStr ? parseDate(fromDateStr) : null
+      const toDate = toDateStr ? parseDate(toDateStr) : null
 
       let fromXPercent: number
       let toXPercent: number
 
       if (fromDateStr && toDateStr) {
-        const fromDate = parseDate(fromDateStr)
-        const toDate = parseDate(toDateStr)
         const fromInRange = fromDate != null && isDateInRange(fromDate, visibleMonths)
         const toInRange = toDate != null && isDateInRange(toDate, visibleMonths)
         if (!fromInRange || !toInRange) return
@@ -142,7 +158,7 @@ export default function DependencyArrows({
           ? `M ${x0} ${fromY} L ${x1} ${toY}`
           : `M ${x0} ${fromY} Q ${cx} ${midY} ${x1} ${toY}`
 
-      const isInbound = graph.inboundEdges.some(
+      const isInbound = allInboundEdges.some(
         (e) => e.from === edge.from && e.to === edge.to
       )
       const fromShort =
@@ -153,7 +169,23 @@ export default function DependencyArrows({
       const tooltip = isInbound
         ? `Blocked by: ${edge.from} (${fromShort} → ${toShort})${datePart}`
         : `Blocks: ${edge.to} (${fromShort} → ${toShort})${datePart}`
-      newPaths.push({ d, type: isInbound ? 'inbound' : 'outbound', tooltip })
+      let color = '#16a34a'
+      let markerEnd = 'url(#dependency-arrows-marker-green)'
+      if (fromDate && fromDate.getTime() <= today.getTime()) {
+        color = '#16a34a'
+        markerEnd = 'url(#dependency-arrows-marker-green)'
+      } else if (fromDate && toDate && fromDate.getTime() > toDate.getTime()) {
+        color = '#dc2626'
+        markerEnd = 'url(#dependency-arrows-marker-red)'
+      } else if (fromDate && toDate) {
+        const diffDays = Math.floor((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24))
+        if (diffDays >= 0 && diffDays <= 10) {
+          color = '#ea580c'
+          markerEnd = 'url(#dependency-arrows-marker-orange)'
+        }
+      }
+      if (showRiskOnlyRed && color !== '#dc2626') return
+      newPaths.push({ d, type: isInbound ? 'inbound' : 'outbound', tooltip, color, markerEnd })
     })
 
     setPaths(newPaths)
@@ -161,16 +193,12 @@ export default function DependencyArrows({
     containerRef,
     projects,
     activeProjectName,
+    showRiskOnlyRed,
     visibleMonths,
     workflowMilestones,
   ])
 
-  if (!activeProjectName || paths.length === 0) return null
-
-  const inboundColor = '#3498db'
-  const outboundColor = '#e67e22'
-  const markerEndInbound = 'url(#dependency-arrows-marker-inbound)'
-  const markerEndOutbound = 'url(#dependency-arrows-marker-outbound)'
+  if ((!activeProjectName && !showRiskOnlyRed) || paths.length === 0) return null
 
   const strokeWidthDefault = 2
   const strokeWidthHover = 3.5
@@ -190,7 +218,7 @@ export default function DependencyArrows({
     >
       <defs>
         <marker
-          id="dependency-arrows-marker-inbound"
+          id="dependency-arrows-marker-green"
           markerWidth="12"
           markerHeight="8.4"
           refX="10.8"
@@ -200,13 +228,13 @@ export default function DependencyArrows({
         >
           <polygon
             points="0 0, 12 4.2, 0 8.4"
-            fill={inboundColor}
-            stroke={inboundColor}
+            fill="#16a34a"
+            stroke="#16a34a"
             strokeWidth="1.2"
           />
         </marker>
         <marker
-          id="dependency-arrows-marker-outbound"
+          id="dependency-arrows-marker-orange"
           markerWidth="12"
           markerHeight="8.4"
           refX="10.8"
@@ -216,8 +244,24 @@ export default function DependencyArrows({
         >
           <polygon
             points="0 0, 12 4.2, 0 8.4"
-            fill={outboundColor}
-            stroke={outboundColor}
+            fill="#ea580c"
+            stroke="#ea580c"
+            strokeWidth="1.2"
+          />
+        </marker>
+        <marker
+          id="dependency-arrows-marker-red"
+          markerWidth="12"
+          markerHeight="8.4"
+          refX="10.8"
+          refY="4.2"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <polygon
+            points="0 0, 12 4.2, 0 8.4"
+            fill="#dc2626"
+            stroke="#dc2626"
             strokeWidth="1.2"
           />
         </marker>
@@ -242,17 +286,17 @@ export default function DependencyArrows({
       {/* Visible arrows; no pointer events so hit area and timeline get events */}
       <g style={{ pointerEvents: 'none' }}>
         {paths.map((path, i) => {
-          const color = path.type === 'inbound' ? inboundColor : outboundColor
           const thick = hoveredPathIndex === i
           return (
             <path
               key={i}
               d={path.d}
               className={`dependency-arrow-${path.type}`}
-              stroke={color}
+              stroke={path.color}
+              style={{ stroke: path.color }}
               strokeWidth={thick ? strokeWidthHover : strokeWidthDefault}
               fill="none"
-              markerEnd={path.type === 'inbound' ? markerEndInbound : markerEndOutbound}
+              markerEnd={path.markerEnd}
               opacity="0.95"
             >
               <title>{path.tooltip}</title>

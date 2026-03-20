@@ -9,7 +9,7 @@
  */
 import { getStates, getStateByKey, getCurrentStatus, getMilestones, getMilestoneDate, getFirstMilestoneKey, getMilestoneByKey } from './workflow.js';
 import { calculatePosition, isDateInRange } from './timeline.js';
-import { getDependencyType, getInboundDependencies, getOutboundDependencies, getDependencyGraph } from './dependencies.js';
+import { getDependencyType, getInboundDependencies, getOutboundDependencies, getDependencyGraph, getEffectiveAtRiskSet } from './dependencies.js';
 
 // Light theme state palette (index 0..7) — canonical mapping for resolveStateColor
 var STATE_PALETTE = [
@@ -127,12 +127,13 @@ function buildDependencyClass(activeDependencyGraph, sourceName) {
     return 'dependency-dimmed';
 }
 
-function buildDeliverableViewModel(source, months, todayPosition, activeDependencyGraph) {
+function buildDeliverableViewModel(source, months, todayPosition, activeDependencyGraph, effectiveAtRiskSetOverride) {
     var status = getCurrentStatus(source);
     var state = getStateByKey(status);
     var stateColor = resolveStateColor(status);
     var statesDef = getStates();
     var milestonesDef = getMilestones();
+    var effectiveAtRiskSet = effectiveAtRiskSetOverride || getEffectiveAtRiskSet();
 
     return {
         name: source.name,
@@ -141,7 +142,7 @@ function buildDeliverableViewModel(source, months, todayPosition, activeDependen
         state: state,
         stateColor: stateColor,
         stateTextColor: resolveStateTextColor(stateColor),
-        atRisk: !!source.atRisk,
+        atRisk: effectiveAtRiskSet.has(source.name),
         descoped: !!source.descoped,
         showInTimeline: source.showInTimeline !== false,
         link: source.link || null,

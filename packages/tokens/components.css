@@ -703,11 +703,6 @@
 .dependency-icon.inbound { color: var(--color-dependency-inbound); }
 .dependency-icon.outbound { color: var(--color-dependency-outbound); }
 
-#dependency-arrows-svg .dependency-arrow-inbound { stroke: var(--color-dependency-inbound); }
-#dependency-arrows-svg .dependency-arrow-outbound { stroke: var(--color-dependency-outbound); }
-#dependency-arrows-svg [id="arrowhead-inbound"] polygon { fill: var(--color-dependency-inbound); }
-#dependency-arrows-svg [id="arrowhead-outbound"] polygon { fill: var(--color-dependency-outbound); }
-
 /* ============================================
    TIMELINE VIEW (SaaS + Lite consistent layout)
    ============================================ */

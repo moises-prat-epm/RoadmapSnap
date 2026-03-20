@@ -5,6 +5,7 @@
  * calculateStats accepts (deliverables, workflow, todayStr, config?) for testability.
  */
 import { getCurrentStatus, getStates, getLastState, getWorkflow, getMilestones, getMilestoneDate } from './workflow.js';
+import { getEffectiveAtRiskSet } from './dependencies.js';
 
 // Get visible data sources (with filters applied)
 function getVisibleDataSources() {
@@ -34,6 +35,7 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
     const config = configOverride ?? (typeof CONFIG !== 'undefined' ? CONFIG : {});
 
     const allSources = getFilterableDeliverablesFrom(deliverables, config);
+    const effectiveAtRiskSet = getEffectiveAtRiskSet(allSources);
     // KPIs exclude descoped items: only count non-descoped for totals, state counts, and progress
     const kpiSources = allSources.filter(source => !source.descoped);
     const visibleSources = kpiSources.filter(source => source.showInTimeline !== false);
@@ -75,7 +77,7 @@ function calculateStats(deliverablesOverride, workflowOverride, todayStrOverride
             stats[status]++;
         }
 
-        if (source.atRisk) stats.atRisk++;
+        if (effectiveAtRiskSet.has(source.name)) stats.atRisk++;
         // descoped already counted above from allSources
 
         if (source.showInTimeline) {
@@ -108,6 +110,7 @@ function getUpcomingMilestones() {
     const milestones = getMilestones();
     const upcoming = {};
     const visibleSources = getAllVisibleDataSources();
+    const effectiveAtRiskSet = getEffectiveAtRiskSet(visibleSources);
     
     milestones.forEach(m => {
         let nearest = null;
@@ -124,7 +127,7 @@ function getUpcomingMilestones() {
             if (date && date >= today) {
                 if (!nearestDate || date < nearestDate) {
                     nearestDate = date;
-                    nearest = { source: source.name, date: milestoneDate, atRisk: source.atRisk };
+                    nearest = { source: source.name, date: milestoneDate, atRisk: effectiveAtRiskSet.has(source.name) };
                 }
             }
         });

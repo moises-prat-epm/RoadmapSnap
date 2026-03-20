@@ -8,6 +8,7 @@ import {
   buildMilestoneMarkers,
   buildGanttSegments,
   formatDateDisplay,
+  parseDate,
   type MonthInfo,
   type ProjectLike,
   type WorkflowMilestone,
@@ -64,6 +65,34 @@ function getDependencyType(project: Project, allProjects: Project[]): 'inbound' 
   return null
 }
 
+function getMilestoneDateStr(project: Project, milestoneKey: string, firstKey: string): string | null {
+  const m = project.milestones?.[milestoneKey]
+  if (m) return m
+  if (milestoneKey === firstKey && project.milestones?.START) return project.milestones.START
+  return null
+}
+
+function getBlockedByRedDependencySet(projects: Project[], workflowMilestones: WorkflowMilestone[]): Set<string> {
+  const blocked = new Set<string>()
+  const firstKey = workflowMilestones[0]?.key ?? 'START'
+  const lastKey = workflowMilestones[workflowMilestones.length - 1]?.key ?? 'M3'
+  const nameToProject = new Map(projects.map((p) => [p.name, p]))
+  projects.forEach((toProject) => {
+    ;(toProject.dependencies ?? []).forEach((dep) => {
+      const fromName = typeof dep === 'string' ? dep : dep.task
+      const fromProject = nameToProject.get(fromName)
+      if (!fromProject) return
+      const fromKey = typeof dep === 'object' && dep?.from ? dep.from : lastKey
+      const toKey = typeof dep === 'object' && dep?.to ? dep.to : firstKey
+      const fromDate = parseDate(getMilestoneDateStr(fromProject, fromKey, firstKey))
+      const toDate = parseDate(getMilestoneDateStr(toProject, toKey, firstKey))
+      if (!fromDate || !toDate) return
+      if (fromDate.getTime() > toDate.getTime()) blocked.add(toProject.name)
+    })
+  })
+  return blocked
+}
+
 export default function GanttTimeline({
   projects,
   workspace,
@@ -109,6 +138,7 @@ export default function GanttTimeline({
   )
 
   const filteredProjects = useMemo(() => {
+    const redBlockedSet = getBlockedByRedDependencySet(projects, workflowMilestones)
     let list = projects.filter((p) => p.show_in_timeline !== false)
     if (safeFilter.search.trim()) {
       const q = safeFilter.search.toLowerCase()
@@ -124,13 +154,18 @@ export default function GanttTimeline({
       )
     }
     if (safeFilter.riskOnly) {
-      list = list.filter((p) => p.at_risk === true)
+      list = list.filter((p) => p.at_risk === true || redBlockedSet.has(p.name))
     }
     if (safeFilter.descopedOnly) {
       list = list.filter((p) => p.descoped === true)
     }
     return list
-  }, [projects, safeFilter, workflow, todayStr])
+  }, [projects, safeFilter, workflow, todayStr, workflowMilestones])
+
+  const redBlockedSet = useMemo(
+    () => getBlockedByRedDependencySet(projects, workflowMilestones),
+    [projects, workflowMilestones]
+  )
 
   const totalDays = useMemo(
     () => visibleMonths.reduce((sum, m) => sum + m.daysInMonth, 0),
@@ -428,10 +463,10 @@ export default function GanttTimeline({
                 return (
                   <div
                     key={project.id}
-                    className={`data-source-row ${project.at_risk ? 'at-risk' : ''} ${project.descoped ? 'descoped' : ''} ${dependencyRowClass}`}
+                    className={`data-source-row ${(project.at_risk || redBlockedSet.has(project.name)) ? 'at-risk' : ''} ${project.descoped ? 'descoped' : ''} ${dependencyRowClass}`}
                   >
                     <div className={`source-name state-${stateIndexClamp}`}>
-                      {project.at_risk && (
+                      {(project.at_risk || redBlockedSet.has(project.name)) && (
                         <span className="risk-indicator" title="At risk">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z" />
@@ -526,6 +561,7 @@ export default function GanttTimeline({
         containerRef={arrowsContainerRef}
         projects={projects}
         activeProjectName={activeDependencyGraph}
+        showRiskOnlyRed={safeFilter.riskOnly}
         visibleMonths={visibleMonths}
         workflowMilestones={workflowMilestones}
       />
