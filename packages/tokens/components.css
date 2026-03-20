@@ -845,16 +845,19 @@
    ============================================ */
 .key-milestones {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    /* One row: column count follows workflow milestone count (set via --km-count from React). */
+    grid-template-columns: repeat(var(--km-count, 4), minmax(0, 1fr));
+    gap: 12px;
     margin-top: 16px;
+    width: 100%;
 }
 
 .milestone-card {
-    background: white;
+    background: var(--color-bg-white);
     border-radius: 8px;
-    padding: 14px 16px;
+    padding: 12px 14px;
     border: 1px solid var(--color-border);
+    min-width: 0;
 }
 
 .milestone-card-header {
@@ -898,6 +901,7 @@
 .milestone-card-content {
     font-size: 11px;
     color: var(--color-text-light);
+    overflow-wrap: anywhere;
 }
 
 .milestone-card-date {
@@ -937,14 +941,50 @@
     background: #2d333b;
 }
 
-[data-theme="dark"] .source-name.state-0, .dark .source-name.state-0 { background: linear-gradient(90deg, rgba(193,199,208,0.1) 0%, var(--color-bg-secondary) 100%); }
-[data-theme="dark"] .source-name.state-1, .dark .source-name.state-1 { background: linear-gradient(90deg, rgba(101,84,192,0.15) 0%, var(--color-bg-secondary) 100%); }
-[data-theme="dark"] .source-name.state-2, .dark .source-name.state-2 { background: linear-gradient(90deg, rgba(8,145,178,0.15) 0%, var(--color-bg-secondary) 100%); }
-[data-theme="dark"] .source-name.state-3, .dark .source-name.state-3 { background: linear-gradient(90deg, rgba(255,171,0,0.15) 0%, var(--color-bg-secondary) 100%); }
-[data-theme="dark"] .source-name.state-4, .dark .source-name.state-4 { background: linear-gradient(90deg, rgba(54,179,126,0.15) 0%, var(--color-bg-secondary) 100%); }
-[data-theme="dark"] .source-name.state-5, .dark .source-name.state-5 { background: linear-gradient(90deg, rgba(0,101,255,0.15) 0%, var(--color-bg-secondary) 100%); }
-[data-theme="dark"] .source-name.state-6, .dark .source-name.state-6 { background: linear-gradient(90deg, rgba(13,148,136,0.15) 0%, var(--color-bg-secondary) 100%); }
-[data-theme="dark"] .source-name.state-7, .dark .source-name.state-7 { background: linear-gradient(90deg, rgba(0,76,191,0.15) 0%, var(--color-bg-secondary) 100%); }
+/*
+ * Dark mode project column: avoid light-mode gradients (they interpolate toward #fafbfc and
+ * wash out the left side where labels sit). Use solid fills + inset state accent — matches Lite.
+ */
+[data-theme="dark"] .source-name.state-0,
+.dark .source-name.state-0 {
+    background: color-mix(in srgb, var(--color-state-0) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-0);
+}
+[data-theme="dark"] .source-name.state-1,
+.dark .source-name.state-1 {
+    background: color-mix(in srgb, var(--color-state-1) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-1);
+}
+[data-theme="dark"] .source-name.state-2,
+.dark .source-name.state-2 {
+    background: color-mix(in srgb, var(--color-state-2) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-2);
+}
+[data-theme="dark"] .source-name.state-3,
+.dark .source-name.state-3 {
+    background: color-mix(in srgb, var(--color-state-3) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-3);
+}
+[data-theme="dark"] .source-name.state-4,
+.dark .source-name.state-4 {
+    background: color-mix(in srgb, var(--color-state-4) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-4);
+}
+[data-theme="dark"] .source-name.state-5,
+.dark .source-name.state-5 {
+    background: color-mix(in srgb, var(--color-state-5) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-5);
+}
+[data-theme="dark"] .source-name.state-6,
+.dark .source-name.state-6 {
+    background: color-mix(in srgb, var(--color-state-6) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-6);
+}
+[data-theme="dark"] .source-name.state-7,
+.dark .source-name.state-7 {
+    background: color-mix(in srgb, var(--color-state-7) 22%, var(--color-bg-secondary));
+    box-shadow: inset 4px 0 0 0 var(--color-state-7);
+}
 
 [data-theme="dark"] .timeline-track,
 .dark .timeline-track {
@@ -986,4 +1026,95 @@
 .dark .month-column,
 [data-theme="dark"] .month-column {
     background: var(--color-bg-secondary);
+}
+
+/* Timeline header: align “Project” cell with month row (no stray white block) */
+[data-theme="dark"] .timeline-header,
+.dark .timeline-header {
+    background: var(--color-bg-page);
+    border-radius: 4px 4px 0 0;
+}
+[data-theme="dark"] .timeline-label,
+.dark .timeline-label {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-light);
+    border-radius: 4px 0 0 0;
+}
+[data-theme="dark"] .timeline-months,
+.dark .timeline-months {
+    background: var(--color-bg-secondary);
+}
+
+/* Group headers: cooler slate for dark UI (matches Lite) */
+[data-theme="dark"] .group-header-name,
+.dark .group-header-name {
+    background: linear-gradient(135deg, #2d3a4f 0%, #3d4f5f 100%);
+    color: #f0f6fc;
+}
+[data-theme="dark"] .group-header-name:hover,
+.dark .group-header-name:hover {
+    background: linear-gradient(135deg, #3d4f5f 0%, #4d5f6f 100%);
+}
+[data-theme="dark"] .group-header-track,
+.dark .group-header-track {
+    background: #3d4f5f;
+}
+
+/* Zebra rows (alternate base) — same state tint, different mix base */
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-0,
+.dark .data-source-row:nth-of-type(even) .source-name.state-0 {
+    background: color-mix(in srgb, var(--color-state-0) 22%, var(--color-bg-white));
+}
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-1,
+.dark .data-source-row:nth-of-type(even) .source-name.state-1 {
+    background: color-mix(in srgb, var(--color-state-1) 22%, var(--color-bg-white));
+}
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-2,
+.dark .data-source-row:nth-of-type(even) .source-name.state-2 {
+    background: color-mix(in srgb, var(--color-state-2) 22%, var(--color-bg-white));
+}
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-3,
+.dark .data-source-row:nth-of-type(even) .source-name.state-3 {
+    background: color-mix(in srgb, var(--color-state-3) 22%, var(--color-bg-white));
+}
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-4,
+.dark .data-source-row:nth-of-type(even) .source-name.state-4 {
+    background: color-mix(in srgb, var(--color-state-4) 22%, var(--color-bg-white));
+}
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-5,
+.dark .data-source-row:nth-of-type(even) .source-name.state-5 {
+    background: color-mix(in srgb, var(--color-state-5) 22%, var(--color-bg-white));
+}
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-6,
+.dark .data-source-row:nth-of-type(even) .source-name.state-6 {
+    background: color-mix(in srgb, var(--color-state-6) 22%, var(--color-bg-white));
+}
+[data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-7,
+.dark .data-source-row:nth-of-type(even) .source-name.state-7 {
+    background: color-mix(in srgb, var(--color-state-7) 22%, var(--color-bg-white));
+}
+
+/* Zebra: timeline area alternates slightly (Lite-style) */
+[data-theme="dark"] .data-source-row:nth-of-type(even) .timeline-track,
+.dark .data-source-row:nth-of-type(even) .timeline-track {
+    background: var(--color-bg-white);
+}
+[data-theme="dark"] .data-source-row:nth-of-type(odd) .timeline-track,
+.dark .data-source-row:nth-of-type(odd) .timeline-track {
+    background: var(--color-bg-secondary);
+}
+
+/* Softer vertical grid lines in dark (less “white graph paper”) */
+[data-theme="dark"] .month-grid-line,
+.dark .month-grid-line {
+    background: rgba(139, 148, 158, 0.28);
+}
+
+[data-theme="dark"] .info-link,
+.dark .info-link {
+    color: var(--color-state-5);
+}
+[data-theme="dark"] .info-link:hover,
+.dark .info-link:hover {
+    color: var(--color-m3);
 }

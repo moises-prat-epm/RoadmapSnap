@@ -135,7 +135,7 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
     <button
       type="button"
       onClick={() => toggleSort(col)}
-      className="inline-flex items-center gap-0.5 font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400"
+      className="inline-flex items-center gap-0.5 font-semibold text-text-dark hover:text-m3"
     >
       {label}
       {sortColumn === col && <span aria-hidden>{sortDir === 'asc' ? ' ▲' : ' ▼'}</span>}
@@ -144,13 +144,13 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
 
   if (filtered.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-6 py-10 text-center dark:border-slate-600 dark:bg-slate-900/40">
-        <p className="text-sm text-slate-600 dark:text-slate-300">No projects match your filters</p>
+      <div className="rounded-lg border border-border bg-secondary px-6 py-10 text-center">
+        <p className="text-sm text-text-light">No projects match your filters</p>
         {onClearFilters && (
           <button
             type="button"
             onClick={onClearFilters}
-            className="mt-3 text-sm font-medium text-blue-600 underline hover:text-blue-800 dark:text-blue-400"
+            className="mt-3 text-sm font-medium text-m3 underline hover:opacity-80"
           >
             Clear filters
           </button>
@@ -160,9 +160,9 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-600">
-      <table className="min-w-full divide-y divide-slate-200 text-left text-sm dark:divide-slate-600">
-        <thead className="bg-slate-50 dark:bg-slate-800/80">
+    <div className="overflow-x-auto rounded-lg border border-border bg-bg-white">
+      <table className="min-w-full divide-y divide-border text-left text-sm text-text-dark">
+        <thead className="bg-secondary">
           <tr>
             <th scope="col" className="px-3 py-2">
               {headerBtn('name', 'Name')}
@@ -173,7 +173,7 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
             <th scope="col" className="px-3 py-2">
               {headerBtn('status', 'Status')}
             </th>
-            <th scope="col" className="px-3 py-2">
+            <th scope="col" className="px-3 py-2 text-text-light">
               At Risk
             </th>
             <th scope="col" className="px-3 py-2">
@@ -182,12 +182,12 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
             <th scope="col" className="px-3 py-2">
               Tags
             </th>
-            <th scope="col" className="w-12 px-3 py-2 text-center">
+            <th scope="col" className="w-12 px-3 py-2 text-center text-text-light">
               Link
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-700 dark:bg-slate-800">
+        <tbody className="divide-y divide-border bg-bg-white">
           {sorted.map((project) => {
             const statusKey = getCurrentStatus(projectToProjectLike(project), workflow, todayStr)
             const stateIndex = stateKeys.indexOf(statusKey)
@@ -200,18 +200,18 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
             const overflow = tags.length - visibleTags.length
 
             return (
-              <tr key={project.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+              <tr key={project.id} className="hover:bg-secondary">
                 <td className="px-3 py-2 align-top">
                   <div
-                    className={`font-semibold ${project.descoped ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}
+                    className={`font-semibold ${project.descoped ? 'text-text-light line-through' : 'text-text-dark'}`}
                   >
                     {project.name}
                   </div>
                   {project.show_in_timeline === false && (
-                    <div className="text-xs italic text-slate-500 dark:text-slate-400">(hidden from timeline)</div>
+                    <div className="text-xs italic text-text-light">(hidden from timeline)</div>
                   )}
                 </td>
-                <td className="px-3 py-2 align-top text-slate-700 dark:text-slate-200">
+                <td className="px-3 py-2 align-top text-text-dark">
                   {project.group_name ?? '—'}
                 </td>
                 <td className="px-3 py-2 align-top">
@@ -221,37 +221,37 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
                 </td>
                 <td className="px-3 py-2 align-top">
                   {project.at_risk ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
-                      <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                    <span className="inline-flex items-center gap-1 text-xs text-risk">
+                      <span className="h-2 w-2 rounded-full bg-risk" aria-hidden />
                       At risk
                     </span>
                   ) : null}
                 </td>
-                <td className="px-3 py-2 align-top text-slate-700 dark:text-slate-200">
+                <td className="px-3 py-2 align-top text-text-dark">
                   {nextCell.kind === 'next' && (
                     <span>
                       {nextCell.short}{' '}
-                      <span className="text-slate-500 dark:text-slate-400">{formatShortEnglishDate(nextCell.dateStr)}</span>
+                      <span className="text-text-light">{formatShortEnglishDate(nextCell.dateStr)}</span>
                     </span>
                   )}
                   {nextCell.kind === 'complete' && (
-                    <span className="inline-block rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    <span className="inline-block rounded border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-m2">
                       Complete
                     </span>
                   )}
-                  {nextCell.kind === 'empty' && <span className="text-slate-400">—</span>}
+                  {nextCell.kind === 'empty' && <span className="text-text-light">—</span>}
                 </td>
                 <td className="px-3 py-2 align-top">
                   <div className="flex flex-wrap gap-1">
                     {visibleTags.map((t) => (
                       <span
                         key={t}
-                        className="inline-block max-w-[120px] truncate rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-600 dark:text-slate-200"
+                        className="inline-block max-w-[120px] truncate rounded-full border border-border bg-secondary px-2 py-0.5 text-xs text-text-dark"
                       >
                         {t}
                       </span>
                     ))}
-                    {overflow > 0 && <span className="text-xs text-slate-500">+{overflow} more</span>}
+                    {overflow > 0 && <span className="text-xs text-text-light">+{overflow} more</span>}
                   </div>
                 </td>
                 <td className="px-3 py-2 text-center align-top">
@@ -260,7 +260,7 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
                       href={project.external_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                      className="inline-flex text-m3 hover:opacity-80"
                       title="Open external link"
                     >
                       {externalLinkIcon}

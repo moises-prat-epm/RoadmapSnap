@@ -40,6 +40,8 @@ interface DependencyArrowsProps {
   /** When null, no arrows are drawn. When set, draw full graph from this project (Lite behavior). */
   activeProjectName: string | null
   showRiskOnlyRed: boolean
+  /** Only draw edges between projects currently shown as rows (e.g. after filters). */
+  visibleProjectNames?: ReadonlySet<string>
   visibleMonths: MonthInfo[]
   workflowMilestones: WorkflowMilestone[]
 }
@@ -49,6 +51,7 @@ export default function DependencyArrows({
   projects,
   activeProjectName,
   showRiskOnlyRed,
+  visibleProjectNames,
   visibleMonths,
   workflowMilestones,
 }: DependencyArrowsProps) {
@@ -80,7 +83,13 @@ export default function DependencyArrows({
             toMilestone: typeof dep === 'object' ? dep.to : undefined,
           }))
         )
-    const allEdges = [...allInboundEdges, ...(graph ? graph.outboundEdges : [])]
+    const allEdgesRaw = [...allInboundEdges, ...(graph ? graph.outboundEdges : [])]
+    const allEdges =
+      visibleProjectNames != null
+        ? allEdgesRaw.filter(
+            (e) => visibleProjectNames.has(e.from) && visibleProjectNames.has(e.to)
+          )
+        : allEdgesRaw
     const nameToProject = new Map(projects.map((p) => [p.name, p]))
     const firstKey = getFirstMilestoneKey(workflowMilestones)
     const lastKey = getLastMilestoneKey(workflowMilestones)
@@ -196,6 +205,7 @@ export default function DependencyArrows({
     showRiskOnlyRed,
     visibleMonths,
     workflowMilestones,
+    visibleProjectNames,
   ])
 
   if ((!activeProjectName && !showRiskOnlyRed) || paths.length === 0) return null

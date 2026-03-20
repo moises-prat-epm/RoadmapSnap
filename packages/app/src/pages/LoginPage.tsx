@@ -5,10 +5,10 @@ export default function LoginPage() {
   const { loginWithRedirect, isAuthenticated } = useAuth0()
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-gray-50">
+    <div className="flex h-screen flex-col items-center justify-center bg-page">
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900">RoadmapSnap</h1>
-        <p className="mt-2 text-gray-500">AI-powered PMO platform</p>
+        <h1 className="text-4xl font-bold text-text-dark">RoadmapSnap</h1>
+        <p className="mt-2 text-text-light">AI-powered PMO platform</p>
       </div>
       <button
         onClick={() => loginWithRedirect()}

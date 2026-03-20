@@ -10,39 +10,33 @@ interface AppShellProps {
 export default function AppShell({ workspaceName, children, workspaceSelector }: AppShellProps) {
   const { user, logout } = useAuth0()
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex">
-      {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 bg-slate-800 dark:bg-slate-900 flex flex-col border-r border-slate-700">
-        <div className="p-4 border-b border-slate-700">
-          <span className="text-white font-semibold text-lg">RoadmapSnap</span>
+    <div className="min-h-screen bg-page">
+      {/* Fixed sidebar — content column scrolls the window (Lite-style), not a nested pane */}
+      <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col overflow-y-auto border-r border-slate-700 bg-slate-800">
+        <div className="border-b border-slate-700 p-4">
+          <span className="text-lg font-semibold text-white">RoadmapSnap</span>
         </div>
-        <nav className="flex-1 p-2 space-y-1">
+        <nav className="flex-1 space-y-1 p-2">
           <a
             href="/dashboard"
-            className="flex items-center px-3 py-2 rounded-md text-slate-200 hover:bg-slate-700 hover:text-white"
+            className="flex items-center rounded-md px-3 py-2 text-slate-200 hover:bg-slate-700 hover:text-white"
           >
             Dashboard
           </a>
-          <span className="flex items-center px-3 py-2 rounded-md text-slate-500 cursor-not-allowed" title="Epic 2">
+          <span className="flex cursor-not-allowed items-center rounded-md px-3 py-2 text-slate-500" title="Epic 2">
             Timeline
           </span>
-          <span className="flex items-center px-3 py-2 rounded-md text-slate-500 cursor-not-allowed" title="Epic 2">
+          <span className="flex cursor-not-allowed items-center rounded-md px-3 py-2 text-slate-500" title="Epic 2">
             Projects
           </span>
         </nav>
-        {workspaceSelector && (
-          <div className="p-3 border-t border-slate-700">
-            {workspaceSelector}
-          </div>
-        )}
+        {workspaceSelector && <div className="border-t border-slate-700 p-3">{workspaceSelector}</div>}
       </aside>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="h-14 flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6">
-          <div className="flex-1 flex justify-center">
-            <span className="text-gray-700 dark:text-gray-200 font-medium truncate">
+      <div className="ml-60 flex min-h-screen min-w-0 flex-col">
+        <header className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center justify-between border-b border-border bg-bg-white px-6">
+          <div className="flex flex-1 justify-center">
+            <span className="truncate font-medium text-text-dark">
               {workspaceName || 'Select a workspace'}
             </span>
           </div>
@@ -50,28 +44,26 @@ export default function AppShell({ workspaceName, children, workspaceSelector }:
             <ThemeToggle />
             <div className="flex items-center gap-2">
               <span
-                className="w-8 h-8 rounded-full bg-slate-600 dark:bg-slate-500 flex items-center justify-center text-white text-sm font-medium"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-600 text-sm font-medium text-white"
                 title={user?.email}
               >
                 {(user?.name ?? user?.email ?? '?').charAt(0).toUpperCase()}
               </span>
-              <span className="text-sm text-gray-600 dark:text-gray-300 max-w-[120px] truncate">
+              <span className="max-w-[120px] truncate text-sm text-text-light">
                 {user?.name ?? user?.email}
               </span>
             </div>
             <button
               type="button"
               onClick={() => logout({ logoutParams: { returnTo: window.location.origin + '/login' } })}
-              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-sm text-text-light hover:text-text-dark"
             >
               Sign out
             </button>
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-6 bg-gray-100 dark:bg-gray-900">
-          {children}
-        </main>
+        <main className="min-w-0 flex-1 bg-page p-6">{children}</main>
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { colors, layout, typography } from '@roadmapsnap/tokens'
 const toKebab = (s: string) => s.replace(/([A-Z])/g, '-$1').toLowerCase()
 
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {

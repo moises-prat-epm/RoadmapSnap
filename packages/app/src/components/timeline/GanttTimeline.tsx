@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react'
 import type { Project, Workspace } from '../../api/client'
 import {
   generateMonths,
@@ -24,8 +24,11 @@ import GanttBar from './GanttBar'
 import MilestoneMarkerComponent from './MilestoneMarker'
 import KeyMilestones from './KeyMilestones'
 import DependencyArrows from './DependencyArrows'
+import { type ZoomPreset } from './TimelineToolbar'
+import { sortTimelineProjects, type TimelineSortState, defaultTimelineSort } from '../../lib/timelineSort'
 
-export type ZoomPreset = '3m' | '6m' | '12m' | 'all'
+export type { ZoomPreset }
+export type { TimelineSortState }
 
 export type GanttFilter = WorkspaceProjectFilter
 
@@ -33,8 +36,19 @@ interface GanttTimelineProps {
   projects: Project[]
   workspace: Workspace | null
   filter?: GanttFilter
-  onFilterChange?: (f: GanttFilter) => void
-  zoom?: ZoomPreset
+  /** Zoom preset (controlled from Dashboard filter bar). */
+  zoom: ZoomPreset
+  /** Row order within groups (Lite-style). */
+  timelineSort?: TimelineSortState
+}
+
+/** Imperative actions for parent (exports + group controls from filter bar). */
+export type GanttTimelineHandle = {
+  exportPNG: () => void
+  exportCSV: () => void
+  exportJSON: () => void
+  expandAllGroups: () => void
+  collapseAllGroups: () => void
 }
 
 function projectToProjectLike(p: Project): ProjectLike {
@@ -60,14 +74,16 @@ function getDependencyType(project: Project, allProjects: Project[]): 'inbound' 
   return null
 }
 
-export default function GanttTimeline({
-  projects,
-  workspace,
-  filter = { search: '', statusFilter: 'ALL', riskOnly: false, descopedOnly: false },
-  onFilterChange,
-  zoom: zoomProp = 'all',
-}: GanttTimelineProps) {
-  const [zoom, setZoom] = useState<ZoomPreset>(zoomProp)
+const GanttTimeline = forwardRef<GanttTimelineHandle, GanttTimelineProps>(function GanttTimeline(
+  {
+    projects,
+    workspace,
+    filter = { search: '', statusFilter: 'ALL', riskOnly: false, descopedOnly: false },
+    zoom,
+    timelineSort = defaultTimelineSort,
+  },
+  ref
+) {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   const [activeDependencyGraph, setActiveDependencyGraph] = useState<string | null>(null)
   const timelineContainerRef = useRef<HTMLDivElement>(null)
@@ -104,6 +120,17 @@ export default function GanttTimeline({
     [projects, workflow, safeFilter, todayStr]
   )
 
+  const sortedFilteredProjects = useMemo(
+    () =>
+      sortTimelineProjects(filteredProjects, projects, workflow, todayStr, timelineSort),
+    [filteredProjects, projects, workflow, todayStr, timelineSort]
+  )
+
+  const visibleProjectNames = useMemo(
+    () => new Set(sortedFilteredProjects.map((p) => p.name)),
+    [sortedFilteredProjects]
+  )
+
   const redBlockedSet = useMemo(
     () => getBlockedByRedDependencySet(projects, workflowMilestones),
     [projects, workflowMilestones]
@@ -116,13 +143,13 @@ export default function GanttTimeline({
 
   const grouped = useMemo(() => {
     const groups: Record<string, Project[]> = {}
-    filteredProjects.forEach((p) => {
+    sortedFilteredProjects.forEach((p) => {
       const g = p.group_name ?? '(No group)'
       if (!groups[g]) groups[g] = []
       groups[g].push(p)
     })
     return groups
-  }, [filteredProjects])
+  }, [sortedFilteredProjects])
 
   const groupOrder = (workspace?.settings as { group_order?: string[] } | undefined)?.group_order
   const groupNames = useMemo(() => {
@@ -151,18 +178,10 @@ export default function GanttTimeline({
 
   useEffect(() => {
     setActiveDependencyGraph(null)
-  }, [safeFilter.search, safeFilter.statusFilter, safeFilter.riskOnly, safeFilter.descopedOnly])
+  }, [safeFilter.search, safeFilter.statusFilter, safeFilter.riskOnly, safeFilter.descopedOnly, zoom, timelineSort.by, timelineSort.order])
 
   const toggleGroup = (name: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [name]: !prev[name] }))
-  }
-
-  if (workflow.length === 0) {
-    return (
-      <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-slate-500 dark:text-slate-400">
-        No workflow defined for this workspace. Add a workflow to see the timeline.
-      </div>
-    )
   }
 
   const stateKeys = useMemo(
@@ -177,16 +196,41 @@ export default function GanttTimeline({
     setCollapsedGroups(next)
   }
 
-  const handleExportPNG = () => {
+  const handleExportPNG = useCallback(() => {
     exportToPNG(timelineContainerRef.current, 'Timeline').catch(console.error)
+  }, [])
+  const handleExportCSV = useCallback(
+    () => exportToCSV(sortedFilteredProjects, workflow, todayStr),
+    [sortedFilteredProjects, workflow, todayStr]
+  )
+  const handleExportJSON = useCallback(
+    () => exportToJSON(sortedFilteredProjects, workspace, workflow, todayStr),
+    [sortedFilteredProjects, workspace, workflow, todayStr]
+  )
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      exportPNG: handleExportPNG,
+      exportCSV: handleExportCSV,
+      exportJSON: handleExportJSON,
+      expandAllGroups: expandAll,
+      collapseAllGroups: collapseAll,
+    }),
+    [handleExportPNG, handleExportCSV, handleExportJSON, expandAll, collapseAll]
+  )
+
+  if (workflow.length === 0) {
+    return (
+      <div className="rounded-lg border border-border bg-bg-white p-6 text-text-light">
+        No workflow defined for this workspace. Add a workflow to see the timeline.
+      </div>
+    )
   }
-  const handleExportCSV = () => exportToCSV(filteredProjects, workflow, todayStr)
-  const handleExportJSON = () =>
-    exportToJSON(filteredProjects, workspace, workflow, todayStr)
 
   return (
     <div className="timeline-view">
-      {/* Key milestones — above toolbar */}
+      {/* Key milestones — filter bar is above KPI in Dashboard (Lite order) */}
       <KeyMilestones projects={projects} workflow={workflow} todayStr={todayStr} />
 
       {/* State legend */}
@@ -202,56 +246,6 @@ export default function GanttTimeline({
               </div>
             )
           })}
-        </div>
-      </div>
-
-      {/* Timeline toolbar: zoom, descoped (filters live in dashboard FilterBar), group, export */}
-      <div className="filter-bar">
-        <div className="filter-group zoom-controls">
-          <span className="filter-label">Zoom:</span>
-          {(['3m', '6m', '12m', 'all'] as const).map((z) => (
-            <button
-              key={z}
-              type="button"
-              onClick={() => {
-                setZoom(z)
-                setActiveDependencyGraph(null)
-              }}
-              className={`zoom-btn ${zoom === z ? 'active' : ''}`}
-            >
-              {z === 'all' ? 'All' : z.toUpperCase()}
-            </button>
-          ))}
-        </div>
-        <div className="filter-group">
-          <button
-            type="button"
-            className={`filter-toggle ${safeFilter.descopedOnly ? 'active' : ''}`}
-            onClick={() => onFilterChange?.({ ...safeFilter, descopedOnly: !safeFilter.descopedOnly, riskOnly: false })}
-          >
-            Descoped
-          </button>
-        </div>
-        {groupNames.length > 0 && (
-          <div className="group-controls">
-            <button type="button" className="group-control-btn" onClick={expandAll}>
-              Expand All
-            </button>
-            <button type="button" className="group-control-btn" onClick={collapseAll}>
-              Collapse All
-            </button>
-          </div>
-        )}
-        <div className="export-controls">
-          <button type="button" className="export-btn" onClick={handleExportPNG}>
-            Export PNG
-          </button>
-          <button type="button" className="export-btn secondary" onClick={handleExportCSV}>
-            CSV
-          </button>
-          <button type="button" className="export-btn secondary" onClick={handleExportJSON}>
-            JSON
-          </button>
         </div>
       </div>
 
@@ -455,6 +449,7 @@ export default function GanttTimeline({
         projects={projects}
         activeProjectName={activeDependencyGraph}
         showRiskOnlyRed={safeFilter.riskOnly}
+        visibleProjectNames={visibleProjectNames}
         visibleMonths={visibleMonths}
         workflowMilestones={workflowMilestones}
       />
@@ -462,4 +457,6 @@ export default function GanttTimeline({
       </div>
     </div>
   )
-}
+})
+
+export default GanttTimeline

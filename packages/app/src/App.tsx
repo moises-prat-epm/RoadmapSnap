@@ -24,16 +24,16 @@ export default function App() {
 
   if (isLoading && !loadingTimedOut) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-page">
+        <div className="text-text-light">Loading...</div>
       </div>
     )
   }
 
   if (loadingTimedOut) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <p className="text-gray-600 dark:text-gray-300 text-center mb-6 max-w-sm">
+      <div className="flex h-screen flex-col items-center justify-center bg-page px-4">
+        <p className="mb-6 max-w-sm text-center text-text-dark">
           Taking longer than usual. You can try signing in again or continue to the app.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -45,14 +45,14 @@ export default function App() {
           </a>
           <a
             href="/dashboard"
-            className="rounded-lg border border-gray-300 dark:border-gray-600 px-6 py-2.5 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 text-center"
+            className="rounded-lg border border-border bg-bg-white px-6 py-2.5 text-center font-medium text-text-dark hover:bg-secondary"
           >
             Continue to app
           </a>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
+            className="text-sm text-text-light hover:text-text-dark"
           >
             Refresh page
           </button>

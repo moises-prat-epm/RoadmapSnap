@@ -1,6 +1,6 @@
 /**
  * RoadmapSnap — filter bar logic
- * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate, drawDependencyArrows (window).
+ * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate.
  */
 import AppState from '../state/appState.js';
 import { getCurrentStatus, getStates, getLastMilestoneKey, getMilestoneDate, isDeliverableNonFilterable } from '../core/workflow.js';
@@ -163,14 +163,6 @@ function toggleDescopedFilter(event) {
     if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
-function toggleGanttBars() {
-    const showGantt = AppState.get().showGantt;
-    AppState.set({ showGantt: !showGantt });
-    if (AppState.get().activeDependencyGraph) {
-        setTimeout(() => drawDependencyArrows(), 50);
-    }
-}
-
 function renderFilterBar(state, sources) {
     var filterableSources = sources.filter(function (s) { return !isDeliverableNonFilterable(s); });
     var filteredCount = filterableSources.length;
@@ -180,11 +172,7 @@ function renderFilterBar(state, sources) {
     var hasGroups = hasAnyGroups(sources);
     var lastMilestoneKey = getLastMilestoneKey();
     var hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.descopedOnly || state.filter.search;
-    var ganttSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
     return html`<div class="filter-bar">
-        <div class="filter-group">
-            <button class="filter-toggle ${state.showGantt ? 'active' : ''}" onclick="toggleGanttBars()">${raw(ganttSvg)} Gantt Bars</button>
-        </div>
         <div class="filter-group">
             <input type="text" class="filter-input" placeholder="Search by name..." value="${(typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(state.filter.search) : state.filter.search)}" oninput="updateFilter('search', this.value)">
         </div>
@@ -239,5 +227,4 @@ window.filterByStatus = filterByStatus;
 window.clearStatusFilterOnOutsideClick = clearStatusFilterOnOutsideClick;
 window.toggleRiskFilter = toggleRiskFilter;
 window.toggleDescopedFilter = toggleDescopedFilter;
-window.toggleGanttBars = toggleGanttBars;
 window.renderFilterBar = renderFilterBar;

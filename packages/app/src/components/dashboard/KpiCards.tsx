@@ -5,18 +5,8 @@ interface KpiCardsProps {
   stats: StatsResult
   workflow: WorkflowItem[]
   onFilterByStatus?: (key: string) => void
-  onToggleRisk?: () => void
-  onToggleDescoped?: () => void
   activeStatusFilter?: string
-  riskOnly?: boolean
-  descopedOnly?: boolean
 }
-
-const riskIconSvg = (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99z" />
-  </svg>
-)
 
 function formatShortDate(ddMmYyyy: string): string {
   const parts = ddMmYyyy.trim().split('/').map(Number)
@@ -35,55 +25,16 @@ export default function KpiCards({
   stats,
   workflow,
   onFilterByStatus,
-  onToggleRisk,
-  onToggleDescoped,
   activeStatusFilter = 'ALL',
-  riskOnly = false,
-  descopedOnly = false,
 }: KpiCardsProps) {
   const stateKeys = stats.stateKeys
   const total = stats.total
-  const atRisk = stats.atRisk ?? 0
-  const descopedCount = stats.descoped ?? 0
   const todayStr = getTodayStr()
 
   return (
     <div className="summary-dashboard">
-      <div className="summary-header">
-        <div className="summary-title">
-          Roadmap Dashboard
-          <span className="summary-title-note">
-            ({total} total items, {total} shown in timeline)
-          </span>
-        </div>
+      <div className="summary-header summary-header--tab-context">
         <div className="header-right">
-          {atRisk > 0 && (
-            <button
-              type="button"
-              onClick={onToggleRisk}
-              className={`risk-summary clickable ${riskOnly ? 'active' : ''}`}
-              title="Click to filter At Risk items"
-            >
-              <span className="risk-summary-icon">{riskIconSvg}</span>
-              <span className="risk-summary-text">{atRisk} At Risk</span>
-            </button>
-          )}
-          {atRisk === 0 && (
-            <div className="risk-summary disabled" title="No at-risk items">
-              <span className="risk-summary-icon">{riskIconSvg}</span>
-              <span className="risk-summary-text">0 At Risk</span>
-            </div>
-          )}
-          {descopedCount > 0 && (
-            <button
-              type="button"
-              onClick={onToggleDescoped}
-              className={`descoped-summary clickable ${descopedOnly ? 'active' : ''}`}
-              title="Click to filter Descoped items"
-            >
-              <span className="descoped-summary-text">{descopedCount} Descoped</span>
-            </button>
-          )}
           <div className="today-date-container">
             <span className="today-date-label">Today:</span>
             <span className="today-date-value">{formatShortDate(todayStr)}</span>
@@ -121,7 +72,7 @@ export default function KpiCards({
 
       <div className="progress-section">
         <div className="progress-header">
-          <span className="progress-title">Overall progress</span>
+          <span className="progress-title" aria-hidden="true" />
           <span className="progress-percentage">
             {stats.completionPercentage}%{total >= 0 ? ` (${total} items)` : ''}
           </span>

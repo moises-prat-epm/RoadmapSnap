@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { WorkflowItem } from '../../api/client'
 import { getUpcomingMilestones } from '../../lib/stats'
 import type { Project } from '../../api/client'
@@ -34,7 +35,14 @@ export default function KeyMilestones({ projects, workflow, todayStr }: KeyMiles
   const upcoming = getUpcomingMilestones(projectsForStats, workflow, todayStr)
 
   return (
-    <div className="key-milestones">
+    <div
+      className="key-milestones"
+      style={
+        {
+          '--km-count': milestones.length,
+        } as CSSProperties
+      }
+    >
       {milestones.map((m, idx) => {
         const item = upcoming[m.key]
         const slot = idx === 0 ? 'start' : 'm' + Math.min(idx - 1, 5)

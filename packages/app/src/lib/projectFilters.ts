@@ -3,7 +3,7 @@
  * Mirrors GanttTimeline filter semantics.
  */
 
-import type { Project, WorkflowItem } from '../api/client'
+import type { Project, WorkflowItem, Workspace } from '../api/client'
 import type { WorkflowMilestone } from './timeline'
 import { parseDate } from './stats'
 import { getCurrentStatus, type ProjectForStats } from './stats'
@@ -128,6 +128,67 @@ export function applyProjectFilters(
 
 export function countTimelineEligible(projects: Project[]): number {
   return projects.filter((p) => p.show_in_timeline !== false).length
+}
+
+/** Timeline-visible projects that match risk-only filter semantics (Lite + SaaS: at-risk, red blocked, red endpoints). */
+export function countTimelineRiskSignaledProjects(projects: Project[], workflow: WorkflowItem[]): number {
+  if (projects.length === 0 || workflow.length === 0) return 0
+  const workflowMilestones = getWorkflowMilestones(workflow)
+  const redBlockedSet = getBlockedByRedDependencySet(projects, workflowMilestones)
+  const redEndpointsSet = getRedDependencyEndpointSet(projects, workflowMilestones)
+  return projects.filter(
+    (p) =>
+      p.show_in_timeline !== false &&
+      (p.at_risk === true || redBlockedSet.has(p.name) || redEndpointsSet.has(p.name))
+  ).length
+}
+
+/** Timeline-visible descoped projects (show Descoped filter when any exist). */
+export function countTimelineDescopedProjects(projects: Project[]): number {
+  return projects.filter((p) => p.show_in_timeline !== false && p.descoped === true).length
+}
+
+/** All workspace projects matching risk-only semantics (Projects tab / list mode). */
+export function countListRiskSignaledProjects(projects: Project[], workflow: WorkflowItem[]): number {
+  if (projects.length === 0 || workflow.length === 0) return 0
+  const workflowMilestones = getWorkflowMilestones(workflow)
+  const redBlockedSet = getBlockedByRedDependencySet(projects, workflowMilestones)
+  const redEndpointsSet = getRedDependencyEndpointSet(projects, workflowMilestones)
+  return projects.filter(
+    (p) => p.at_risk === true || redBlockedSet.has(p.name) || redEndpointsSet.has(p.name)
+  ).length
+}
+
+export function countListDescopedProjects(projects: Project[]): number {
+  return projects.filter((p) => p.descoped === true).length
+}
+
+/** Distinct group names for filtered timeline projects (same ordering as Gantt). */
+export function getTimelineGroupNames(
+  projects: Project[],
+  workflow: WorkflowItem[],
+  filter: WorkspaceProjectFilter,
+  todayStr: string,
+  workspace: Workspace | null
+): string[] {
+  const filtered = applyProjectFilters(projects, workflow, filter, todayStr, 'timeline')
+  const namesSet = new Set<string>()
+  for (const p of filtered) {
+    namesSet.add(p.group_name ?? '(No group)')
+  }
+  const names = [...namesSet]
+  const groupOrder = (workspace?.settings as { group_order?: string[] } | undefined)?.group_order
+  if (Array.isArray(groupOrder) && groupOrder.length > 0) {
+    return names.sort((a, b) => {
+      const i = groupOrder.indexOf(a)
+      const j = groupOrder.indexOf(b)
+      if (i === -1 && j === -1) return a.localeCompare(b)
+      if (i === -1) return 1
+      if (j === -1) return -1
+      return i - j
+    })
+  }
+  return names.sort()
 }
 
 /** Milestone date string for a project (START alias for first milestone). */

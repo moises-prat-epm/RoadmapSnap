@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApi } from '../../hooks/useApi'
 import { useCurrentUser } from '../../hooks/useRole'
 import type { UserPreferences } from '../../api/client'
+import { applyThemeClassToDocument, writeStoredTheme } from '../../lib/themeStorage'
 
 export default function ThemeToggle() {
   const api = useApi()
@@ -19,9 +20,9 @@ export default function ThemeToggle() {
 
   const toggle = () => {
     const next: UserPreferences['theme'] = theme === 'dark' ? 'light' : 'dark'
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', next === 'dark')
-    }
+    const stored = next === 'dark' ? 'dark' : 'light'
+    applyThemeClassToDocument(stored)
+    writeStoredTheme(stored)
     mutation.mutate(next)
   }
 
@@ -29,7 +30,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
+      className="rounded-lg p-2 text-text-light hover:bg-secondary hover:text-text-dark"
       title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
       aria-label="Toggle theme"
     >

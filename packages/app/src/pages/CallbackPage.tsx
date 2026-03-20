@@ -25,16 +25,18 @@ export default function CallbackPage() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-gray-50">
-        <p className="text-red-600 mb-4">Sign in failed: {error.message}</p>
-        <a href="/login" className="text-blue-600 hover:underline">Back to sign in</a>
+      <div className="flex h-screen flex-col items-center justify-center bg-page">
+        <p className="mb-4 text-risk">Sign in failed: {error.message}</p>
+        <a href="/login" className="text-m3 hover:underline">
+          Back to sign in
+        </a>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-50">
-      <div className="text-gray-500">Completing sign in...</div>
+    <div className="flex h-screen items-center justify-center bg-page">
+      <div className="text-text-light">Completing sign in...</div>
     </div>
   )
 }
