@@ -23,9 +23,10 @@ async function authPlugin(fastify) {
     if (allowTestHeader) {
       const testSub = request.headers['x-test-user-sub'];
       if (testSub != null && testSub !== '') {
+        // Unique email per sub — users.email is UNIQUE; tests use many different subs in one process.
         request.user = {
           sub: testSub,
-          email: 'test@example.com',
+          email: `${testSub}@test.example.com`,
           name: 'Test User',
         };
         return;
