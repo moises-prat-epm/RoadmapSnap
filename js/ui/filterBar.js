@@ -1,22 +1,25 @@
 /**
  * RoadmapSnap — filter bar logic
- * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate, drawDependencyArrows (window).
+ * Uses AppState for filter/sort/showGantt. Subscriber in index.html calls renderRoadmap. Depends on AppState, isDeliverableNonFilterable, getCurrentStatus, getStates, getLastMilestoneKey, parseDate, getMilestoneDate.
  */
 import AppState from '../state/appState.js';
 import { getCurrentStatus, getStates, getLastMilestoneKey, getMilestoneDate, isDeliverableNonFilterable } from '../core/workflow.js';
 import { parseDate } from '../core/timeline.js';
+import { getEffectiveAtRiskSet, getRedDependencyEndpointSet } from '../core/dependencies.js';
 import { html, raw } from './renderer.js';
 import { getAllVisibleDataSources } from '../core/stats.js';
 import { hasAnyGroups } from './grouping.js';
 
 function filterDeliverables(sources) {
     const filter = AppState.get().filter;
+    const effectiveAtRiskSet = getEffectiveAtRiskSet();
+    const redDependencyEndpoints = getRedDependencyEndpointSet();
     return sources.filter(source => {
         const isNonFilterable = isDeliverableNonFilterable(source);
         if (filter.status !== 'ALL' && isNonFilterable) {
             return false;
         }
-        if (filter.riskOnly && !source.atRisk) {
+        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name) && !redDependencyEndpoints.has(source.name)) {
             return false;
         }
         if (filter.descopedOnly && !source.descoped) {
@@ -26,7 +29,7 @@ function filterDeliverables(sources) {
             const status = getCurrentStatus(source);
             if (status !== filter.status) return false;
         }
-        if (filter.riskOnly && !source.atRisk) return false;
+        if (filter.riskOnly && !effectiveAtRiskSet.has(source.name) && !redDependencyEndpoints.has(source.name)) return false;
         if (filter.descopedOnly && !source.descoped) return false;
         if (filter.search) {
             const searchLower = filter.search.toLowerCase();
@@ -59,6 +62,7 @@ function sortDeliverables(sources) {
     const states = getStates();
     const lastMilestoneKey = getLastMilestoneKey();
     const sort = AppState.get().sort;
+    const effectiveAtRiskSet = getEffectiveAtRiskSet();
 
     sorted.sort((a, b) => {
         let comparison = 0;
@@ -78,7 +82,7 @@ function sortDeliverables(sources) {
                 comparison = dateA - dateB;
                 break;
             case 'risk':
-                comparison = (b.atRisk ? 1 : 0) - (a.atRisk ? 1 : 0);
+                comparison = (effectiveAtRiskSet.has(b.name) ? 1 : 0) - (effectiveAtRiskSet.has(a.name) ? 1 : 0);
                 break;
         }
         return sort.order === 'desc' ? -comparison : comparison;
@@ -159,14 +163,6 @@ function toggleDescopedFilter(event) {
     if (typeof window.closeDependencyGraph === 'function') window.closeDependencyGraph();
 }
 
-function toggleGanttBars() {
-    const showGantt = AppState.get().showGantt;
-    AppState.set({ showGantt: !showGantt });
-    if (AppState.get().activeDependencyGraph) {
-        setTimeout(() => drawDependencyArrows(), 50);
-    }
-}
-
 function renderFilterBar(state, sources) {
     var filterableSources = sources.filter(function (s) { return !isDeliverableNonFilterable(s); });
     var filteredCount = filterableSources.length;
@@ -176,11 +172,7 @@ function renderFilterBar(state, sources) {
     var hasGroups = hasAnyGroups(sources);
     var lastMilestoneKey = getLastMilestoneKey();
     var hasActiveFilters = state.filter.status !== 'ALL' || state.filter.riskOnly || state.filter.descopedOnly || state.filter.search;
-    var ganttSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>';
     return html`<div class="filter-bar">
-        <div class="filter-group">
-            <button class="filter-toggle ${state.showGantt ? 'active' : ''}" onclick="toggleGanttBars()">${raw(ganttSvg)} Gantt Bars</button>
-        </div>
         <div class="filter-group">
             <input type="text" class="filter-input" placeholder="Search by name..." value="${(typeof window.escapeHtmlAttr === 'function' ? window.escapeHtmlAttr(state.filter.search) : state.filter.search)}" oninput="updateFilter('search', this.value)">
         </div>
@@ -235,5 +227,4 @@ window.filterByStatus = filterByStatus;
 window.clearStatusFilterOnOutsideClick = clearStatusFilterOnOutsideClick;
 window.toggleRiskFilter = toggleRiskFilter;
 window.toggleDescopedFilter = toggleDescopedFilter;
-window.toggleGanttBars = toggleGanttBars;
 window.renderFilterBar = renderFilterBar;

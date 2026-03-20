@@ -1,12 +1,18 @@
 /**
- * Request context plugin: resolves DB user, sets PostgreSQL session vars for RLS/audit.
- * Use fastify.setRequestContext as a preHandler after authenticate (e.g. on /auth/me).
- * Skip context setup for /health (do not add this preHandler to /health).
- * TODO Epic 2: resolve org from JWT claims or workspace param
+ * Request context plugin: resolves DB user, org context, sets PostgreSQL session vars for RLS/audit.
+ * Runs only on authenticated requests (skips /health).
+ * Resolves org in order: X-Org-Id header → ?orgId query → org_members lookup by user.
+ * User provisioning: INSERT user from JWT if not present (Auth0 post-login sync).
  */
 
 import { pool } from '../db/client.js';
 import authPlugin from './auth.js';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidUuid(value) {
+  return value != null && UUID_REGEX.test(String(value));
+}
 
 async function contextPlugin(fastify) {
   fastify.decorate('setRequestContext', async function setRequestContext(request, reply) {
@@ -27,31 +33,148 @@ async function contextPlugin(fastify) {
     reply.raw.once('close', release);
 
     const auth0Id = request.user.sub;
-    const userRow = await client.query(
-      'SELECT id, email, display_name FROM users WHERE auth0_id = $1',
-      [auth0Id]
-    );
+
+    // User provisioning: insert if not exists (Auth0 post-login sync)
+    let userRow;
+    try {
+      userRow = await client.query(
+        'SELECT id, email, display_name, preferences FROM users WHERE auth0_id = $1',
+        [auth0Id]
+      );
+    } catch (err) {
+      if (err.code === '42703' && err.message && err.message.includes('preferences')) {
+        userRow = await client.query(
+          'SELECT id, email, display_name FROM users WHERE auth0_id = $1',
+          [auth0Id]
+        );
+      } else {
+        release();
+        throw err;
+      }
+    }
+    if (userRow.rowCount === 0) {
+      await client.query(
+        `INSERT INTO users (auth0_id, email, display_name)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (auth0_id) DO NOTHING`,
+        [
+          auth0Id,
+          request.user.email ?? null,
+          request.user.name ?? null,
+        ]
+      );
+      try {
+        userRow = await client.query(
+          'SELECT id, email, display_name, preferences FROM users WHERE auth0_id = $1',
+          [auth0Id]
+        );
+      } catch (err) {
+        if (err.code === '42703' && err.message && err.message.includes('preferences')) {
+          userRow = await client.query(
+            'SELECT id, email, display_name FROM users WHERE auth0_id = $1',
+            [auth0Id]
+          );
+        } else {
+          throw err;
+        }
+      }
+      // Add new user to seed org if it exists so they can see seeded workspaces
+      if (userRow.rowCount > 0) {
+        await client.query(
+          `INSERT INTO org_members (org_id, user_id, role)
+           SELECT o.id, $1, 'admin' FROM organizations o WHERE o.slug = 'config-seed-org' LIMIT 1
+           ON CONFLICT (org_id, user_id) DO NOTHING`,
+          [userRow.rows[0].id]
+        );
+      }
+    }
+
     if (userRow.rowCount === 0) {
       release();
       return;
     }
 
     const row = userRow.rows[0];
+    const preferences = row.preferences && typeof row.preferences === 'object'
+      ? row.preferences
+      : { theme: 'light' };
+
+    // Resolve org context (priority: X-Org-Id → ?orgId → first org_members row)
+    let resolvedOrgId = null;
+    let role = null;
+
+    const headerOrgId = request.headers['x-org-id'];
+    const queryOrgId = request.query?.orgId;
+    if (headerOrgId && isValidUuid(headerOrgId)) {
+      resolvedOrgId = headerOrgId;
+    } else if (queryOrgId && isValidUuid(queryOrgId)) {
+      resolvedOrgId = queryOrgId;
+    }
+
+    if (resolvedOrgId) {
+      const memberRow = await client.query(
+        'SELECT role FROM org_members WHERE user_id = $1 AND org_id = $2',
+        [row.id, resolvedOrgId]
+      );
+      if (memberRow.rowCount > 0) {
+        role = memberRow.rows[0].role;
+      } else {
+        resolvedOrgId = null;
+      }
+    }
+
+    if (!resolvedOrgId) {
+      // Prefer an org that has at least one workspace so users see seeded data when present
+      const firstOrg = await client.query(
+        `SELECT om.org_id, om.role
+         FROM org_members om
+         WHERE om.user_id = $1
+         ORDER BY (SELECT COUNT(*) FROM workspaces w WHERE w.org_id = om.org_id) DESC, om.created_at ASC
+         LIMIT 1`,
+        [row.id]
+      );
+      if (firstOrg.rowCount > 0) {
+        resolvedOrgId = firstOrg.rows[0].org_id;
+        role = firstOrg.rows[0].role;
+      }
+    }
+
+    // Development: if user has no org, get-or-create a default dev org and add user as admin
+    if (!resolvedOrgId && process.env.NODE_ENV === 'development') {
+      const setupClient = await pool.connect();
+      try {
+        await setupClient.query('SET LOCAL row_security = off');
+        const devOrg = await setupClient.query(
+          `INSERT INTO organizations (name, slug, plan) VALUES ('Dev Default', 'dev-default', 'trial')
+           ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`
+        );
+        const devOrgId = devOrg.rows[0]?.id;
+        if (devOrgId) {
+          await setupClient.query(
+            `INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'admin')
+             ON CONFLICT (org_id, user_id) DO UPDATE SET role = 'admin'`,
+            [devOrgId, row.id]
+          );
+          resolvedOrgId = devOrgId;
+          role = 'admin';
+        }
+      } finally {
+        setupClient.release();
+      }
+    }
+
     request.dbUser = {
       id: row.id,
       email: row.email,
       display_name: row.display_name,
+      role: role ?? null,
+      preferences,
     };
+    request.orgId = resolvedOrgId ?? null;
 
-    // Epic 1 stub: use hardcoded org from env; skip if not set
-    const defaultOrgId = fastify.config.DEFAULT_ORG_ID || process.env.DEFAULT_ORG_ID;
-    if (defaultOrgId) {
-      // SET LOCAL does not support bound parameters ($1); values must be literal.
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      const orgIdSafe = uuidRegex.test(String(defaultOrgId)) ? defaultOrgId : null;
-      const userIdSafe = row.id != null && uuidRegex.test(String(row.id)) ? row.id : null;
-      if (orgIdSafe) await client.query(`SET LOCAL app.current_org_id = '${orgIdSafe}'`);
-      if (userIdSafe) await client.query(`SET LOCAL app.current_user_id = '${userIdSafe}'`);
+    if (resolvedOrgId && isValidUuid(resolvedOrgId) && isValidUuid(row.id)) {
+      await client.query(`SET LOCAL app.current_org_id = '${resolvedOrgId}'`);
+      await client.query(`SET LOCAL app.current_user_id = '${row.id}'`);
     }
   });
 

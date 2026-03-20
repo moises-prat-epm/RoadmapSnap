@@ -62,7 +62,11 @@ async function run() {
 
     const files = readdirSync(MIGRATIONS_DIR)
       .filter((f) => f.endsWith('.sql'))
-      .sort();
+      .sort((a, b) => {
+        const numA = parseInt(a.replace(/^V(\d+).*$/i, '$1'), 10) || 0;
+        const numB = parseInt(b.replace(/^V(\d+).*$/i, '$1'), 10) || 0;
+        return numA - numB;
+      });
 
     if (files.length === 0) {
       console.log('migrate: No .sql files found in src/db/migrations/');

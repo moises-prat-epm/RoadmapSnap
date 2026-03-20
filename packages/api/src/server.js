@@ -41,6 +41,17 @@ export async function build() {
   await fastify.register(contextPlugin);
   await fastify.register(rbacPlugin);
 
+  fastify.get('/', async (_request, reply) => {
+    return reply.type('application/json').send({
+      service: 'roadmapsnap-api',
+      version,
+      docs: {
+        health: '/health',
+        api: '/api/v1',
+      },
+    });
+  });
+
   fastify.get('/health', async () => ({
     status: 'ok',
     service: 'roadmapsnap-api',

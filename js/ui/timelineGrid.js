@@ -4,7 +4,7 @@
  */
 import { html, raw, renderIf } from './renderer.js';
 import { getStates, getMilestones, getLastMilestoneKey, getFirstMilestoneKey, getMilestoneByKey, getMilestoneDate } from '../core/workflow.js';
-import { getAllDataSources } from '../core/dependencies.js';
+import { getAllDataSources, getEffectiveAtRiskSet } from '../core/dependencies.js';
 import { formatDateDisplay, getTimelineHeaderPeriods } from '../core/timeline.js';
 import { buildDeliverableViewModel } from '../core/viewModel.js';
 import { groupDeliverables, hasAnyGroups, getGroupStats } from './grouping.js';
@@ -13,16 +13,19 @@ import AppState from '../state/appState.js';
 var chevronSVG = '<svg class="group-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12.53 16.28a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 011.06-1.06L12 14.69l6.97-6.97a.75.75 0 111.06 1.06l-7.5 7.5z" clip-rule="evenodd" /></svg>';
 
 function renderTimelineGrid(state, visibleSources, months, todayPosition) {
+    var effectiveAtRiskSet = getEffectiveAtRiskSet();
     var statesDef = getStates();
     var milestonesDef = getMilestones();
     var lastMilestoneKey = getLastMilestoneKey();
-    var monthWidth = months.length ? 100 / months.length : 0;
+    var totalDays = months.length ? months.reduce(function (s, m) { return s + m.daysInMonth; }, 0) : 0;
     var gridLinesHTML = months.slice(1).map(function (m, i) {
-        return '<div class="month-grid-line" style="left: ' + (i + 1) * monthWidth + '%;"></div>';
+        var cumDays = months.slice(0, i + 1).reduce(function (s, mo) { return s + mo.daysInMonth; }, 0);
+        var leftPct = totalDays ? (cumDays / totalDays) * 100 : 0;
+        return '<div class="month-grid-line" style="left: ' + leftPct + '%;"></div>';
     }).join('');
 
     function renderSourceRow(source, isGroupItem, months, todayPosition) {
-        var vm = buildDeliverableViewModel(source, months, todayPosition, AppState.get().activeDependencyGraph);
+        var vm = buildDeliverableViewModel(source, months, todayPosition, AppState.get().activeDependencyGraph, effectiveAtRiskSet);
         var stateIndex = Math.min(7, Math.max(0, statesDef.findIndex(function (s) { return s.key === vm.status; })));
         var statusClass = 'state-' + stateIndex;
         var indicatorClass = 'state-' + stateIndex;
@@ -106,7 +109,7 @@ function renderTimelineGrid(state, visibleSources, months, todayPosition) {
     var columnHeaderLabel = (typeof CONFIG !== 'undefined' && CONFIG.ENTITY_LABELS && (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular)) ? (CONFIG.ENTITY_LABELS.columnHeader || CONFIG.ENTITY_LABELS.singular) : 'Item';
     var headerPeriods = getTimelineHeaderPeriods(months);
     var monthColumns = headerPeriods.map(function (p) {
-        return html`<div class="month-column" style="width: ${p.widthPct}%;">${p.label}</div>`;
+        return html`<div class="month-column" style="width: ${p.widthPct}%; flex: 0 0 ${p.widthPct}%;">${p.label}</div>`;
     });
     var hasGroups = hasAnyGroups(visibleSources);
 

@@ -1,0 +1,376 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Lite-style: window/document scroll so sticky filter bar uses the viewport scrollport (same as roadmap.css). */
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Dark mode: use design tokens when .dark is on html (SaaS theme toggle) */
+html.dark {
+  color-scheme: dark;
+}
+html.dark body,
+html.dark #root {
+  background: var(--color-bg-page);
+  color: var(--color-text-dark);
+}
+
+/* Dashboard stacked progress bar — match Lite height (tokens: 24px); Tailwind base can stretch flex children */
+#root .progress-bar-container {
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  box-sizing: border-box;
+}
+
+#root .progress-segment {
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+/* Keep completion % on the right when progress title is empty */
+#root .progress-header .progress-percentage {
+  margin-left: auto;
+}
+
+/* Timeline KPI block: no duplicate page title — today aligns right */
+#root .summary-dashboard .summary-header--tab-context {
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+/* Timeline toolbar: above dependency arrows when sticky/overlap */
+.filter-bar {
+  margin: 0 auto 12px auto;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-white, #fff);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 20;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.filter-select,
+.filter-input {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white, #fff);
+  color: var(--color-text-dark);
+}
+.filter-input {
+  width: 160px;
+}
+.filter-toggle {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white, #fff);
+  color: var(--color-text-dark);
+  cursor: pointer;
+}
+.filter-toggle.active {
+  background: rgba(222, 53, 11, 0.1);
+  border-color: var(--color-risk);
+  color: var(--color-risk);
+}
+.filter-clear {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  background: var(--color-bg-secondary, #f4f5f7);
+  color: var(--color-text-light);
+  cursor: pointer;
+}
+.filter-clear:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+html.dark .filter-clear:disabled {
+  opacity: 0.45;
+}
+.group-controls {
+  display: flex;
+  gap: 6px;
+}
+.group-control-btn {
+  padding: 6px 10px;
+  font-size: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-bg-white, #fff);
+  cursor: pointer;
+}
+.export-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.export-note {
+  font-size: 12px;
+  color: var(--color-text-light);
+  margin-left: auto;
+}
+
+/* Floating export FAB — timeline tab (replaces inline export bar) */
+.floating-export-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.floating-export-fab > * {
+  pointer-events: auto;
+}
+
+.floating-export-fab__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(135deg, #0052cc 0%, #0065ff 100%);
+  box-shadow:
+    0 4px 14px rgba(0, 82, 204, 0.45),
+    0 2px 6px rgba(15, 23, 42, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.floating-export-fab__trigger:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px rgba(0, 82, 204, 0.5),
+    0 2px 8px rgba(15, 23, 42, 0.15);
+}
+
+.floating-export-fab__trigger:focus-visible {
+  outline: 2px solid #0065ff;
+  outline-offset: 3px;
+}
+
+.floating-export-fab__menu {
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-white, #fff);
+  box-shadow:
+    0 10px 40px rgba(15, 23, 42, 0.15),
+    0 4px 12px rgba(15, 23, 42, 0.1);
+}
+
+html.dark .floating-export-fab__menu {
+  background: var(--color-bg-white, #1d2127);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.floating-export-fab__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-dark);
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.floating-export-fab__item:hover {
+  background: var(--color-bg-secondary, #f4f5f7);
+}
+
+html.dark .floating-export-fab__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-primary, #0065ff);
+  color: white;
+  cursor: pointer;
+}
+
+.export-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+/* Secondary export actions: must stay visible in light mode (not token bg-secondary). */
+.export-btn.export-btn--secondary {
+  background: #6b778c;
+  color: #fff;
+}
+.export-btn.export-btn--secondary:hover {
+  background: #5c6670;
+  filter: none;
+}
+html.dark .export-btn.export-btn--secondary {
+  background: #6e7a87;
+  color: #f0f6fc;
+}
+html.dark .export-btn.export-btn--secondary:hover {
+  background: #7d8a99;
+}
+
+/* Legacy class name (if any remain) */
+.export-btn.secondary {
+  background: #6b778c;
+  color: #fff;
+}
+.export-btn.secondary:hover {
+  background: #5c6670;
+}
+html.dark .export-btn.secondary {
+  background: #6e7a87;
+  color: #f0f6fc;
+}
+
+.filter-summary {
+  align-self: center;
+  flex-shrink: 0;
+}
+.timeline-export-wrapper {
+  min-height: 200px;
+}
+
+/*
+ * Filter bar is position:fixed — do not reserve a tall empty strip (was causing a large gap under tabs).
+ * Children are out of flow; wrapper has no layout height.
+ */
+.timeline-filter-bar-sticky-wrap {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+/*
+ * Timeline filter: fixed “floating” bar over the page (always visible while on timeline).
+ * Spans main column: sidebar is w-60 (15rem). Sits below sticky app header (h-14).
+ */
+/* Match Lite .filter-bar (roadmap.css): padding 12px 16px, gap 12px — only positioning + glass here */
+.filter-bar.filter-bar--timeline-sticky {
+  position: fixed;
+  top: calc(3.5rem + 10px);
+  left: calc(15rem + 16px);
+  right: 16px;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 12px 16px;
+  gap: 12px;
+  border-radius: 8px;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--color-border);
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.15);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+html.dark .filter-bar.filter-bar--timeline-sticky {
+  background: rgba(30, 35, 42, 0.96);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Lite input width on floating bar */
+.filter-bar.filter-bar--timeline-sticky .filter-input {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+}
+
+.filter-results {
+  font-size: 11px;
+  color: var(--color-text-light);
+  white-space: nowrap;
+  align-self: center;
+}
+
+.filter-bar.filter-bar--timeline-sticky .filter-results {
+  margin-left: auto;
+}
+
+/* Reserve space below header so fixed filter bar does not cover tab row (matches Lite bar ~48px tall) */
+.dashboard-page--floating-filter {
+  padding-top: 3rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-page--floating-filter {
+    padding-top: 3.5rem;
+  }
+}
+
+.filter-results strong {
+  color: var(--color-text-dark);
+  font-weight: 600;
+}
+
+/* Dependency icon as button: keep icon look, no default button chrome */
+button.dependency-icon {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  background: inherit;
+}

@@ -2,13 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
     paths-ignore:
       - 'packages/**'
   pull_request:
-    branches: [main]
     paths-ignore:
       - 'packages/**'
+  workflow_dispatch:
 
 jobs:
   ci:

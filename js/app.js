@@ -7,9 +7,9 @@
 import './state/appState.js';
 import './core/configValidator.js';
 import './roadmap.utils.js';
-import { parseDate, getTodayDate, generateMonths, calculatePosition } from './core/timeline.js';
+import { parseDate, getTodayDate, generateMonths, generateVisibleMonthsForZoom, calculatePosition } from './core/timeline.js';
 import './core/workflow.js';
-import './core/dependencies.js';
+import { getEffectiveAtRiskSet } from './core/dependencies.js';
 import './core/viewModel.js';
 import './core/stats.js';
 import './ui/renderer.js';
@@ -46,26 +46,14 @@ function initOriginalTimeline() {
 function setDateRange(months) {
     initOriginalTimeline();
     const state = AppState.get();
-    const today = parseDate(getTodayDate());
 
     if (months === 'all') {
         CONFIG.TIMELINE.START_MONTH = state.timelineStart;
         CONFIG.TIMELINE.END_MONTH = state.timelineEnd;
-        AppState.set({ zoom: 'all' });
+        AppState.set({ zoom: 'all', activeDependencyGraph: null });
     } else {
-        const halfMonths = Math.floor(months / 2);
-        const startDate = new Date(today);
-        startDate.setMonth(startDate.getMonth() - halfMonths);
-        const endDate = new Date(today);
-        endDate.setMonth(endDate.getMonth() + halfMonths);
-        const formatMonthYear = (date) => {
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const y = date.getFullYear();
-            return `${m}/${y}`;
-        };
-        CONFIG.TIMELINE.START_MONTH = formatMonthYear(startDate);
-        CONFIG.TIMELINE.END_MONTH = formatMonthYear(endDate);
-        AppState.set({ zoom: months + 'mo' });
+        // 3mo/6mo/12mo: visible months from today at beginning + next X months (computed in renderRoadmap)
+        AppState.set({ zoom: months + 'mo', activeDependencyGraph: null });
     }
 }
 window.setDateRange = setDateRange;
@@ -105,16 +93,19 @@ function renderFooter() {
 
 function renderRoadmap() {
     const state = AppState.get();
-    const months = generateMonths();
+    const months = (state.zoom === 'all' || !state.zoom)
+        ? generateMonths()
+        : generateVisibleMonthsForZoom(parseDate(getTodayDate()), parseInt(state.zoom, 10));
     const todayPosition = calculatePosition(getTodayDate(), months);
     const visibleSources = getVisibleDataSources();
+    const effectiveAtRiskSet = getEffectiveAtRiskSet();
     const hasSearchFilter = Boolean(state.filter.search && state.filter.search.trim());
     const sourcesForKpi = hasSearchFilter
         ? filterBySearchOnly(CONFIG.DELIVERABLES)
         : null;
     const stats = hasSearchFilter ? calculateStats(sourcesForKpi) : calculateStats();
     const upcoming = getUpcomingMilestones();
-    const atRiskInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.atRisk).length;
+    const atRiskInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && effectiveAtRiskSet.has(s.name)).length;
     const descopedInView = visibleSources.filter(s => !isDeliverableNonFilterable(s) && s.descoped).length;
     const statsForDashboard = Object.assign({}, stats, { atRiskInView, descopedInView });
 
@@ -128,6 +119,11 @@ function renderRoadmap() {
         renderFooter();
 
     document.body.innerHTML = pageHTML;
+    if (state.activeDependencyGraph || state.filter?.riskOnly) {
+        setTimeout(() => drawDependencyArrows(), 0);
+    } else {
+        clearDependencyArrows();
+    }
 }
 
 // Initialize

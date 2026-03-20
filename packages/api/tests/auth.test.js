@@ -63,7 +63,7 @@ test('GET /auth/me with valid test token returns 200', async () => {
   assert.equal(res.statusCode, 200);
   const body = res.json();
   assert.equal(body.sub, 'test-user-abc123');
-  assert.equal(body.email, 'test@example.com');
+  assert.equal(body.email, 'test-user-abc123@test.example.com');
 });
 
 test('GET /auth/me response contains required user fields', async () => {
