@@ -16,7 +16,8 @@ describe('ApiClient', () => {
       })
     )
 
-    const client = createApiClient(() => Promise.resolve('token'))
+    // Client validates JWT shape (three segments) before fetch; use a dummy JWT-shaped string.
+    const client = createApiClient(() => Promise.resolve('header.payload.signature'))
 
     await expect(client.getWorkspaces()).rejects.toThrow(ApiError)
     await expect(client.getWorkspaces()).rejects.toMatchObject({
