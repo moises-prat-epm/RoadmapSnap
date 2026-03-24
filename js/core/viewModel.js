@@ -16,11 +16,24 @@ var STATE_PALETTE = [
     '#c1c7d0', '#6554c0', '#0891b2', '#ffab00', '#36b37e', '#0065ff', '#0d9488', '#004cbf'
 ];
 
+// Matches css/roadmap.css + tokens [data-theme="monochrome"] --color-state-0..7
+var MONO_STATE_PALETTE = [
+    '#e8e8e8', '#d0d0d0', '#b8b8b8', '#9e9e9e', '#858585', '#6b6b6b', '#525252', '#3a3a3a'
+];
+
+function isMonochromeTheme() {
+    if (typeof document === 'undefined') return false;
+    return document.documentElement.getAttribute('data-theme') === 'monochrome';
+}
+
 function resolveStateColor(statusKey) {
     var states = getStates();
     var index = states.findIndex(function (s) { return s.key === statusKey; });
     if (index < 0) index = 0;
     index = Math.min(7, index);
+    if (isMonochromeTheme()) {
+        return MONO_STATE_PALETTE[index];
+    }
     return STATE_PALETTE[index];
 }
 
