@@ -12,6 +12,7 @@ const {
   parseMonthYear,
   getMonthName,
   generateMonths,
+  getTimelineHeaderPeriods,
   calculatePosition,
   isDateInRange,
 } = await import('../../js/core/timeline.js');
@@ -261,4 +262,49 @@ test('darkenColor: empty hex returns "#000000"', () => {
 
 test('darkenColor: 0% leaves color unchanged', () => {
   assert.equal(darkenColor('#ff0000', 0), '#ff0000');
+});
+
+// --- getTimelineHeaderPeriods ---
+test('getTimelineHeaderPeriods: ≤12 months uses month names', () => {
+  const prev = globalThis.CONFIG;
+  globalThis.CONFIG = { TIMELINE: { START_MONTH: '01/2026', END_MONTH: '03/2026' } };
+  try {
+    const months = generateMonths();
+    const periods = getTimelineHeaderPeriods(months);
+    assert.equal(periods.length, 3);
+    assert.equal(periods[0].label, 'Jan 2026');
+    assert.ok(Math.abs(periods.reduce((s, p) => s + p.widthPct, 0) - 100) < 0.01);
+  } finally {
+    globalThis.CONFIG = prev;
+  }
+});
+
+test('getTimelineHeaderPeriods: 13–36 months uses quarters (Q1 …)', () => {
+  const prev = globalThis.CONFIG;
+  globalThis.CONFIG = { TIMELINE: { START_MONTH: '01/2026', END_MONTH: '12/2028' } };
+  try {
+    const months = generateMonths();
+    assert.equal(months.length, 36);
+    const periods = getTimelineHeaderPeriods(months);
+    assert.ok(periods.some((p) => /^Q[1-4] \d{4}$/.test(p.label)));
+    assert.ok(!periods.some((p) => /\d{4} H[12]/.test(p.label)));
+  } finally {
+    globalThis.CONFIG = prev;
+  }
+});
+
+test('getTimelineHeaderPeriods: >36 months uses half-years (YYYY H1 / H2)', () => {
+  const prev = globalThis.CONFIG;
+  globalThis.CONFIG = { TIMELINE: { START_MONTH: '01/2026', END_MONTH: '01/2029' } };
+  try {
+    const months = generateMonths();
+    assert.equal(months.length, 37);
+    const periods = getTimelineHeaderPeriods(months);
+    assert.ok(periods.some((p) => p.label === '2026 H1'));
+    assert.ok(periods.some((p) => p.label === '2026 H2'));
+    assert.ok(!periods.some((p) => /^Q[1-4] /.test(p.label)));
+    assert.ok(Math.abs(periods.reduce((s, p) => s + p.widthPct, 0) - 100) < 0.01);
+  } finally {
+    globalThis.CONFIG = prev;
+  }
 });

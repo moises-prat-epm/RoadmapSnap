@@ -722,54 +722,55 @@
  * Monochrome — full grayscale UI. Exceptions: SVG dependency arrows (RAG, JS) + risk (at-risk row,
  * risk filters, risk-summary, group-stats-risk uses --color-risk).
  */
+/* Plain hex gradients (no color-mix): html2canvas cannot parse computed color() from color-mix(). */
 [data-theme="monochrome"] .source-name.state-0 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-0) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #f5f5f5 0%, #ffffff 100%);
 }
 [data-theme="monochrome"] .source-name.state-1 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-1) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #ebebeb 0%, #ffffff 100%);
 }
 [data-theme="monochrome"] .source-name.state-2 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-2) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #e1e1e1 0%, #ffffff 100%);
 }
 [data-theme="monochrome"] .source-name.state-3 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-3) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #d6d6d6 0%, #ffffff 100%);
 }
 [data-theme="monochrome"] .source-name.state-4 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-4) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #cccccc 0%, #ffffff 100%);
 }
 [data-theme="monochrome"] .source-name.state-5 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-5) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #c1c1c1 0%, #ffffff 100%);
 }
 [data-theme="monochrome"] .source-name.state-6 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-6) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #b6b6b6 0%, #ffffff 100%);
 }
 [data-theme="monochrome"] .source-name.state-7 {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--color-state-7) 42%, var(--color-bg-white)) 0%, var(--color-bg-white) 100%);
+    background: linear-gradient(90deg, #acacac 0%, #ffffff 100%);
 }
 
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-0 {
-    background: color-mix(in srgb, var(--color-state-0) 30%, var(--color-bg-secondary));
+    background: #f1f1f1;
 }
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-1 {
-    background: color-mix(in srgb, var(--color-state-1) 30%, var(--color-bg-secondary));
+    background: #eaeaea;
 }
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-2 {
-    background: color-mix(in srgb, var(--color-state-2) 30%, var(--color-bg-secondary));
+    background: #e3e3e3;
 }
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-3 {
-    background: color-mix(in srgb, var(--color-state-3) 30%, var(--color-bg-secondary));
+    background: #dbdbdb;
 }
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-4 {
-    background: color-mix(in srgb, var(--color-state-4) 30%, var(--color-bg-secondary));
+    background: #d3d3d3;
 }
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-5 {
-    background: color-mix(in srgb, var(--color-state-5) 30%, var(--color-bg-secondary));
+    background: #cccccc;
 }
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-6 {
-    background: color-mix(in srgb, var(--color-state-6) 30%, var(--color-bg-secondary));
+    background: #c4c4c4;
 }
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .source-name.state-7 {
-    background: color-mix(in srgb, var(--color-state-7) 30%, var(--color-bg-secondary));
+    background: #bdbdbd;
 }
 
 [data-theme="monochrome"] .data-source-row:nth-of-type(even) .timeline-track {
@@ -853,6 +854,123 @@
 }
 
 [data-theme="monochrome"] .timeline-label {
+    background: var(--color-bg-secondary);
+}
+
+/*
+ * Papallona — Opella-inspired: token-tinted rows, navy/teal chrome (https://www.opella.com/en)
+ */
+[data-theme="papallona"] .source-name.state-0 {
+    background: linear-gradient(90deg, #d4dae3 0%, #ffffff 100%);
+}
+[data-theme="papallona"] .source-name.state-1 {
+    background: linear-gradient(90deg, #b5bbc3 0%, #ffffff 100%);
+}
+[data-theme="papallona"] .source-name.state-2 {
+    background: linear-gradient(90deg, #9ed4cf 0%, #ffffff 100%);
+}
+[data-theme="papallona"] .source-name.state-3 {
+    background: linear-gradient(90deg, #9fc8c5 0%, #ffffff 100%);
+}
+[data-theme="papallona"] .source-name.state-4 {
+    background: linear-gradient(90deg, #a1ccb1 0%, #ffffff 100%);
+}
+[data-theme="papallona"] .source-name.state-5 {
+    background: linear-gradient(90deg, #9ac3d9 0%, #ffffff 100%);
+}
+[data-theme="papallona"] .source-name.state-6 {
+    background: linear-gradient(90deg, #a5b8ef 0%, #ffffff 100%);
+}
+[data-theme="papallona"] .source-name.state-7 {
+    background: linear-gradient(90deg, #a5b0be 0%, #ffffff 100%);
+}
+
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-0 {
+    background: #d5dbe4;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-1 {
+    background: #bfc5ce;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-2 {
+    background: #afd7d6;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-3 {
+    background: #b0cfcf;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-4 {
+    background: #b1d1c1;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-5 {
+    background: #accbdd;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-6 {
+    background: #b3c3ed;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .source-name.state-7 {
+    background: #b4beca;
+}
+
+[data-theme="papallona"] .data-source-row:nth-of-type(even) .timeline-track {
+    background: #e8ecf1;
+}
+[data-theme="papallona"] .data-source-row:nth-of-type(odd) .timeline-track {
+    background: #f2f4f7;
+}
+
+[data-theme="papallona"] .data-source-row.dependency-highlight {
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.35);
+}
+[data-theme="papallona"] .data-source-row.dependency-active {
+    box-shadow: 0 0 0 3px #0f766e;
+}
+
+[data-theme="papallona"] .info-link {
+    color: #0d9488;
+}
+[data-theme="papallona"] .info-link:hover {
+    color: #0f766e;
+}
+
+[data-theme="papallona"] .group-header-name {
+    background: linear-gradient(135deg, #1e3a5c 0%, #274a6e 100%);
+    color: #f8fafc;
+}
+[data-theme="papallona"] .group-header-name:hover {
+    background: linear-gradient(135deg, #274a6e 0%, #335978 100%);
+}
+[data-theme="papallona"] .group-header-track {
+    background: #335978;
+}
+[data-theme="papallona"] .group-stats-risk {
+    color: var(--color-risk);
+}
+
+[data-theme="papallona"] .zoom-btn:hover {
+    border-color: #0d9488;
+}
+[data-theme="papallona"] .zoom-btn.active {
+    background: #0f766e;
+    border-color: #0f766e;
+    color: #ffffff;
+}
+
+[data-theme="papallona"] .state-legend {
+    background: var(--color-bg-secondary);
+}
+
+[data-theme="papallona"] .kpi-card.active {
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.4), 0 4px 12px rgba(22, 38, 51, 0.08);
+}
+
+[data-theme="papallona"] .month-column {
+    background: var(--color-bg-secondary);
+}
+
+[data-theme="papallona"] .timeline-track {
+    background: #f2f4f7;
+}
+
+[data-theme="papallona"] .timeline-label {
     background: var(--color-bg-secondary);
 }
 
@@ -1100,42 +1218,42 @@
  */
 [data-theme="dark"] .source-name.state-0,
 .dark .source-name.state-0 {
-    background: color-mix(in srgb, var(--color-state-0) 22%, var(--color-bg-secondary));
+    background: #212832;
     box-shadow: inset 4px 0 0 0 var(--color-state-0);
 }
 [data-theme="dark"] .source-name.state-1,
 .dark .source-name.state-1 {
-    background: color-mix(in srgb, var(--color-state-1) 22%, var(--color-bg-secondary));
+    background: #2e3451;
     box-shadow: inset 4px 0 0 0 var(--color-state-1);
 }
 [data-theme="dark"] .source-name.state-2,
 .dark .source-name.state-2 {
-    background: color-mix(in srgb, var(--color-state-2) 22%, var(--color-bg-secondary));
+    background: #19434f;
     box-shadow: inset 4px 0 0 0 var(--color-state-2);
 }
 [data-theme="dark"] .source-name.state-3,
 .dark .source-name.state-3 {
-    background: color-mix(in srgb, var(--color-state-3) 22%, var(--color-bg-secondary));
+    background: #483f22;
     box-shadow: inset 4px 0 0 0 var(--color-state-3);
 }
 [data-theme="dark"] .source-name.state-4,
 .dark .source-name.state-4 {
-    background: color-mix(in srgb, var(--color-state-4) 22%, var(--color-bg-secondary));
+    background: #1d433c;
     box-shadow: inset 4px 0 0 0 var(--color-state-4);
 }
 [data-theme="dark"] .source-name.state-5,
 .dark .source-name.state-5 {
-    background: color-mix(in srgb, var(--color-state-5) 22%, var(--color-bg-secondary));
+    background: #263952;
     box-shadow: inset 4px 0 0 0 var(--color-state-5);
 }
 [data-theme="dark"] .source-name.state-6,
 .dark .source-name.state-6 {
-    background: color-mix(in srgb, var(--color-state-6) 22%, var(--color-bg-secondary));
+    background: #1b4445;
     box-shadow: inset 4px 0 0 0 var(--color-state-6);
 }
 [data-theme="dark"] .source-name.state-7,
 .dark .source-name.state-7 {
-    background: color-mix(in srgb, var(--color-state-7) 22%, var(--color-bg-secondary));
+    background: #1e3251;
     box-shadow: inset 4px 0 0 0 var(--color-state-7);
 }
 
@@ -1216,35 +1334,35 @@
 /* Zebra rows (alternate base) — same state tint, different mix base */
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-0,
 .dark .data-source-row:nth-of-type(even) .source-name.state-0 {
-    background: color-mix(in srgb, var(--color-state-0) 22%, var(--color-bg-white));
+    background: #242e3e;
 }
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-1,
 .dark .data-source-row:nth-of-type(even) .source-name.state-1 {
-    background: color-mix(in srgb, var(--color-state-1) 22%, var(--color-bg-white));
+    background: #313a5e;
 }
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-2,
 .dark .data-source-row:nth-of-type(even) .source-name.state-2 {
-    background: color-mix(in srgb, var(--color-state-2) 22%, var(--color-bg-white));
+    background: #1c4a5b;
 }
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-3,
 .dark .data-source-row:nth-of-type(even) .source-name.state-3 {
-    background: color-mix(in srgb, var(--color-state-3) 22%, var(--color-bg-white));
+    background: #4c452f;
 }
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-4,
 .dark .data-source-row:nth-of-type(even) .source-name.state-4 {
-    background: color-mix(in srgb, var(--color-state-4) 22%, var(--color-bg-white));
+    background: #204a49;
 }
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-5,
 .dark .data-source-row:nth-of-type(even) .source-name.state-5 {
-    background: color-mix(in srgb, var(--color-state-5) 22%, var(--color-bg-white));
+    background: #29405e;
 }
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-6,
 .dark .data-source-row:nth-of-type(even) .source-name.state-6 {
-    background: color-mix(in srgb, var(--color-state-6) 22%, var(--color-bg-white));
+    background: #1e4a51;
 }
 [data-theme="dark"] .data-source-row:nth-of-type(even) .source-name.state-7,
 .dark .data-source-row:nth-of-type(even) .source-name.state-7 {
-    background: color-mix(in srgb, var(--color-state-7) 22%, var(--color-bg-white));
+    background: #21385d;
 }
 
 /* Zebra: timeline area alternates slightly (Lite-style) */

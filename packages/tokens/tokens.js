@@ -9,7 +9,7 @@ export const colors = {
   m0: 'var(--color-state-2)', /* resolved in CSS */
   m1: '#ffab00',
   m2: '#36b37e',
-  m3: '#0065ff',
+  m3: '#0f766e',
   m4: '#0d9488',
   m5: '#7c3aed',
   state0: '#c1c7d0',
@@ -44,7 +44,7 @@ export const darkColors = {
   m0: 'var(--color-state-2)',
   m1: '#fbbf24',
   m2: '#34d399',
-  m3: '#60a5fa',
+  m3: '#10b981',
   m4: '#2dd4bf',
   m5: '#a78bfa',
   state0: '#475569',

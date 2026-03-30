@@ -30,7 +30,7 @@ body {
     --color-m0: var(--color-state-2);
     --color-m1: #b45309;
     --color-m2: #0d9488;
-    --color-m3: #0369a1;
+    --color-m3: #0f766e;
     --color-m4: #0f766e;
     --color-m5: #5b21b6;
     --color-state-0: #94a3b8;
@@ -59,7 +59,7 @@ body {
     --color-m0: var(--color-state-2);
     --color-m1: #d97706;
     --color-m2: #059669;
-    --color-m3: #2563eb;
+    --color-m3: #14b8a6;
     --color-m4: #0d9488;
     --color-m5: #9333ea;
     --color-state-0: #9ca3af;
@@ -88,7 +88,7 @@ body {
     --color-m0: var(--color-state-2);
     --color-m1: #fde68a;
     --color-m2: #86efac;
-    --color-m3: #93c5fd;
+    --color-m3: #6ee7b7;
     --color-m4: #5eead4;
     --color-m5: #c4b5fd;
     --color-state-0: #e5e5e5;
@@ -133,6 +133,73 @@ body {
     --color-dependency-outbound: #262626;
     --color-risk: #b91c1c;
     --color-today: #262626;
+}
+
+/* Papallona — Opella-inspired institutional healthcare UI: warm canvas, deep navy type, teal/green care accents.
+   Reference: https://www.opella.com/en */
+[data-theme="papallona"] {
+    --color-bg-page: #f7f6f4;
+    --color-bg-white: #ffffff;
+    --color-bg-secondary: #eef1f5;
+    --color-border: #d1d9e0;
+    --color-text-dark: #162633;
+    --color-text-light: #5a6778;
+    --color-start: #1e3a5c;
+    --color-m0: #0f766e;
+    --color-m1: #0d9488;
+    --color-m2: #14b8a6;
+    --color-m3: #10b981;
+    --color-m4: #15803d;
+    --color-m5: #0e7490;
+    --color-state-0: #94a3b8;
+    --color-state-1: #475569;
+    --color-state-2: #0d9488;
+    --color-state-3: #0f766e;
+    --color-state-4: #15803d;
+    --color-state-5: #0369a1;
+    --color-state-6: #1d4ed8;
+    --color-state-7: #1e3a5c;
+    --color-dependency-inbound: #0284c7;
+    --color-dependency-outbound: #c2410c;
+    --color-risk: #b91c1c;
+    --color-today: #c2410c;
+}
+
+[data-theme="papallona"] .summary-dashboard {
+    background: linear-gradient(135deg, #faf9f7 0%, #eef1f5 100%);
+}
+
+[data-theme="papallona"] .kpi-card.total {
+    background: linear-gradient(135deg, #1e3a5c 0%, #0f766e 100%);
+    color: #ffffff;
+}
+
+[data-theme="papallona"] .kpi-card.active {
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.45), 0 4px 12px rgba(22, 38, 51, 0.1);
+}
+
+[data-theme="papallona"] .filter-select:focus,
+[data-theme="papallona"] .filter-input:focus {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+}
+
+[data-theme="papallona"] .theme-toggle:hover {
+    border-color: #0d9488;
+    background: rgba(13, 148, 136, 0.06);
+}
+
+[data-theme="papallona"] .export-btn {
+    background: linear-gradient(135deg, #1e3a5c 0%, #0f766e 100%);
+    color: #ffffff;
+}
+
+[data-theme="papallona"] .export-btn:hover {
+    box-shadow: 0 4px 14px rgba(30, 58, 92, 0.35);
+}
+
+[data-theme="papallona"] .export-btn.secondary {
+    background: linear-gradient(135deg, #475569 0%, #64748b 100%);
 }
 
 [data-theme="monochrome"] .summary-dashboard {

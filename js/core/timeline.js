@@ -116,9 +116,14 @@ function generateVisibleMonthsForZoom(today, count) {
     return months;
 }
 
+/** Calendar half-year: H1 = Jan–Jun, H2 = Jul–Dec (1-based). */
+function getHalfYearIndex(date) {
+    return date.getMonth() < 6 ? 1 : 2;
+}
+
 /**
- * Returns header periods for the timeline. When span > 12 months, returns quarters (Q1 2026, Q2 2026, ...)
- * to avoid crowded month labels; otherwise returns one period per month.
+ * Returns header periods for the timeline. Uses month names when ≤12 months; when &gt;36 months (more than
+ * three years) uses half-years ("2026 H1", "2026 H2"); between 12 and 36 months uses quarters (Q1 2026, …).
  * Widths are day-proportional so the header aligns with the Gantt (which uses calculatePosition by days).
  * Each period: { label: string, widthPct: number }.
  */
@@ -131,18 +136,33 @@ function getTimelineHeaderPeriods(months) {
             return { label: m.name, widthPct: (m.daysInMonth / totalDays) * 100 };
         });
     }
+    var useHalfYear = months.length > 36;
     var periods = [];
     var i = 0;
     while (i < months.length) {
         var d = months[i].date;
         var year = d.getFullYear();
-        var q = Math.floor(d.getMonth() / 3) + 1;
-        var label = 'Q' + q + ' ' + year;
+        var label;
+        var bucketYear = year;
+        var bucketKey;
+        if (useHalfYear) {
+            bucketKey = getHalfYearIndex(d);
+            label = year + ' H' + bucketKey;
+        } else {
+            bucketKey = Math.floor(d.getMonth() / 3) + 1;
+            label = 'Q' + bucketKey + ' ' + year;
+        }
         var periodDays = 0;
         while (i < months.length) {
             var d2 = months[i].date;
-            var q2 = Math.floor(d2.getMonth() / 3) + 1;
-            if (d2.getFullYear() === year && q2 === q) {
+            var sameBucket;
+            if (useHalfYear) {
+                sameBucket = d2.getFullYear() === bucketYear && getHalfYearIndex(d2) === bucketKey;
+            } else {
+                var q2 = Math.floor(d2.getMonth() / 3) + 1;
+                sameBucket = d2.getFullYear() === year && q2 === bucketKey;
+            }
+            if (sameBucket) {
                 periodDays += months[i].daysInMonth;
                 i++;
             } else {

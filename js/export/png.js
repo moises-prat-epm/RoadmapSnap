@@ -7,14 +7,24 @@ import { getTodayDate } from '../core/timeline.js';
 
 function exportToPNG(elementId, fileNamePrefix) {
     const element = document.getElementById(elementId);
+    const h2c = typeof globalThis.html2canvas === 'function' ? globalThis.html2canvas : null;
     const buttons = document.querySelectorAll('.export-btn');
+
+    if (!element) {
+        console.error('Export failed: element not found:', elementId);
+        return;
+    }
+    if (!h2c) {
+        console.error('Export failed: html2canvas is not loaded (check index.html script tag).');
+        return;
+    }
 
     buttons.forEach(btn => {
         btn.disabled = true;
         btn.style.opacity = '0.6';
     });
 
-    html2canvas(element, {
+    h2c(element, {
         scale: 2,
         backgroundColor: '#ffffff',
         logging: false,
