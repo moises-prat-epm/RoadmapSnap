@@ -8,10 +8,14 @@ import {
   projectToProjectLike,
   type WorkspaceProjectFilter,
 } from '../../lib/projectFilters'
+import { useRole } from '../../hooks/useRole'
+import ProjectFormModal from './ProjectFormModal'
+import DeleteProjectModal from './DeleteProjectModal'
 
 export interface ProjectListProps {
   projects: Project[]
   workspace: Workspace
+  workspaceId: string
   filter: WorkspaceProjectFilter
   onClearFilters?: () => void
 }
@@ -71,10 +75,32 @@ const externalLinkIcon = (
   </svg>
 )
 
-export default function ProjectList({ projects, workspace, filter, onClearFilters }: ProjectListProps) {
+const editIcon = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+)
+
+const deleteIcon = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <path d="M10 11v6M14 11v6" />
+    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+  </svg>
+)
+
+export default function ProjectList({ projects, workspace, workspaceId, filter, onClearFilters }: ProjectListProps) {
   const workflow = workspace.workflow_definition ?? []
   const todayStr = getTodayStr()
   const stateKeys = useMemo(() => getStateKeys(workflow), [workflow])
+  const { can } = useRole()
+  const isEditor = can('editor')
+
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Project | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
 
   const filtered = useMemo(
     () => applyProjectFilters(projects, workflow, filter, todayStr, 'list'),
@@ -89,7 +115,7 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortColumn(col)
-      setSortDir(col === 'milestone' ? 'asc' : 'asc')
+      setSortDir('asc')
     }
   }
 
@@ -142,136 +168,194 @@ export default function ProjectList({ projects, workspace, filter, onClearFilter
     </button>
   )
 
-  if (filtered.length === 0) {
-    return (
-      <div className="rounded-lg border border-border bg-secondary px-6 py-10 text-center">
-        <p className="text-sm text-text-light">No projects match your filters</p>
-        {onClearFilters && (
+  return (
+    <>
+      {/* Toolbar */}
+      {isEditor && (
+        <div className="mb-3 flex justify-end">
           <button
             type="button"
-            onClick={onClearFilters}
-            className="mt-3 text-sm font-medium text-m3 underline hover:opacity-80"
+            onClick={() => setCreateOpen(true)}
+            className="rounded bg-m3 px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
           >
-            Clear filters
+            + Add Project
           </button>
-        )}
-      </div>
-    )
-  }
+        </div>
+      )}
 
-  return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-bg-white">
-      <table className="min-w-full divide-y divide-border text-left text-sm text-text-dark">
-        <thead className="bg-secondary">
-          <tr>
-            <th scope="col" className="px-3 py-2">
-              {headerBtn('name', 'Name')}
-            </th>
-            <th scope="col" className="px-3 py-2">
-              {headerBtn('group', 'Group')}
-            </th>
-            <th scope="col" className="px-3 py-2">
-              {headerBtn('status', 'Status')}
-            </th>
-            <th scope="col" className="px-3 py-2 text-text-light">
-              At Risk
-            </th>
-            <th scope="col" className="px-3 py-2">
-              {headerBtn('milestone', 'Next Milestone')}
-            </th>
-            <th scope="col" className="px-3 py-2">
-              Tags
-            </th>
-            <th scope="col" className="w-12 px-3 py-2 text-center text-text-light">
-              Link
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border bg-bg-white">
-          {sorted.map((project) => {
-            const statusKey = getCurrentStatus(projectToProjectLike(project), workflow, todayStr)
-            const stateIndex = stateKeys.indexOf(statusKey)
-            const stateIdxClamp = stateIndex >= 0 ? Math.min(stateIndex, 7) : 0
-            const stateClass = `state-${stateIdxClamp}`
-            const stateItem = workflow.find((w) => w.type === 'state' && w.key === statusKey)
-            const nextCell = getNextMilestoneCell(project, workflow, todayStr)
-            const tags = project.tags ?? []
-            const visibleTags = tags.slice(0, 3)
-            const overflow = tags.length - visibleTags.length
-
-            return (
-              <tr key={project.id} className="hover:bg-secondary">
-                <td className="px-3 py-2 align-top">
-                  <div
-                    className={`font-semibold ${project.descoped ? 'text-text-light line-through' : 'text-text-dark'}`}
-                  >
-                    {project.name}
-                  </div>
-                  {project.show_in_timeline === false && (
-                    <div className="text-xs italic text-text-light">(hidden from timeline)</div>
-                  )}
-                </td>
-                <td className="px-3 py-2 align-top text-text-dark">
-                  {project.group_name ?? '—'}
-                </td>
-                <td className="px-3 py-2 align-top">
-                  <span className={`state-legend-badge inline-block rounded px-2 py-0.5 text-xs font-medium ${stateClass}`}>
-                    {stateItem?.short ?? statusKey}
-                  </span>
-                </td>
-                <td className="px-3 py-2 align-top">
-                  {project.at_risk ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-risk">
-                      <span className="h-2 w-2 rounded-full bg-risk" aria-hidden />
-                      At risk
-                    </span>
-                  ) : null}
-                </td>
-                <td className="px-3 py-2 align-top text-text-dark">
-                  {nextCell.kind === 'next' && (
-                    <span>
-                      {nextCell.short}{' '}
-                      <span className="text-text-light">{formatShortEnglishDate(nextCell.dateStr)}</span>
-                    </span>
-                  )}
-                  {nextCell.kind === 'complete' && (
-                    <span className="inline-block rounded border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-m2">
-                      Complete
-                    </span>
-                  )}
-                  {nextCell.kind === 'empty' && <span className="text-text-light">—</span>}
-                </td>
-                <td className="px-3 py-2 align-top">
-                  <div className="flex flex-wrap gap-1">
-                    {visibleTags.map((t) => (
-                      <span
-                        key={t}
-                        className="inline-block max-w-[120px] truncate rounded-full border border-border bg-secondary px-2 py-0.5 text-xs text-text-dark"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                    {overflow > 0 && <span className="text-xs text-text-light">+{overflow} more</span>}
-                  </div>
-                </td>
-                <td className="px-3 py-2 text-center align-top">
-                  {project.external_link ? (
-                    <a
-                      href={project.external_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex text-m3 hover:opacity-80"
-                      title="Open external link"
-                    >
-                      {externalLinkIcon}
-                    </a>
-                  ) : null}
-                </td>
+      {filtered.length === 0 ? (
+        <div className="rounded-lg border border-border bg-secondary px-6 py-10 text-center">
+          <p className="text-sm text-text-light">No projects match your filters</p>
+          {onClearFilters && (
+            <button
+              type="button"
+              onClick={onClearFilters}
+              className="mt-3 text-sm font-medium text-m3 underline hover:opacity-80"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-border bg-bg-white">
+          <table className="min-w-full divide-y divide-border text-left text-sm text-text-dark">
+            <thead className="bg-secondary">
+              <tr>
+                <th scope="col" className="px-3 py-2">
+                  {headerBtn('name', 'Name')}
+                </th>
+                <th scope="col" className="px-3 py-2">
+                  {headerBtn('group', 'Group')}
+                </th>
+                <th scope="col" className="px-3 py-2">
+                  {headerBtn('status', 'Status')}
+                </th>
+                <th scope="col" className="px-3 py-2 text-text-light">
+                  At Risk
+                </th>
+                <th scope="col" className="px-3 py-2">
+                  {headerBtn('milestone', 'Next Milestone')}
+                </th>
+                <th scope="col" className="px-3 py-2">
+                  Tags
+                </th>
+                <th scope="col" className="w-12 px-3 py-2 text-center text-text-light">
+                  Link
+                </th>
+                {isEditor && (
+                  <th scope="col" className="w-16 px-3 py-2" aria-label="Actions" />
+                )}
               </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+            </thead>
+            <tbody className="divide-y divide-border bg-bg-white">
+              {sorted.map((project) => {
+                const statusKey = getCurrentStatus(projectToProjectLike(project), workflow, todayStr)
+                const stateIndex = stateKeys.indexOf(statusKey)
+                const stateIdxClamp = stateIndex >= 0 ? Math.min(stateIndex, 7) : 0
+                const stateClass = `state-${stateIdxClamp}`
+                const stateItem = workflow.find((w) => w.type === 'state' && w.key === statusKey)
+                const nextCell = getNextMilestoneCell(project, workflow, todayStr)
+                const tags = project.tags ?? []
+                const visibleTags = tags.slice(0, 3)
+                const overflow = tags.length - visibleTags.length
+
+                return (
+                  <tr key={project.id} className="hover:bg-secondary">
+                    <td className="px-3 py-2 align-top">
+                      <div
+                        className={`font-semibold ${project.descoped ? 'text-text-light line-through' : 'text-text-dark'}`}
+                      >
+                        {project.name}
+                      </div>
+                      {project.show_in_timeline === false && (
+                        <div className="text-xs italic text-text-light">(hidden from timeline)</div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 align-top text-text-dark">
+                      {project.group_name ?? '—'}
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <span className={`state-legend-badge inline-block rounded px-2 py-0.5 text-xs font-medium ${stateClass}`}>
+                        {stateItem?.short ?? statusKey}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      {project.at_risk ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-risk">
+                          <span className="h-2 w-2 rounded-full bg-risk" aria-hidden />
+                          At risk
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 align-top text-text-dark">
+                      {nextCell.kind === 'next' && (
+                        <span>
+                          {nextCell.short}{' '}
+                          <span className="text-text-light">{formatShortEnglishDate(nextCell.dateStr)}</span>
+                        </span>
+                      )}
+                      {nextCell.kind === 'complete' && (
+                        <span className="inline-block rounded border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-m2">
+                          Complete
+                        </span>
+                      )}
+                      {nextCell.kind === 'empty' && <span className="text-text-light">—</span>}
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex flex-wrap gap-1">
+                        {visibleTags.map((t) => (
+                          <span
+                            key={t}
+                            className="inline-block max-w-[120px] truncate rounded-full border border-border bg-secondary px-2 py-0.5 text-xs text-text-dark"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                        {overflow > 0 && <span className="text-xs text-text-light">+{overflow} more</span>}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-center align-top">
+                      {project.external_link ? (
+                        <a
+                          href={project.external_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex text-m3 hover:opacity-80"
+                          title="Open external link"
+                        >
+                          {externalLinkIcon}
+                        </a>
+                      ) : null}
+                    </td>
+                    {isEditor && (
+                      <td className="px-3 py-2 text-center align-top">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditTarget(project)}
+                            className="rounded p-1 text-text-light hover:text-m3"
+                            title="Edit project"
+                            aria-label={`Edit ${project.name}`}
+                          >
+                            {editIcon}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(project)}
+                            className="rounded p-1 text-text-light hover:text-risk"
+                            title="Delete project"
+                            aria-label={`Delete ${project.name}`}
+                          >
+                            {deleteIcon}
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <ProjectFormModal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        workspaceId={workspaceId}
+      />
+      <ProjectFormModal
+        isOpen={editTarget != null}
+        onClose={() => setEditTarget(null)}
+        workspaceId={workspaceId}
+        project={editTarget}
+      />
+      <DeleteProjectModal
+        isOpen={deleteTarget != null}
+        onClose={() => setDeleteTarget(null)}
+        project={deleteTarget}
+        workspaceId={workspaceId}
+      />
+    </>
   )
 }

@@ -11,6 +11,7 @@ export async function registerAuthRoutes(fastify) {
     return {
       ...request.user,
       preferences,
+      role: request.dbUser?.role ?? 'viewer',
     };
   });
 

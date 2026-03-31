@@ -67,6 +67,17 @@ export interface CurrentUser {
   email: string
   name: string
   preferences: UserPreferences
+  role: 'viewer' | 'editor' | 'admin'
+}
+
+export interface CreateProjectBody {
+  name: string
+  group_name?: string | null
+  at_risk?: boolean
+  descoped?: boolean
+  show_in_timeline?: boolean
+  tags?: string[]
+  external_link?: string | null
 }
 
 export class ApiError extends Error {
@@ -148,6 +159,18 @@ export class ApiClient {
 
   updateMe(body: { preferences: UserPreferences }): Promise<CurrentUser> {
     return this.request('PATCH', '/auth/me', body)
+  }
+
+  createProject(workspaceId: string, body: CreateProjectBody): Promise<{ project: Project }> {
+    return this.request('POST', `/api/v1/workspaces/${workspaceId}/projects`, body)
+  }
+
+  updateProject(projectId: string, body: Partial<CreateProjectBody>): Promise<{ project: Project }> {
+    return this.request('PATCH', `/api/v1/projects/${projectId}`, body)
+  }
+
+  deleteProject(projectId: string): Promise<void> {
+    return this.request('DELETE', `/api/v1/projects/${projectId}`)
   }
 }
 
