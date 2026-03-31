@@ -253,6 +253,7 @@ export default function DashboardPage() {
               <ProjectList
                 projects={projects}
                 workspace={workspace}
+                workspaceId={effectiveWorkspaceId!}
                 filter={filter}
                 onClearFilters={clearAllFilters}
               />

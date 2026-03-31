@@ -73,6 +73,8 @@ async function authPlugin(fastify) {
   await registerAuthRoutes(fastify);
   const workspacesRoutes = (await import('../routes/workspaces.js')).default;
   await fastify.register(workspacesRoutes, { prefix: '/api/v1' });
+  const projectsRoutes = (await import('../routes/projects.js')).default;
+  await fastify.register(projectsRoutes, { prefix: '/api/v1' });
 }
 
 export default authPlugin;
