@@ -16,7 +16,7 @@ A powerful, client-side roadmap dashboard for project and program management.
 **No backend. No database.** Edit `js/config.js` → refresh → done.  
 Built with **Vite** for fast development and production builds.
 
-Try it with a [sample project](https://roadmapsnapweb.pages.dev)
+Try it with a [sample project](https://roadmapsnapweb.moisesprat.dev)
 
 ![RoadmapSnap Preview](docs/preview.png)
 
