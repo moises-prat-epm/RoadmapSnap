@@ -119,3 +119,32 @@
   --color-risk: #b91c1c;
   --color-today: #c2410c;
 }
+
+/* Evergreen — Lite + app (matches css/roadmap.css [data-theme="evergreen"]) */
+[data-theme="evergreen"] {
+  --color-bg-page: #f7f7f7;
+  --color-bg-white: #ffffff;
+  --color-bg-secondary: #f0f0f0;
+  --color-border: #e0e0e0;
+  --color-text-dark: #303030;
+  --color-text-light: #676767;
+  --color-start: #0b3c56;
+  --color-m0: var(--color-state-2);
+  --color-m1: #6cbe4c;
+  --color-m2: #277e6e;
+  --color-m3: #44b4a1;
+  --color-m4: #cbd938;
+  --color-m5: #307297;
+  --color-state-0: #cccccc;
+  --color-state-1: #676767;
+  --color-state-2: #277e6e;
+  --color-state-3: #6cbe4c;
+  --color-state-4: #cbd938;
+  --color-state-5: #44b4a1;
+  --color-state-6: #48a2cf;
+  --color-state-7: #0b3c56;
+  --color-dependency-inbound: #307297;
+  --color-dependency-outbound: #9138b0;
+  --color-risk: #d92d20;
+  --color-today: #d92d20;
+}

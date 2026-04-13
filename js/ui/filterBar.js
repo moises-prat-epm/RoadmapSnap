@@ -211,6 +211,7 @@ function renderFilterBar(state, sources) {
                 <option value="blank" ${state.theme === 'blank' ? 'selected' : ''}>Blank</option>
                 <option value="monochrome" ${state.theme === 'monochrome' ? 'selected' : ''}>Monochrome</option>
                 <option value="papallona" ${state.theme === 'papallona' ? 'selected' : ''}>Papallona</option>
+                <option value="evergreen" ${state.theme === 'evergreen' ? 'selected' : ''}>Evergreen</option>
             </select>
         </div>
         <div class="filter-results">

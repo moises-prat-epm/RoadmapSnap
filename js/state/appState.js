@@ -1,3 +1,16 @@
+function readStoredTheme() {
+  let t = localStorage.getItem('roadmapsnap-theme') || 'light';
+  if (t === 'dsm-firmenich') {
+    t = 'evergreen';
+    try {
+      localStorage.setItem('roadmapsnap-theme', t);
+    } catch {
+      /* ignore */
+    }
+  }
+  return t;
+}
+
 const AppState = (() => {
   const DEFAULT_STATE = {
     filter: { status: 'ALL', riskOnly: false, descopedOnly: false, search: '' },
@@ -6,7 +19,7 @@ const AppState = (() => {
     showGantt: true,
     groupCollapsed: {},
     activeDependencyGraph: null,
-    theme: localStorage.getItem('roadmapsnap-theme') || 'light',
+    theme: readStoredTheme(),
     timelineStart: null,
     timelineEnd: null,
   };

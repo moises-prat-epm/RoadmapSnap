@@ -26,6 +26,11 @@ var PAPALLONA_STATE_PALETTE = [
     '#94a3b8', '#475569', '#0d9488', '#0f766e', '#15803d', '#0369a1', '#1d4ed8', '#1e3a5c'
 ];
 
+// Matches [data-theme="evergreen"] — green/teal/navy palette (DM Sans when loaded)
+var EVERGREEN_STATE_PALETTE = [
+    '#cccccc', '#676767', '#277e6e', '#6cbe4c', '#cbd938', '#44b4a1', '#48a2cf', '#0b3c56'
+];
+
 function isMonochromeTheme() {
     if (typeof document === 'undefined') return false;
     return document.documentElement.getAttribute('data-theme') === 'monochrome';
@@ -34,6 +39,11 @@ function isMonochromeTheme() {
 function isPapallonaTheme() {
     if (typeof document === 'undefined') return false;
     return document.documentElement.getAttribute('data-theme') === 'papallona';
+}
+
+function isEvergreenTheme() {
+    if (typeof document === 'undefined') return false;
+    return document.documentElement.getAttribute('data-theme') === 'evergreen';
 }
 
 function resolveStateColor(statusKey) {
@@ -46,6 +56,9 @@ function resolveStateColor(statusKey) {
     }
     if (isPapallonaTheme()) {
         return PAPALLONA_STATE_PALETTE[index];
+    }
+    if (isEvergreenTheme()) {
+        return EVERGREEN_STATE_PALETTE[index];
     }
     return STATE_PALETTE[index];
 }
