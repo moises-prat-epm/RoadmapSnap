@@ -1,22 +1,53 @@
-# 🚀 RoadmapSnap
+# 🗺️ RoadmapSnap
 
 [![CI](https://github.com/moises-prat-epm/RoadmapSnap/actions/workflows/ci.yml/badge.svg)](https://github.com/moises-prat-epm/RoadmapSnap/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Open Source](https://img.shields.io/badge/open--source-free-brightgreen)]()
 
-## Products
+**AI-powered PMO governance platform for enterprise program visibility.**  
+Built for PMO leaders managing multiple strategic programs across complex organizations.
 
-- **RoadmapSnap Lite** (this repo root): Backend-free roadmap dashboard. Edit `js/config.js`, run from `index.html`, works offline. Deployed to Cloudflare Pages and other static hosts.
-- **RoadmapSnap SaaS**: Multi-tenant version with Auth0 and PostgreSQL, under active development in `packages/api/`.
+> RoadmapSnap sits above your execution tools — not inside them.  
+> It turns scattered program data into executive-ready governance intelligence.
 
-All existing documentation and usage instructions in this README refer to **Lite**.
+🔗 [Live Demo](https://roadmapsnapweb.pages.dev) · [GitHub Repo](https://github.com/moises-prat-epm/RoadmapSnap)
 
------
+---
 
-A powerful, client-side roadmap dashboard for project and program management.
+## What it does
 
-**No backend. No database.** Edit `js/config.js` → refresh → done.  
-Built with **Vite** for fast development and production builds.
+RoadmapSnap gives PMO leaders and program executives a single governance view across all active programs — with automatic status intelligence, cross-program dependency mapping, and risk visibility — without replacing the execution tools your teams already use.
 
-Try it with a [sample project](https://roadmapsnapweb.moisesprat.dev)
+**No backend. No database. No lock-in.**  
+Configure via `js/config.js` → refresh → done.
+
+---
+
+## Key capabilities
+
+- **Executive KPI dashboard** — auto-calculated health metrics across all workstreams
+- **Dependency intelligence** — interactive cross-deliverable dependency graph with blocking detection
+- **Risk tracking** — at-risk flagging with visual indicators and filtered views
+- **Governance-ready exports** — PNG, CSV, JSON for stakeholder reporting
+- **Configurable workflow states** — map to your organization's delivery lifecycle
+- **Timeline zoom** — 3, 6, 12 months or full program range
+
+---
+
+## Who it's for
+
+- **Head of PMO** managing multi-program portfolios
+- **VP of Program Delivery** needing executive visibility without manual reporting
+- **Program Managers** running enterprise-scale programs with cross-team dependencies
+
+---
+
+## Open-core model
+
+The **Lite tier is free and open source** — full governance visibility, no cost, self-hosted.  
+A commercial SaaS tier (AI Program Copilot with Jira integration and predictive risk scoring) is in active development.
+
+---
 
 ![RoadmapSnap Preview](docs/preview.png)
 
